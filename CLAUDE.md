@@ -14,6 +14,7 @@ Use the latest stable versions.
 - Language: TypeScript, including automated tests.
 - Database: Supabase.
 - UI colors: OKLCH only.
+- Colour analysis: 8-bit sRGB in and out. The blend test runs in encoded sRGB; clustering, distances and harmony run in OKLab/OKLCH with ΔE. See `docs/roadmap.md`.
 
 ## Architecture
 
@@ -84,6 +85,8 @@ Prefer simple TypeScript implementations. Do not introduce WebAssembly, native m
 
 ## Planning and documentation
 
+- The roadmap is `docs/roadmap.md`. Keep it in step with the issues and milestones.
+- `claude-setup/` is informal reference (slides, Lean model, audit). Never commit it.
 - Every significant development task has an issue. Keep the backlog, timeline and Kanban board synchronized with the `project-planning` skill.
 - Document systems as finite automata where possible, with the `finite-automata` skill. User stories built from them go in `docs/user-stories.md`.
 - Aggressively separate documented system behaviour, at any level of abstraction, into independent audit, quoted prompt, and your own understanding.
