@@ -12,7 +12,7 @@ osakaalu täpselt, ilma värve paletiks ümardamata.
 
 ## Arenduskeskkonna seadistamine
 
-Eeldused: Node.js 20.9+ (soovitatav 24) ja npm.
+Eeldused: Node.js 24 (vt `.nvmrc`; min 22.22) ja npm.
 
 ```bash
 git clone https://github.com/rakenduste-programmeerimine-2026/Statistical-colors.git
@@ -32,6 +32,9 @@ Rakendus avaneb aadressil http://localhost:3000.
 | `npm run start`     | Käivitab buildi                 |
 | `npm run lint`      | ESLint                          |
 | `npm run typecheck` | TypeScripti tüübikontroll       |
+| `npm test`          | Ühiktestid (Vitest)             |
+| `npm run test:watch`| Testid jälgimisrežiimis         |
+| `npm run test:coverage` | Testid + katvuse raport     |
 
 ## Töövoog
 
