@@ -1,8 +1,8 @@
 name: CI
 
 on:
+  # All PRs, also ones stacked on another feature branch.
   pull_request:
-    branches: [main]
   push:
     branches: [main]
 
