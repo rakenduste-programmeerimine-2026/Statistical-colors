@@ -27,7 +27,6 @@ These need the developer's decision. Until then, the working assumption applies.
 
 | ID | Question | Working assumption [UNDERSTANDING] |
 |---|---|---|
-| Q-1 | P-001 says "the appropriate integration branch" without naming it. Which branch is it? | Per P-002, Claude asks this on the first prompt and records the answer in `.claude/project.json`. |
 
 ## P-001 (2026-11-05): Project Development Standards & Workflow
 
@@ -186,3 +185,63 @@ Supersedes: the working assumptions for Q-2, Q-3 and Q-4
 5. Every fixed bug is logged in `docs/bugs/README.md` with its type, a short description and what was used to fix it.
 6. For a bug caused by an implicit state machine, an independent agent (`state-machine-analyst`) analyzes whether it should be made explicit in code and refactored. Claude asks the user for the go-ahead before any such refactor.
 7. Every implicit state machine is documented in `docs/automata/`, even if it is not made explicit.
+
+## P-004 (2026-11-16): Commit size, Pull Request approval and frontend-only commits
+
+Type: instruction
+Issue: #25
+
+> read through claude setup try to keep commits shorts and pertaining to one notable small subfunction per commit, never approve your own pull requests save these  commands to memory. Read through the folder claude setup implement what's in it and add what's nessassary from the previous sentence to it
+
+> use develop but with a better name as you are working in a team, keep in mind you can only commit frontend code without explicit permission add that as well to claude setup and use it when choosing a name
+
+[UNDERSTANDING] The second quote answers Q-1. "a better name" means a name that shows this integration branch is for frontend work, so it does not read as the whole team's `develop`.
+
+## P-005 (2026-11-16): Decisions from P-004
+
+Type: approved decision
+Source: P-004
+Issue: #25
+Supersedes: Q-1
+
+1. Q-1: The integration branch is `develop-frontend`, recorded in `.claude/project.json`.
+2. Keep commits short. Each commit covers one notable, small subfunction.
+3. Claude never approves its own Pull Requests. The `guard-git` hook blocks `gh pr review --approve`.
+4. Claude commits only frontend code without the user's explicit permission. Backend, database, CI and tooling changes need explicit permission first.
+
+## P-006 (2026-11-17): Next.js and Supabase stack, commit scope
+
+Type: instruction
+Issue: #25
+
+> use nextjs and supabase fix claude steup, CI and tooling etc is fine just don't touch backend and database and their tests yourself.
+
+## P-007 (2026-11-17): Decisions from P-006
+
+Type: approved decision
+Source: P-006
+Issue: #25
+Supersedes: P-001 "Backend: Node.js with Express.js" and "Backend architecture: Ports and Adapters (Hexagonal Architecture)"; P-005 item 4
+
+1. The stack is Next.js and Supabase. There is no separate Express.js server. Server-side code lives in Next.js Route Handlers and Server Actions.
+2. Ports and adapters apply wherever they do not clash with Next.js, on the server side as well as in the frontend (P-003 item 2).
+3. Without explicit permission, Claude may commit frontend code, CI, tooling, documentation and the Claude setup. Claude does not change backend code, database code (Supabase migrations, policies, seed data, `supabase/`) or their tests.
+
+[UNDERSTANDING] "Backend" means server-side logic: Route Handlers, Server Actions, Supabase clients and data access, matching the `backend` label on GitHub issues.
+
+## P-008 (2026-11-17): Pull Request permission and commit size
+
+Type: instruction
+Issue: #25
+Supersedes: P-005 item 2; the "Prepare the Pull Request" step's opening of the Pull Request without asking
+
+> do not open pull request without permission, bundle the commits a bit more by logical type somewhere arournd fithy to 150 lines redo current commits
+
+## P-009 (2026-11-17): Decisions from P-008
+
+Type: approved decision
+Source: P-008
+Issue: #25
+
+1. Claude does not open a Pull Request without the user's permission. It prepares the branch and the description, then asks.
+2. Bundle commits by logical type, aiming for about 50 to 150 changed lines each. A single file larger than that may be one commit.
