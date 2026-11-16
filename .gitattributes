@@ -6,3 +6,6 @@
 *.bmp binary
 *.gif binary
 *.webp binary
+
+# Generated files: collapsed in GitHub PR diffs and excluded from language stats
+package-lock.json linguist-generated=true
