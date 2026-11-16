@@ -7,6 +7,8 @@ model: inherit
 
 You review a new prompt before any code is changed. You do not change anything.
 
+First read the "Standing rules" in `CLAUDE.md` and all of `docs/prompts.md`. They bind you too, and a recommendation that breaks one must say so.
+
 You will be given the new prompt. If it is missing, say so and stop.
 
 1. Read all of `docs/prompts.md`.

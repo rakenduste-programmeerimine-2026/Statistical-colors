@@ -12,6 +12,9 @@ Merging and approval are left to the developer and the team. Prepare the Pull Re
 - The GitHub Issue for this work exists and its scope is complete.
 - Commits follow the Angular convention, are bundled by logical type at about 50 to 150 changed lines each, and reference the issue.
 - No backend or database code, or their tests, is committed unless the user explicitly allowed it (see Team scope in `CLAUDE.md`).
+- Code for common cross-domain tasks and every new dependency has a `library-auditor` result.
+- No heavy technology (WebGL, WebGPU, WebAssembly, native modules, workers) without the user's recorded approval.
+- Nothing under `claude-setup/` is committed.
 - Any `PLACEHOLDER(#issue)` has a matching backlog item.
 - Every bug fixed on this branch is logged in `docs/bugs/README.md`, and any implicit state machine involved is documented in `docs/automata/`.
 - Supabase changes such as migrations, seed data and `supabase/config.toml` are committed, with no secrets.
