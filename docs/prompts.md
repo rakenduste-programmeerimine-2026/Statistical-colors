@@ -268,3 +268,22 @@ Issue: #27
 5. Results are reported as consistent with the input, never as proven to be the original.
 
 [UNDERSTANDING] `VisualMedia.lean` type-checked with Lean 4.36.0 on 2026-11-17 (exit code 0, two deprecation warnings for `dif_pos`). This is a run on the developer's machine, not an independent audit. Axioms were not printed.
+
+## P-012 (2026-11-17): Heavy technology review, library audit, rules for agents
+
+Type: instruction
+Issue: #36
+
+> make sure not to add stuff like webgl without human review, run an audit before starting to write code for whether some library, package etc exists that allready does this very common cross domain task, keep it reasonable everything doesn't need one but for example image decoding should atleat warrent checking for existing things. Make sure this and other previous meta level claude instructions in prompts are saved and get to the other agents and their context as well
+
+## P-013 (2026-11-17): Decisions from P-012
+
+Type: approved decision
+Source: P-012
+Issue: #36
+
+1. Heavy technologies such as WebGL, WebGPU, WebAssembly, native modules, Web Workers and worker threads need the user's review and explicit approval before they are added, in addition to the `performance-analyst` justification.
+2. Before writing code for a common, cross-domain task (for example image decoding, colour space conversion, CSV, file upload, charts), run the `library-auditor` agent to check whether a maintained library already does it. Small, project-specific logic does not need an audit.
+3. All standing meta rules for Claude live in the "Standing rules" section of `CLAUDE.md`. Every agent reads `CLAUDE.md` and `docs/prompts.md` before it starts.
+
+[UNDERSTANDING] "Meta level instructions" means the rules about how Claude works rather than what the app does: P-002/P-003 (bugs, state machines, prompt commits), P-004/P-005 (integration branch, no approving PRs), P-007 (team scope), P-008/P-009 (no PR without permission, commit size), P-011 (`claude-setup/` never committed) and P-013.
