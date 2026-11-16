@@ -245,3 +245,26 @@ Issue: #25
 
 1. Claude does not open a Pull Request without the user's permission. It prepares the branch and the description, then asks.
 2. Bundle commits by logical type, aiming for about 50 to 150 changed lines each. A single file larger than that may be one commit.
+
+## P-010 (2026-11-17): Slides and Lean model as informal reference
+
+Type: instruction
+Issue: #27
+
+> there are slides and lean code in the claude setup now as informal reference what new understanding did they provide? run the lean code, remember to not commit them as they are only their findings and roadmaps etc
+
+> update the roadmap and other places with the plan
+
+## P-011 (2026-11-17): Decisions from P-010
+
+Type: approved decision
+Source: P-010
+Issue: #27
+
+1. `claude-setup/` (slides, `VisualMedia.lean`, `AUDIT.md`) is informal reference. It is never committed.
+2. The plan from the slides is the roadmap, recorded in `docs/roadmap.md` and as GitHub issues.
+3. Target: the colour tokens of a design and, later, which component uses which colour. Grids, spacing and type scales are out of scope.
+4. Colours come in and go out as 8-bit sRGB (untagged means sRGB). The blend test runs in encoded sRGB. Clustering, distances and harmony run in OKLab/OKLCH with ΔE.
+5. Results are reported as consistent with the input, never as proven to be the original.
+
+[UNDERSTANDING] `VisualMedia.lean` type-checked with Lean 4.36.0 on 2026-11-17 (exit code 0, two deprecation warnings for `dif_pos`). This is a run on the developer's machine, not an independent audit. Axioms were not printed.
