@@ -65,8 +65,8 @@ privaatsesse Storage bucketisse `reports`, kausta `{kasutaja_id}/`.
 
 ```bash
 npx supabase login
-npm run db:link    # vali tiimi projekt
-npm run db:push    # rakendab uued migratsioonid
+npm run db:link    # vali tiimi projekt (küsib DB parooli)
+npm run db:push    # rakendab uued migratsioonid pilves olevale projektile (--remote)
 npm run db:types   # uuendab src/lib/supabase/database.types.ts
 ```
 
