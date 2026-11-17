@@ -314,3 +314,29 @@ Issue: #25
 
 1. The work for #25, #27 and #36 ships as one Pull Request, #26.
 2. Claude never comments on, reviews or otherwise acts on other people's Pull Requests. They are outside its scope. Findings about them go to the user only.
+
+## P-017 (2026-11-17): Port the old Flask frontend to Next.js
+
+Type: requirement
+Issue: #37
+
+> in claude setup folder there is now a folder called old code your goal is to take the frontend from it and convert it into nextjs, allign it with current issues, roadmaps, kanban boards do not add features not allready in the original code unless they are minor. Simulate the backend with generated tests/stubs assume the backend and database will be added and create issues for the features needed. As this is a major refactor build the thing first and wait for my goahead before turning it into chunks ready to be commited and later turned into a pull request, same goes for the issues.
+
+> generate the issues, stage the commits, open a merge request etc
+
+> remember roadmap and kanban board
+
+## P-018 (2026-11-17): Decisions from P-017
+
+Type: approved decision
+Source: P-017
+Issue: #37
+
+1. One image per upload, as in the original. Multiple files and drag and drop stay in #15.
+2. Saved themes live in the browser (localStorage) behind a `ThemeStore` port. No backend or database work for themes.
+3. The backend is simulated in the frontend: an `AnalysisService` port, a stub adapter that returns clearly marked fake results, and contract tests the real adapter (#40) must pass. No Route Handlers or Server Actions.
+4. Users type theme colours as hex. The browser converts them with `oklch(from <hex> l c h)`, so UI colours stay OKLCH.
+5. The saved-themes dropdown uses `@radix-ui/react-select` (library audit; approved by the user).
+6. TIFF is dropped from the allowed formats, because browsers cannot decode it.
+7. Backend features the port needs: #38 (pixel-by-pixel CSV), #39 (read an analysis by id), #40 (real adapter).
+8. For this task, issues, commits and the Pull Request waited for the user's go-ahead, which P-017's second quote gives.
