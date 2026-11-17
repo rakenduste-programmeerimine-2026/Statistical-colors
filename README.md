@@ -36,6 +36,10 @@ Rakendus avaneb aadressil http://localhost:3000.
 | `npm run test:watch`| Testid jälgimisrežiimis         |
 | `npm run test:coverage` | Testid + katvuse raport     |
 
+## Roadmap
+
+Värvituvastuse plaan, etapid ja milestone'id: [`docs/roadmap.md`](docs/roadmap.md).
+
 ## Töövoog
 
 - Iga töö algab **issue'st**. Branchi nimi: `<tüüp>/<issue-nr>-<lühikirjeldus>`,
