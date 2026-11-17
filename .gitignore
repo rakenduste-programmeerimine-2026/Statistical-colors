@@ -46,3 +46,7 @@ claude-setup/
 
 # Built browser extension (npm run build:extension)
 /extension/dist/
+
+# Built Figma plugin (npm run build:figma)
+/figma-plugin/dist/
+/figma-plugin/.build/
