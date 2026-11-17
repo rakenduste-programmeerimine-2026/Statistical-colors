@@ -5,7 +5,7 @@ description: Prepare a Pull Request for the current feature branch, including th
 
 # Prepare a Pull Request
 
-Merging and approval are left to the developer and the team. Prepare the Pull Request, ask the user for permission to open it, and stop. Never approve a Pull Request, including your own.
+Merging and approval are left to the developer and the team. Never comment on or review other people's Pull Requests. Prepare the Pull Request, ask the user for permission to open it, and stop. Never approve a Pull Request, including your own.
 
 ## 1. Confirm the work
 

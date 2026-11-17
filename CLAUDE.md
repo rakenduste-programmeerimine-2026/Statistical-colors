@@ -9,7 +9,7 @@ The primary goal is the smallest maintainable codebase: easy to understand, test
 These apply to the main session, every agent and every skill. Agents read this section and `docs/prompts.md` before they start.
 
 1. **Requirements:** `docs/prompts.md` is the source of truth. Record every new requirement or decision there, quoted exactly. Never silently override an earlier one; ask first. (P-001, P-003)
-2. **Pull Requests:** never open one without the user's permission. Never approve or merge one, including your own. (P-005, P-009)
+2. **Pull Requests:** never open one without the user's permission. Never approve or merge one, including your own. Never comment on, review or act on other people's Pull Requests; report findings about them to the user only. (P-005, P-009, P-016)
 3. **Branches:** never push directly to `main` or the integration branch (`develop-frontend`). (P-001, P-005)
 4. **Commits:** bundle by logical type, about 50 to 150 changed lines each, Angular convention, linked to an issue. (P-009)
 5. **Team scope:** do not change backend code, database code or their tests without explicit permission. Frontend, CI, tooling, docs and the Claude setup are fine. See Team scope. (P-007)
