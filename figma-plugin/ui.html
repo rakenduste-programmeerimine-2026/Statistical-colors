@@ -1,0 +1,37 @@
+<!-- Template: build.mjs puts the compiled UI script where the marker is and writes dist/ui.html. -->
+<style>
+  /* UI colours are OKLCH (P-023 item 9). */
+  :root {
+    --ink: oklch(0.2603 0 0);
+    --soft: oklch(0.3904 0 0);
+    --muted: oklch(0.4386 0 0);
+    --faint: oklch(0.6268 0 0);
+    --line: oklch(0.7699 0 0);
+    --panel: oklch(0.9702 0 0);
+    --accent: oklch(0.6612 0.1739 250.2);
+    --accent-soft: oklch(0.9792 0.0108 248.1);
+    --error: oklch(0.5296 0.1904 28.3);
+    --on-accent: oklch(1 0 0);
+  }
+  body { font: 12px/1.45 Inter, system-ui, sans-serif; margin: 0; padding: 14px; color: var(--ink); }
+  h1 { font-size: 13px; margin: 0 0 8px; }
+  h1 small { font-weight: 400; color: var(--faint); }
+  #drop { border: 2px dashed var(--line); border-radius: 8px; padding: 22px 12px; text-align: center; color: var(--muted); }
+  #drop.over { border-color: var(--accent); background: var(--accent-soft); }
+  #files { margin: 8px 0; color: var(--soft); min-height: 2.8em; }
+  label { display: flex; gap: 6px; align-items: baseline; margin: 4px 0; }
+  button { font: inherit; width: 100%; padding: 8px; border-radius: 6px; border: 0; background: var(--accent); color: var(--on-accent); margin-top: 8px; cursor: pointer; }
+  button:disabled { background: var(--line); cursor: default; }
+  pre { background: var(--panel); border-radius: 6px; padding: 8px; white-space: pre-wrap; word-break: break-word; max-height: 250px; overflow: auto; margin: 10px 0 0; font: 11px/1.4 ui-monospace, Menlo, Consolas, monospace; }
+  .err { color: var(--error); }
+</style>
+<h1>Import a capture <small>· Värvi tükeldaja</small></h1>
+<div id="drop">Drop <b>scene-final.svg</b> and <b>shot.png</b> here<br />or <a href="#" id="pick">choose files</a></div>
+<input type="file" id="input" multiple accept=".svg,.png" hidden />
+<div id="files"></div>
+<label><input type="checkbox" id="preferSub" /> Prefer open substitute fonts (Arimo, Tinos…) even when the original is installed</label>
+<button id="go" disabled>Import</button>
+<pre id="log">Waiting for files.</pre>
+<script>
+  /* UI_SCRIPT */
+</script>
