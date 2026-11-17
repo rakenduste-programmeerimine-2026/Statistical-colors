@@ -15,6 +15,7 @@ Colours come in and go out as 8-bit sRGB. Each step is a pure TypeScript functio
 | Step | What it does | Space | Issue |
 |---|---|---|---|
 | 0. Decode and count | Exact pixels, every unique colour with count and share | sRGB | #11, #12 |
+| 0b. Save, read, export | Store the analysis, read it back by id, summary and pixel CSVs | — | #13, #39, #14, #38 |
 | 1. Blend test | Antialiased edge pixels between two real colours snap to the nearer one | encoded sRGB | #29 |
 | 2. Share filter | Drop rare colours (edges, JPEG noise) and optionally small icons | — | #30 |
 | 3. Convert | sRGB → linear → OKLab → OKLCH, ΔE_OK distance | OKLab / OKLCH | #28 |
@@ -41,10 +42,17 @@ People enter the real tokens by hand (#19). A record is flagged when the predict
 | Milestone | Due | Issues |
 |---|---|---|
 | M1: Setup and database | 2026-11-18 | #4–#10, #25 |
-| M2: MVP, images in, statistics out | 2026-11-21 | #11–#17 |
+| M2: MVP, images in, statistics out | 2026-11-21 | #11–#17, #37–#40 |
 | M3: Colour space and user test | 2026-11-25 | #18–#21, #27–#32, #36 |
 | M4: Polish and presentation | 2026-12-09 | #33, #34 |
 | Backlog | — | #35 |
+
+## Frontend and backend boundary
+
+The UI (#37, ported from the original Flask app) talks to the backend only through two ports:
+
+- `AnalysisService` (`src/core/analysis/analysis-service.ts`): analyse, read by id, CSV downloads. A stub adapter returns marked fake data until the real adapter (#40) replaces it. Both must pass `analysis-service.contract.ts`.
+- `ThemeStore` (`src/core/theme/theme-store.ts`): saved themes, kept in the browser.
 
 ## Ownership
 
