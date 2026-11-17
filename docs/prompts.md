@@ -287,3 +287,14 @@ Issue: #36
 3. All standing meta rules for Claude live in the "Standing rules" section of `CLAUDE.md`. Every agent reads `CLAUDE.md` and `docs/prompts.md` before it starts.
 
 [UNDERSTANDING] "Meta level instructions" means the rules about how Claude works rather than what the app does: P-002/P-003 (bugs, state machines, prompt commits), P-004/P-005 (integration branch, no approving PRs), P-007 (team scope), P-008/P-009 (no PR without permission, commit size), P-011 (`claude-setup/` never committed) and P-013.
+
+## P-014 (2026-11-17): Note on earlier entries
+
+Type: approved decision
+Issue: #36
+
+Clarification only; no earlier entry is rewritten.
+
+1. P-001 to P-003 belong to issue #25. They were written before this repository's history began.
+2. Q-2, Q-3 and Q-4, named in P-002 and P-003, were open questions in a version of this file that came before the repository. Their answers are recorded in P-003.
+3. P-008 supersedes the "Prepare the Pull Request" workflow step in `CLAUDE.md`, not an entry in this file.
