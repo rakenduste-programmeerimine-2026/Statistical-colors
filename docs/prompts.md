@@ -366,3 +366,16 @@ Issue: #45
 4. F1, the patch step and the PDF reader get time and size limits: one time budget per call with checks inside the shape searches, a drawing area the size of the region being fitted, a cap on targets and patches, and no local quantising of regions the tracer would reject anyway.
 5. The pipeline pings Chrome between steps, so the service worker is not stopped after 30 idle seconds.
 6. S1's paint-record replay at k× is not ported. Chrome does not let extensions use the LayerTree domain, so the extension always uses the layout record.
+
+## P-026 (2026-11-17): Limits added after the compliance review of #45
+
+Type: decision, not yet confirmed by the user
+Source: `prompt-compliance-reviewer` run for #45
+Issue: #45
+
+[UNDERSTANDING] Completes P-025 item 4, which the first version did not fully implement. Stands until the user says otherwise.
+
+1. The PDF reader refuses files over 64 MB, keeps at most 100,000 paths, and stops after 30 seconds. When it stops early, the page says why (`truncated`).
+2. The patch step stops scoring after 120 seconds as well as after 60 patches; the rest become bitmaps, and the report says which and why.
+3. S1's report keeps the reference field `paintRecordUnavailable`, so report.json still says why there is no paint record.
+4. Open question for the user: `extension/src/core/control-templates.ts` holds the reference's template data for Chrome's form-control art unchanged, because its generator needs a Chrome test setup that is not in this repository. P-023 item 1 says assets are not copied verbatim; whether this data counts as an asset is for the user to decide.
