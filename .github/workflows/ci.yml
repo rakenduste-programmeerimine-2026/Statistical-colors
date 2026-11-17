@@ -41,3 +41,6 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Build extension
+        run: npm run build:extension

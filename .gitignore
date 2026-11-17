@@ -43,3 +43,6 @@ next-env.d.ts
 
 # informal reference material, never committed (P-011)
 claude-setup/
+
+# Built browser extension (npm run build:extension)
+/extension/dist/
