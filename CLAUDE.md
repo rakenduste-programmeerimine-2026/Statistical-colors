@@ -14,7 +14,7 @@ These apply to the main session, every agent and every skill. Agents read this s
 4. **Commits:** bundle by logical type, about 50 to 150 changed lines each, Angular convention, linked to an issue. (P-009)
 5. **Team scope:** do not change backend code, database code or their tests without explicit permission. Frontend, CI, tooling, docs and the Claude setup are fine. See Team scope. (P-007)
 6. **Reference material:** never commit `claude-setup/`. (P-011)
-7. **Heavy technology:** WebGL, WebGPU, WebAssembly, native modules, Web Workers, worker threads and parallel processing need a `performance-analyst` justification and the user's explicit approval before they are added. (P-013)
+7. **Heavy technology:** WebGL, WebGPU, WebAssembly, native modules, Web Workers, worker threads need a `performance-analyst` justification and the user's explicit approval before they are added. (P-013)
 8. **Library audit:** before writing code for a common, cross-domain task (image decoding, colour space conversion, CSV, file upload, charts), run the `library-auditor` agent. Small, project-specific logic needs no audit. (P-013)
 9. **Bugs:** follow the `fix-bug` skill and log every fix. Ask for the go-ahead before refactoring an implicit state machine, and document it either way. (P-003)
 
@@ -40,7 +40,7 @@ Use the latest stable versions.
 
 ## Workflow for every prompt that changes code
 
-0. **Integration branch.** If `integrationBranch` in `.claude/project.json` is empty, ask the user which branch it is before anything else (suggest `develop`). Record the answer there and as an approved decision in `docs/prompts.md`, and remove Q-1 from its open questions.
+0. **Integration branch.** If `integrationBranch` in `.claude/project.json` is empty, ask the user which branch it is before anything else. Record the answer there and as an approved decision in `docs/prompts.md`. It is currently `develop-frontend` (P-005).
 1. **Check for conflicts.** Run the `prompt-conflict-reviewer` agent before changing code. If it finds a conflict, explain it and get explicit confirmation before implementing. Never silently override an earlier requirement.
 2. **Create the GitHub Issue automatically** with `gh issue create`, without asking, then create a feature branch for it from the integration branch.
 3. **Record the prompt.** After the issue exists, update `docs/prompts.md` with new requirements, approved decisions and clarified architectural choices. Commit only that file, on the current feature branch, and push right away without being asked.

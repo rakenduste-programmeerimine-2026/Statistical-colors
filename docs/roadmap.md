@@ -42,10 +42,12 @@ People enter the real tokens by hand (#19). A record is flagged when the predict
 |---|---|---|
 | M1: Setup and database | 2026-11-18 | #4–#10, #25 |
 | M2: MVP, images in, statistics out | 2026-11-21 | #11–#17 |
-| M3: Colour space and user test | 2026-11-25 | #18–#21, #27–#32 |
+| M3: Colour space and user test | 2026-11-25 | #18–#21, #27–#32, #36 |
 | M4: Polish and presentation | 2026-12-09 | #33, #34 |
 | Backlog | — | #35 |
 
 ## Ownership
+
+Step 0 (#11, #12) is labelled `backend` and owned by the team; Claude does not change it without permission (Team scope in `CLAUDE.md`).
 
 [UNDERSTANDING] Steps 1–6 and the results UI run in the browser, as #11 suggests for decoding, so they are labelled `frontend`. This is not yet confirmed by the team. Saving results, flags and policies (#13, #19 database part) belong to the backend and database owners.

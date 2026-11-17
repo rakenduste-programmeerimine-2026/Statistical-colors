@@ -18,9 +18,9 @@ try {
 if (!branch) {
   console.log(
     'Project setup: the integration branch is not set. Before doing anything else, ' +
-      'ask the user which branch is the integration branch (suggest `develop`). ' +
+      'ask the user which branch is the integration branch. ' +
       'Then set `integrationBranch` in `.claude/project.json`, record the answer as an ' +
-      'approved decision in `docs/prompts.md`, remove Q-1 from its open questions, ' +
+      'approved decision in `docs/prompts.md`, ' +
       'and continue with the user\'s prompt.',
   );
 }
