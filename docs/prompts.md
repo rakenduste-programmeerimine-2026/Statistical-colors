@@ -360,3 +360,18 @@ Issue: #42
 4. The preview appears on the upload page for the picked file and on the demo results page (user's answer: "Upload + demo results"). `ImageAnalysis` gets an optional `imageUrl`, which the real adapter (#39, #40) may fill later.
 5. The branch for #42 is stacked on `feat/37-flask-frontend-nextjs` until #41 merges (user's answer: "Stack on #37").
 6. Library audit: platform `createImageBitmap` with `colorSpaceConversion: "none"` and `premultiplyAlpha: "none"`, plus canvas 2D. No dependency. If the browser rejects those options, the preview shows an error instead of an inexact decode.
+
+## P-021 (2026-11-17): Claude's decisions while building #42
+
+Type: decision, not yet confirmed by the user
+Source: browser check, `performance-analyst` and `prompt-compliance-reviewer` runs for #42
+Issue: #42
+
+[UNDERSTANDING] These change the reference viewer's behaviour. They stand until the user says otherwise.
+
+1. Plain scrolling over the preview scrolls the page; Ctrl (or Cmd) + scroll zooms. The reference viewer filled the window, so plain scrolling zoomed there; embedded in a page it trapped scrolling.
+2. Until the user zooms or pans, the preview keeps fitting when its size changes. The first size the browser reports can be smaller than the final layout, which gave a too-small first fit.
+3. The preview decodes images up to 4096 × 4096 pixels (`MAX_PREVIEW_PIXELS`, about 16.7 MP, the iOS Safari canvas limit) and explains when an image is larger. The analysis is not limited by this. Per `performance-analyst`: the main thread is fine, so no Worker or WebAssembly.
+4. A new file releases the previous decoded image (`performance-analyst`: memory retention).
+5. The upload page previews a file only after it passes the upload rules (type and 25 MB).
+6. The demo CSVs and BMP are stored byte for byte (`public/demo/** -text` in `.gitattributes`). `src/adapters/demo/palette-analysis.json` is generated once from the original app's `palette_1__1dab3c06aafd1d68.json` and summary CSV.
