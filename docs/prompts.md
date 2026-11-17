@@ -315,6 +315,67 @@ Issue: #25
 1. The work for #25, #27 and #36 ships as one Pull Request, #26.
 2. Claude never comments on, reviews or otherwise acts on other people's Pull Requests. They are outside its scope. Findings about them go to the user only.
 
+## P-017 (2026-11-17): Port the old Flask frontend to Next.js
+
+Type: requirement
+Issue: #37
+
+> in claude setup folder there is now a folder called old code your goal is to take the frontend from it and convert it into nextjs, allign it with current issues, roadmaps, kanban boards do not add features not allready in the original code unless they are minor. Simulate the backend with generated tests/stubs assume the backend and database will be added and create issues for the features needed. As this is a major refactor build the thing first and wait for my goahead before turning it into chunks ready to be commited and later turned into a pull request, same goes for the issues.
+
+> generate the issues, stage the commits, open a merge request etc
+
+> remember roadmap and kanban board
+
+## P-018 (2026-11-17): Decisions from P-017
+
+Type: approved decision
+Source: P-017
+Issue: #37
+
+1. One image per upload, as in the original. Multiple files and drag and drop stay in #15.
+2. Saved themes live in the browser (localStorage) behind a `ThemeStore` port. No backend or database work for themes.
+3. The backend is simulated in the frontend: an `AnalysisService` port, a stub adapter that returns clearly marked fake results, and contract tests the real adapter (#40) must pass. No Route Handlers or Server Actions.
+4. Users type theme colours as hex. The browser converts them with `oklch(from <hex> l c h)`, so UI colours stay OKLCH.
+5. The saved-themes dropdown uses `@radix-ui/react-select` (library audit; approved by the user).
+6. TIFF is dropped from the allowed formats, because browsers cannot decode it.
+7. Backend features the port needs: #38 (pixel-by-pixel CSV), #39 (read an analysis by id), #40 (real adapter).
+8. For this task, issues, commits and the Pull Request waited for the user's go-ahead, which P-017's second quote gives.
+
+## P-019 (2026-11-17): Exact pixel preview and a demo result
+
+Type: requirement
+Issue: #42
+
+> add a exact pixel viewer like preview when a user adds a file currently have the results of a file being processed in the frontend as dummy data when someone presses the demo button and open the bmp included with it in the preview screen. Use an example from the previously uploaded statistical analysis of color pickers
+
+## P-020 (2026-11-17): Decisions from P-019
+
+Type: approved decision
+Source: P-019, the user's answers to the conflict review
+Issue: #42
+
+1. The viewer and the demo are an explicit exception to P-017's "do not add features not allready in the original code". The viewer is ported from `claude-setup/old code/Exact Pixel Viewer (1).html`, without its own colour counting (the analysis service counts colours) and without paste or drag and drop (#15).
+2. The demo image is `palette (1).bmp` from the old app's `uploads/` (`palette_1__1dab3c06aafd1d68`). It is copied into the repository with its colour summary and its original pixel CSV (user's answer: "BMP + summary + pixel CSV"). This is an approved exception to P-011: only these copies are committed, `claude-setup/` itself still is not.
+3. The demo results are labelled as an example result from the earlier colour picker study (user's answer: "Mark as example"). It is permanent, not a placeholder.
+4. The preview appears on the upload page for the picked file and on the demo results page (user's answer: "Upload + demo results"). `ImageAnalysis` gets an optional `imageUrl`, which the real adapter (#39, #40) may fill later.
+5. The branch for #42 is stacked on `feat/37-flask-frontend-nextjs` until #41 merges (user's answer: "Stack on #37").
+6. Library audit: platform `createImageBitmap` with `colorSpaceConversion: "none"` and `premultiplyAlpha: "none"`, plus canvas 2D. No dependency. If the browser rejects those options, the preview shows an error instead of an inexact decode.
+
+## P-021 (2026-11-17): Claude's decisions while building #42
+
+Type: decision, not yet confirmed by the user
+Source: browser check, `performance-analyst` and `prompt-compliance-reviewer` runs for #42
+Issue: #42
+
+[UNDERSTANDING] These change the reference viewer's behaviour. They stand until the user says otherwise.
+
+1. Plain scrolling over the preview scrolls the page; Ctrl (or Cmd) + scroll zooms. The reference viewer filled the window, so plain scrolling zoomed there; embedded in a page it trapped scrolling.
+2. Until the user zooms or pans, the preview keeps fitting when its size changes. The first size the browser reports can be smaller than the final layout, which gave a too-small first fit.
+3. The preview decodes images up to 4096 × 4096 pixels (`MAX_PREVIEW_PIXELS`, about 16.7 MP, the iOS Safari canvas limit) and explains when an image is larger. The analysis is not limited by this. Per `performance-analyst`: the main thread is fine, so no Worker or WebAssembly.
+4. A new file releases the previous decoded image (`performance-analyst`: memory retention).
+5. The upload page previews a file only after it passes the upload rules (type and 25 MB).
+6. The demo CSVs and BMP are stored byte for byte (`public/demo/** -text` in `.gitattributes`). `src/adapters/demo/palette-analysis.json` is generated once from the original app's `palette_1__1dab3c06aafd1d68.json` and summary CSV.
+
 ## P-022 (2026-11-17): The screenshot plugin
 
 Type: requirement
@@ -405,3 +466,16 @@ Issue: #46
 2. The pure decisions (fonts, paints, gradients, borders, checks, report) live in `src/logic.ts` with unit tests. `src/code.ts` uses the Figma API, and `src/ui.ts` handles files and pixels in the plugin's window.
 3. The colour analysis is attached to the imported frame as plugin data under the key `fs-analysis`, and the report layer says whether it was attached. Until the backend read exists (#48), the UI sends none (`PLACEHOLDER(#48)`), and the manifest allows no network access.
 4. The plugin is named "Värvi tükeldaja · Intent Capture Import", with the id `statistical-colors-intent-import`.
+
+## P-029 (2026-11-18): Plugin pull requests are stacked on the app port
+
+Type: approved decision
+Source: the user's answers on syncing the branches
+Issue: #44, #46
+
+> avoid the merge conflict
+
+Answer: "Stack plugins on app (Recommended)".
+
+1. The app-port branch (`feat/42-pixel-preview-demo`) is merged once into `feat/44-capture-extension`, which resolves the shared docs and tooling there. The pull requests form one line, #26 → #41 → #43 → #51 → #52, and merge in that order. This replaces P-023 item 5's independence from the app-port branches.
+2. P-024 no longer applies: P-017 to P-021 are now in this branch's copy of this file.
