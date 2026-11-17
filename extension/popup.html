@@ -25,6 +25,8 @@
   #status.error { color: var(--error); }
   #approaches small { color: var(--warn); }
   .note { font-size: 11px; color: var(--muted); margin: 2px 0 0; }
+  .links { font-size: 12px; margin: 2px 0 0; }
+  button.link { width: auto; margin: 0 10px 0 0; padding: 0; border: 0; background: none; color: var(--accent); cursor: pointer; text-decoration: underline; }
 </style>
 <h1>Capture this tab</h1>
 <label><input type="checkbox" checked disabled /> Lossless screenshot <small>always</small></label>
@@ -32,6 +34,7 @@
 <section id="recover">
   <h2>Recover intent with</h2>
   <div id="approaches"></div>
+  <p class="links" id="presets"></p>
   <label style="margin-top: 6px"
     >Zoom for k× outputs
     <select id="scale">

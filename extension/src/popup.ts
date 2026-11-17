@@ -2,7 +2,7 @@
 import type { RunMessage, StatusMessage } from "./background.ts";
 import { BROWSERS, detectBrowser, envFrom, OS, type Brand, type Detected } from "./env.ts";
 import { doneStatus, singleChoice, startCapture } from "./popup-logic.ts";
-import { REGISTRY } from "./registry.ts";
+import { HINTS, PRESETS, REGISTRY } from "./registry.ts";
 
 const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 
@@ -27,10 +27,20 @@ function checkbox(name: string, value: string, label: string, checked = false, n
   return wrap;
 }
 
-// Approaches arrive in #45; until then the section stays hidden.
 $("recover").hidden = REGISTRY.approaches.length === 0;
 for (const a of REGISTRY.approaches) {
-  $("approaches").append(checkbox("approach", a.id, a.title, !a.needsDebugger, a.needsDebugger ? "needs debugger" : ""));
+  const note = [HINTS[a.id], a.needsDebugger ? "needs debugger" : ""].filter(Boolean).join(" · ");
+  $("approaches").append(checkbox("approach", a.id, a.title, !a.needsDebugger, note));
+}
+for (const [label, ids] of PRESETS) {
+  const link = document.createElement("button");
+  link.type = "button";
+  link.className = "link";
+  link.textContent = label;
+  link.addEventListener("click", () => {
+    for (const b of $("approaches").querySelectorAll("input")) b.checked = ids.includes(b.value);
+  });
+  $("presets").append(link);
 }
 for (const [group, list] of [["os", OS], ["browser", BROWSERS]] as const) {
   for (const [value, name] of list) $(group).append(checkbox(group, value, name));
