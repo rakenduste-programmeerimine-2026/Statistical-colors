@@ -113,3 +113,65 @@ Acceptance criteria:
 - Given the text field, when I type "#12", then the text stays "#12" and the colour does not change.
 - Given "#12" in the field, when the field loses focus, then it shows the last valid colour again.
 - Given the field, when I type 8 characters, then only 7 are kept.
+
+## Pixel viewer and demo
+
+### US-011: Preview a picked file exactly
+
+Automaton: pixel viewer, Loading → AutoFit
+Source: [PROMPT P-019] "add a exact pixel viewer like preview when a user adds a file"
+
+As a designer, I want to see the file I picked before I send it, pixel for pixel, so that I know I picked the right image.
+
+Acceptance criteria:
+- Given no file is picked, or the file breaks the upload rules (for example .tiff or 25 MB + 1 byte), then no preview is shown.
+- Given I pick a 512 × 40 BMP, then the preview shows "512 × 40 px" at the largest whole-number zoom that fits.
+- Given the preview, then every screen pixel shows a stored value of the file: no smoothing, no colour-profile conversion.
+
+### US-012: Read the pixel under the cursor
+
+Automaton: pixel viewer, AutoFit/Manual (pointer move, no state change)
+Source: [PROMPT P-019] "exact pixel viewer"
+
+As a designer, I want to read the exact colour under my cursor, so that I can check single pixels.
+
+Acceptance criteria:
+- Given the cursor is on pixel (0, 0) of the demo image, then I see "x 0, y 0 · #032F29 · rgb 3, 47, 41".
+- Given a pixel with alpha below 255, then the alpha is shown too.
+- Given the cursor is outside the image, then the readout asks me to move over the image.
+
+### US-013: Zoom and pan
+
+Automaton: pixel viewer, AutoFit → Manual → AutoFit
+Source: [UNDERSTANDING] ported from the reference Exact Pixel Viewer
+
+As a designer, I want to zoom in on details and back out, so that I can inspect small areas.
+
+Acceptance criteria:
+- Given 1×, when I press + (button, key or Ctrl + scroll), then the zoom is 2×; when I zoom out from 1×, then it is 1/2 (every second pixel, unblended).
+- Given I scroll without Ctrl over the preview, then the page scrolls and the zoom does not change.
+- Given I zoomed in, when the window is resized, then my zoom stays; when I press Fit or 0, then the preview fits again.
+- Given 6× or more, when I tick "Pikslivõrk", then a grid is drawn between pixels.
+
+### US-014: Refuse an inexact decode
+
+Automaton: pixel viewer, Loading → Failed
+Source: [PROMPT P-020] item 6
+
+As a designer, I want to be told when the browser cannot open my file exactly, so that I do not trust wrong colours.
+
+Acceptance criteria:
+- Given the browser cannot decode the file with colour conversion turned off, then I see a message naming the file and the zoom buttons are disabled.
+- Given an image of 4096 × 4096 pixels, then it is previewed; given 4096 × 4097, then I see that it is too large to preview and can still analyse it (P-021 item 3).
+
+### US-015: Open the demo
+
+Automaton: upload form (link, no state change); results page
+Source: [PROMPT P-019] "when someone presses the demo button and open the bmp included with it in the preview screen"
+
+As a new visitor, I want to see a finished result without uploading anything, so that I understand what the app does.
+
+Acceptance criteria:
+- Given the upload page, when I press "Ava demo", then `/results/demo` opens.
+- Given the demo result, then a note says it is the real result of "palette (1).bmp" from the earlier colour picker study, the summary shows 512 × 40, 20480 pixels and 295 unique colours, and the BMP is in the preview.
+- Given the demo result, when I download either CSV, then I get the original app's file.

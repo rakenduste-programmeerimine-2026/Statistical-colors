@@ -42,7 +42,7 @@ People enter the real tokens by hand (#19). A record is flagged when the predict
 | Milestone | Due | Issues |
 |---|---|---|
 | M1: Setup and database | 2026-11-18 | #4–#10, #25 |
-| M2: MVP, images in, statistics out | 2026-11-21 | #11–#17, #37–#40 |
+| M2: MVP, images in, statistics out | 2026-11-21 | #11–#17, #37–#40, #42 |
 | M3: Colour space and user test | 2026-11-25 | #18–#21, #27–#32, #36 |
 | M4: Polish and presentation | 2026-12-09 | #33, #34 |
 | Backlog | — | #35 |
@@ -53,6 +53,8 @@ The UI (#37, ported from the original Flask app) talks to the backend only throu
 
 - `AnalysisService` (`src/core/analysis/analysis-service.ts`): analyse, read by id, CSV downloads. A stub adapter returns marked fake data until the real adapter (#40) replaces it. Both must pass `analysis-service.contract.ts`.
 - `ThemeStore` (`src/core/theme/theme-store.ts`): saved themes, kept in the browser.
+
+The exact pixel preview (#42) decodes the picked file in the browser for display only; it does not count colours. The demo result (`/results/demo`) is a fixed example from the earlier colour picker study, served by the `withDemo` adapter in front of any `AnalysisService`. If #39 stores the uploaded image, the real adapter can fill the optional `imageUrl` so the results page previews it too.
 
 ## Ownership
 
