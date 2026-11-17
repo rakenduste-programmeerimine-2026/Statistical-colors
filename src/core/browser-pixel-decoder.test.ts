@@ -28,12 +28,23 @@ function createFakeCanvas(pixels: Uint8ClampedArray | null) {
   return { canvas, ctx, asCanvas: () => canvas as unknown as HTMLCanvasElement };
 }
 
+/** createImageBitmap stub that reads the given options like a browser that knows them. */
+function readingCreateImageBitmap(
+  bitmap: ImageBitmap,
+  read: (keyof ImageBitmapOptions)[] = ["colorSpaceConversion", "premultiplyAlpha"],
+) {
+  return vi.fn(async (_image: Blob, options: ImageBitmapOptions) => {
+    for (const key of read) void options[key];
+    return bitmap;
+  });
+}
+
 function environment(
   bitmap: ImageBitmap,
   canvas: HTMLCanvasElement,
 ): BrowserPixelDecoderEnvironment {
   return {
-    createImageBitmap: vi.fn().mockResolvedValue(bitmap),
+    createImageBitmap: readingCreateImageBitmap(bitmap),
     createCanvas: () => canvas,
   };
 }
@@ -108,6 +119,27 @@ describe("createBrowserPixelDecoder", () => {
     );
     expect(close).toHaveBeenCalledOnce();
   });
+
+  it.each([
+    ["ignores both options", []],
+    ["ignores premultiplyAlpha", ["colorSpaceConversion"]],
+    ["ignores colorSpaceConversion", ["premultiplyAlpha"]],
+  ] as const)(
+    "throws ExactDecodingUnsupportedError if the browser %s",
+    async (_case, read) => {
+      const { bitmap, close } = createFakeBitmap(1, 1);
+      const createCanvas = vi.fn();
+
+      await expect(
+        createBrowserPixelDecoder(() => ({
+          createImageBitmap: readingCreateImageBitmap(bitmap, [...read]),
+          createCanvas,
+        })).decode(file),
+      ).rejects.toBeInstanceOf(ExactDecodingUnsupportedError);
+      expect(close).toHaveBeenCalledOnce();
+      expect(createCanvas).not.toHaveBeenCalled();
+    },
+  );
 
   it("throws ExactDecodingUnsupportedError if createImageBitmap is missing", async () => {
     const fake = createFakeCanvas(new Uint8ClampedArray(4));

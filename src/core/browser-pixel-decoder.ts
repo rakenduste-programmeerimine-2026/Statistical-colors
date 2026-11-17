@@ -22,10 +22,32 @@ function defaultEnvironment(): BrowserPixelDecoderEnvironment {
   };
 }
 
-const EXACT_BITMAP_OPTIONS: ImageBitmapOptions = {
-  colorSpaceConversion: "none",
-  premultiplyAlpha: "none",
-};
+/**
+ * Browsers silently ignore unknown `createImageBitmap` options, so a
+ * try/catch cannot tell whether they were applied. WebIDL dictionary
+ * conversion reads every member the browser knows about, so getters reveal
+ * whether these options are understood.
+ */
+function createExactBitmapOptions() {
+  let readColorSpaceConversion = false;
+  let readPremultiplyAlpha = false;
+
+  const options: ImageBitmapOptions = {
+    get colorSpaceConversion() {
+      readColorSpaceConversion = true;
+      return "none" as const;
+    },
+    get premultiplyAlpha() {
+      readPremultiplyAlpha = true;
+      return "none" as const;
+    },
+  };
+
+  return {
+    options,
+    wereHonoured: () => readColorSpaceConversion && readPremultiplyAlpha,
+  };
+}
 
 function readPixelsWithCanvas2D(
   bitmap: ImageBitmap,
@@ -63,8 +85,12 @@ export function createBrowserPixelDecoder(
         );
       }
 
-      const bitmap = await env.createImageBitmap(file, EXACT_BITMAP_OPTIONS);
+      const { options, wereHonoured } = createExactBitmapOptions();
+      const bitmap = await env.createImageBitmap(file, options);
       try {
+        if (!wereHonoured()) {
+          throw new ExactDecodingUnsupportedError();
+        }
         return readPixelsWithCanvas2D(bitmap, env);
       } finally {
         bitmap.close();
