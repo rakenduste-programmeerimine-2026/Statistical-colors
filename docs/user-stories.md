@@ -29,17 +29,17 @@ Acceptance criteria:
 - Given a capture is running, when I press Capture again, then I see "A capture is already running." and the first capture is unaffected.
 - Given it has finished, when I press Capture, then a new capture starts.
 
-### US-103: Grant the debugger only when needed
+### US-103: Use the debugger only when needed
 
 Automaton: capture extension run, Idle → Attached
-Source: [PROMPT P-023] item 6, "Optional permission (Recommended)"
+Source: [PROMPT P-027] "Required, attach on demand (Recommended)" (replaces P-023 item 6, which Chrome does not allow)
 
-As a designer, I want the extension to ask for the debugger permission only when I choose an approach that needs it, so that a plain capture never shows Chrome's debugging bar.
+As a designer, I want the extension to attach the debugger only when I choose an approach that needs it, so that a plain capture never shows Chrome's debugging bar.
 
 Acceptance criteria:
-- Given no debugger approach is chosen, then no permission prompt appears and the debugging bar is not shown.
-- Given a debugger approach is chosen and I refuse the permission, then I see that the chosen approaches need it and nothing is captured.
-- Given I allow it, then the viewport is pinned to its size before the bar appeared, and the debugger is detached when the capture ends, even after an error.
+- Given the extension is installed, then Chrome lists the debugger permission once, at install.
+- Given no debugger approach is chosen, then the debugging bar is not shown.
+- Given K1, S1 or S3 is chosen, then the viewport is pinned to its size before the bar appeared, and the debugger is detached when the capture ends, even after an error.
 
 ## Recovery approaches
 

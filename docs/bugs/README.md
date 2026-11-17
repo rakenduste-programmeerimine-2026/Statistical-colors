@@ -23,3 +23,4 @@ Every fixed bug, newest first. Follow the `fix-bug` skill to add one.
 |---|---|---|---|---|---|
 | 2026-11-17 | validation | The PDF reader reported "path limit" on a page with exactly the maximum number of paths; found by a boundary test before commit | Check the limit when a path would be added, not after every token | #45 | — |
 | 2026-11-17 | validation | `crop` with an origin past the right or bottom edge read pixels from the next row instead of returning a transparent 1 × 1; found by the compliance review before commit | Return a transparent 1 × 1 when nothing of the rectangle is inside the image | #44 | — |
+| 2026-11-17 | configuration | Chrome ignored the extension's debugger permission, because it does not allow `debugger` as an optional permission; reported by the user when loading the extension | List `debugger` as a normal permission and attach only for K1, S1 and S3 (P-027); a test checks the manifest | #44 | `docs/automata/capture-extension.md` |

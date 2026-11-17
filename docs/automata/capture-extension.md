@@ -39,7 +39,7 @@ Initial and final state: Idle.
 | From | Event | Guard | To | Source |
 |---|---|---|---|---|
 | Idle | run message from the popup | no debugger approach chosen | Capturing | [UNDERSTANDING] |
-| Idle | run message | a debugger approach chosen, and the optional permission granted in the popup | Attached | [PROMPT P-023] item 6 |
+| Idle | run message | a debugger approach (K1, S1, S3) chosen | Attached | [PROMPT P-027] "Required, attach on demand" |
 | Attached | viewport pinned | — | Capturing | [UNDERSTANDING] |
 | Capturing | every approach and combination finished (failures recorded per id) | — | Idle; detached if attached; "done" sent with files and errors | [UNDERSTANDING] |
 | Capturing | the run itself throws (for example the screenshot fails) | — | Idle; detached; "done" with `errors.run` | [UNDERSTANDING] |
@@ -52,7 +52,7 @@ Initial and final state: Idle.
 stateDiagram-v2
     [*] --> Ready
     Ready --> Starting: Capture pressed (button disabled, "Starting…")
-    Starting --> Ready: debugger refused, no active tab, or start refused (error shown)
+    Starting --> Ready: no active tab, or start refused (error shown)
     Starting --> Waiting: service worker accepted the run
     Waiting --> Waiting: progress message ("Running …")
     Waiting --> Ready: done message (files and problems shown)
@@ -61,7 +61,6 @@ stateDiagram-v2
 | From | Event | Guard | To | Source |
 |---|---|---|---|---|
 | Ready | Capture pressed | — | Starting | [UNDERSTANDING] |
-| Starting | — | a chosen approach needs the debugger and it is refused | Ready, error | [PROMPT P-023] item 6 |
 | Starting | — | no active tab, or the service worker refuses | Ready, error | [UNDERSTANDING] |
 | Starting | service worker replies ok | — | Waiting | [UNDERSTANDING] |
 | Waiting | done | — | Ready; shown as an error only when no file was saved | [UNDERSTANDING] |
@@ -75,4 +74,4 @@ Inside Capturing, K1 changes the device scale, S3 the emulated media and D1 inje
 - The service worker is stopped by Chrome during a long run: [UNDERSTANDING] the pings between steps make this unlikely, but one step that computes for more than 30 seconds without a Chrome call (D2 on a photo-heavy page) could still be stopped. The run is then lost with no "done" message, and the debugger may stay attached until the tab closes. Not measured.
 - A single page call that runs long: one F1 fit can take up to 45 s, and the D1+F1+S2 fits 20 to 30 s each, inside one `executeScript` call with no ping. [UNDERSTANDING] Chrome may keep the service worker alive while that call is pending; not measured.
 - The popup is closed during a run: the run continues; the result is only visible in Downloads.
-- The debugger permission is removed between the popup check and `attach`: `attach` throws "The debugger permission was not granted." and the run ends with `errors.run`.
+- Attaching fails (for example DevTools is already attached to the tab): `attach` throws and the run ends with `errors.run`.
