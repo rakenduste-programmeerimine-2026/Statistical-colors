@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useServices } from "@/adapters/services";
 import { clampTopN } from "@/core/analysis/upload-rules";
 import type { CsvKind, ImageAnalysis } from "@/core/analysis/types";
+import { PixelViewer } from "../preview/PixelViewer";
 import { button, card, hint } from "../ui";
 import { ColorTable } from "./ColorTable";
 import { saveFile } from "./download";
@@ -63,6 +64,13 @@ export function ResultsView() {
         </p>
       )}
 
+      {analysis.example && (
+        <p role="note" className={card}>
+          Näide: see on pildi „{analysis.fileName}” tegelik tulemus varasemast värvivalijate uuringust. Oma pildi
+          analüüsimiseks laadi see üles avalehel.
+        </p>
+      )}
+
       <section className={card} aria-label="Pildi andmed">
         <div className="text-muted">
           Pilt: <span className="font-mono">{analysis.fileName}</span>
@@ -92,6 +100,12 @@ export function ResultsView() {
           </p>
         )}
       </section>
+
+      {analysis.imageUrl && (
+        <div className={card}>
+          <PixelViewer source={analysis.imageUrl} name={analysis.fileName} />
+        </div>
+      )}
 
       <section className={card} aria-labelledby="top-heading">
         <h2 id="top-heading" className="text-xl font-bold">

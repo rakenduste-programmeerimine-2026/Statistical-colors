@@ -13,6 +13,13 @@ vi.mock("next/navigation", () => ({
 
 const saveFile = vi.fn();
 vi.mock("./download", () => ({ saveFile: (...args: unknown[]) => saveFile(...args) }));
+vi.mock("../preview/PixelViewer", () => ({
+  PixelViewer: ({ source, name }: { source: string; name: string }) => (
+    <p data-testid="preview">
+      {name} {source}
+    </p>
+  ),
+}));
 
 const analysis: ImageAnalysis = {
   id: "palette__0123456789abcdef",
@@ -90,6 +97,21 @@ describe("ResultsView", () => {
     renderWithServices(<ResultsView />, servicesWith(analysis));
     await screen.findByRole("table");
     expect(screen.queryByRole("note")).not.toBeInTheDocument();
+  });
+
+  it("labels the colour picker study example and previews its image", async () => {
+    renderWithServices(
+      <ResultsView />,
+      servicesWith({ ...analysis, fileName: "palette (1).bmp", example: true, imageUrl: "/demo/palette.bmp" }),
+    );
+    expect(await screen.findByRole("note")).toHaveTextContent("varasemast värvivalijate uuringust");
+    expect(screen.getByTestId("preview")).toHaveTextContent("palette (1).bmp /demo/palette.bmp");
+  });
+
+  it("shows no preview when the image is not stored", async () => {
+    renderWithServices(<ResultsView />, servicesWith(analysis));
+    await screen.findByRole("table");
+    expect(screen.queryByTestId("preview")).not.toBeInTheDocument();
   });
 
   it("says when the result is missing", async () => {

@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useId, useState, type FormEvent } from "react";
+import { DEMO_ID } from "@/adapters/demo/with-demo";
 import { useServices } from "@/adapters/services";
 import { InvalidImageError } from "@/core/analysis/analysis-service";
 import {
@@ -15,6 +17,7 @@ import {
   validateUpload,
   type UploadError,
 } from "@/core/analysis/upload-rules";
+import { PixelViewer } from "../preview/PixelViewer";
 import { button, card, hint, input, label } from "../ui";
 
 const MESSAGES: Record<UploadError | "invalid-image", string> = {
@@ -74,6 +77,7 @@ export function UploadForm() {
           accept={ACCEPT}
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
         />
+        {file && !validateUpload(file) && <PixelViewer source={file} name={file.name} />}
 
         <div className="flex flex-wrap gap-4">
           <div className="min-w-65 flex-1">
@@ -106,9 +110,14 @@ export function UploadForm() {
           </div>
         </div>
 
-        <button type="submit" className={`${button} mt-4`} disabled={processing}>
-          {processing ? "Töötlen…" : "Töötle pilti"}
-        </button>
+        <div className="mt-4 flex flex-wrap gap-2.5">
+          <button type="submit" className={button} disabled={processing}>
+            {processing ? "Töötlen…" : "Töötle pilti"}
+          </button>
+          <Link className={button} href={`/results/${DEMO_ID}`}>
+            Ava demo
+          </Link>
+        </div>
 
         <p className={`${hint} mt-4`}>
           Suurim fail: {MAX_UPLOAD_MB} MB. Lubatud laiendid: {ALLOWED_EXTENSIONS.join(", ")}. Piksel-haaval CSV võib
