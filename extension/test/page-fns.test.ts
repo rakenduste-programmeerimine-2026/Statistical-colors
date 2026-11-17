@@ -1,29 +1,8 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import ts from "typescript";
 import { afterEach, describe, expect, it } from "vitest";
 import type * as PageFns from "../src/core/page-fns.ts";
+import { compiled, fromSource } from "./compiled.ts";
 
-/** page-fns.ts as tsc emits it for Chrome (target ES2022), not as Vitest transforms it. */
-function compiled(): typeof PageFns {
-  const source = readFileSync(resolve(__dirname, "../src/core/page-fns.ts"), "utf8");
-  const { outputText } = ts.transpileModule(source, {
-    compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
-  });
-  const exports = {};
-  new Function("exports", outputText)(exports);
-  return exports as typeof PageFns;
-}
-const fns = compiled();
-
-/**
- * Chrome sends these functions to the page as source text. Rebuilding each one
- * from its source proves it needs nothing from this module: a stray import or
- * closure would throw a ReferenceError here.
- */
-function fromSource<F extends (...args: never[]) => unknown>(fn: F): F {
-  return new Function(`return (${fn.toString()})`)() as F;
-}
+const fns = compiled<typeof PageFns>("../src/core/page-fns.ts");
 
 afterEach(() => {
   document.body.innerHTML = "";
