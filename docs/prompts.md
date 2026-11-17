@@ -343,3 +343,11 @@ Issue: #44, #45, #46, #47, #48
 7. Approved tooling (heavy-tech and dependency review): the MV3 background service worker, plain `tsc` builds with no bundler, and the type-only devDependencies `@types/chrome` and `@figma/plugin-typings`. Chrome APIs are tested with hand-written fakes. No browser-mode tests for now.
 8. Per the library audit: the old hand-written PDF path reader, tracer and diff are kept, because no library fits exactly. [UNDERSTANDING] `parseColor` also falls back to the browser (a 1×1 canvas) for colours the regex does not read, such as `oklch()`.
 9. OKLCH applies to the popup and plugin UI. Captured and rendered content stays 8-bit sRGB (P-011).
+
+## P-024 (2026-11-17): Note on this branch's copy of this file
+
+Type: approved decision (clarification only)
+Source: P-023 item 5
+Issue: #44
+
+P-017 to P-021 (the app port, #37, and the pixel preview, #42) are recorded on those branches, which this branch does not contain. They join this file when those Pull Requests merge. P-023 refers to them by number.
