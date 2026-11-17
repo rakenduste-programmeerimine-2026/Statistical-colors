@@ -20,8 +20,9 @@ import { quantiseLocal, traceRegion } from "./trace.ts";
 
 /** Small round controls are mostly edge pixels, so the strict (±8) bar is modest. */
 export const ACCEPT = { within48Pct: 96, within8Pct: 60 };
-/** Patches past this many go straight to a bitmap, unscored (P-025 item 4). */
+/** Patches past this many, or after this long, go straight to a bitmap, unscored (P-025 item 4). */
 export const MAX_SCORED_PATCHES = 60;
+export const PATCH_MS = 120_000;
 
 const f = (v: number) => +v.toFixed(3);
 const rgb = (c: RgbaTuple | number[]) => `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
@@ -245,10 +246,12 @@ export const PATCH_COMBO: Combination = {
     let added = "";
     const rows: Record<string, unknown>[] = [];
     const tally: Record<string, number> = {};
+    const started = performance.now();
     for (const [index, [n, parent]] of patches.entries()) {
       const tried: Record<string, unknown>[] = [];
       let won: { route: string; r: RouteResult } | null = null;
-      if (index < MAX_SCORED_PATCHES) {
+      const unscored = index >= MAX_SCORED_PATCHES ? "not scored: over the patch limit" : performance.now() - started > PATCH_MS ? "not scored: time budget" : null;
+      if (!unscored) {
         await ctx.host.ping?.();
         // The DOM route has one unknown, the text's sub-pixel start: a few are tried and the best kept.
         const shifts = n.control?.text ? [0, -0.25, 0.25, -0.5, 0.5, -0.75, 0.75, -1, 1] : [0];
@@ -312,7 +315,7 @@ export const PATCH_COMBO: Combination = {
       const route = won ? won.route : "bitmap";
       tally[route] = (tally[route] ?? 0) + 1;
       const label = n.control ? `${n.control.type}${n.control.checked ? " (checked)" : ""}` : String(n.patch?.reason);
-      rows.push({ control: label, route, tried: index < MAX_SCORED_PATCHES ? tried : "not scored: over the patch limit" });
+      rows.push({ control: label, route, tried: unscored ?? tried });
     }
     const svg = embedMeta(base.svg.replace(/<\/svg>\s*$/, () => `${added}</svg>`), meta);
     await ctx.save("scene-final.svg", svg);

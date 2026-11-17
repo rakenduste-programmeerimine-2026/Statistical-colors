@@ -37,7 +37,14 @@ export interface PdfPage {
   height: number;
   paths: PdfPath[];
   texts: PdfText[];
+  /** Why reading stopped early, when it did. */
+  truncated?: string;
 }
+
+/** Limits for one page (P-025 item 4). */
+export const MAX_PDF_BYTES = 64 * 1024 * 1024;
+export const MAX_PDF_PATHS = 100_000;
+export const PDF_MS = 30_000;
 
 const latin1 = (bytes: Uint8Array) => {
   let s = "";
@@ -76,7 +83,10 @@ async function inflate(bytes: Uint8Array): Promise<Uint8Array> {
   return new Uint8Array(await out.arrayBuffer());
 }
 
-export async function parsePdfPage(bytes: Uint8Array): Promise<PdfPage> {
+export async function parsePdfPage(bytes: Uint8Array, { maxMs = PDF_MS, now = () => performance.now() } = {}): Promise<PdfPage> {
+  if (bytes.length > MAX_PDF_BYTES) throw new Error(`PDF of ${bytes.length} bytes is over the ${MAX_PDF_BYTES}-byte limit`);
+  const started = now();
+  let truncated: string | undefined;
   const src = latin1(bytes);
   const objs = new Map<number, number>();
   for (const m of src.matchAll(/(?:^|[\r\n])(\d+) 0 obj\b/g)) objs.set(+m[1], (m.index ?? 0) + m[0].length);
@@ -203,7 +213,8 @@ export async function parsePdfPage(bytes: Uint8Array): Promise<PdfPage> {
     };
     const paint = (fill: boolean, stroke: boolean, evenodd = false) => {
       takeClip();
-      if (d && pts.length) {
+      if (d && pts.length && paths.length >= MAX_PDF_PATHS) truncated ??= "path limit";
+      else if (d && pts.length) {
         const scale = Math.sqrt(Math.abs(g.ctm[0] * g.ctm[3] - g.ctm[1] * g.ctm[2])) * PT;
         const b = bboxOf(pts);
         paths.push({
@@ -228,7 +239,10 @@ export async function parsePdfPage(bytes: Uint8Array): Promise<PdfPage> {
     const re = /\s+|%[^\r\n]*|<<|>>|\[|\]|<[0-9A-Fa-f\s]*>|\((?:\\.|[^\\()])*\)|\/[^\s<>[\]()/%]*|[-+]?(?:\d+\.?\d*|\.\d+)|[A-Za-z'"*]+/g;
     let m: RegExpExecArray | null;
     let skip = 0;
+    let tokens = 0;
     while ((m = re.exec(content))) {
+      if (++tokens % 4096 === 0 && now() - started > maxMs) truncated ??= "time budget";
+      if (truncated) return;
       const t = m[0];
       if (/^\s|^%/.test(t)) continue;
       if (t === "<<" || t === "[") {
@@ -424,7 +438,7 @@ export async function parsePdfPage(bytes: Uint8Array): Promise<PdfPage> {
   let content = "";
   for (const r of refs) content += `${await stream(+r)}\n`;
   await run(content, dictAfter(page, "Resources"), [1, 0, 0, 1, 0, 0], 0);
-  return { width: (box[2] - box[0]) * PT, height: pageH * PT, paths, texts };
+  return { width: (box[2] - box[0]) * PT, height: pageH * PT, paths, texts, ...(truncated ? { truncated } : {}) };
 }
 
 /** The paths and text origins inside one rectangle (page CSS px). */
