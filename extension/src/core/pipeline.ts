@@ -3,7 +3,7 @@
 // The approaches and combinations themselves arrive in #45; with none chosen,
 // a run saves the lossless shot and report.json.
 import type { Host } from "./host.ts";
-import { decode as decodePng, encode as encodePng, type Pixels } from "./img.ts";
+import { dataUrlToBlob, decode as decodePng, encode as encodePng, type Pixels } from "./img.ts";
 import { pageInfo, settle, type PageInfo } from "./page-fns.ts";
 
 /** OS and browser of the machine that rendered the page; chosen in the popup. */
@@ -20,13 +20,24 @@ export interface RunOptions {
   /** Zoom for k× outputs. */
   scale: number;
   env?: Env | null;
+  /** S1: skip the paint record and read the layout record. */
+  forceLayoutRecord?: boolean;
+  /** S2: elements matching this selector are left out of the scene. */
+  ignoreSelector?: string | null;
+  /** S2: extra font substitutes, lower-case family → open family. */
+  substitutes?: Record<string, string>;
 }
 
-export interface ApproachResult {
+/** What an approach returns. Each approach has its own type alias with more fields. */
+export type ApproachResult = {
   report?: Record<string, unknown>;
   [key: string]: unknown;
-}
+};
 
+/**
+ * The registry's view of an approach. An approach may take a second, optional
+ * options argument (D2 does, for the combination steps).
+ */
 export interface Approach {
   id: string;
   title: string;
@@ -59,6 +70,8 @@ export interface Context {
   once<T>(key: string, fn: () => Promise<T>): Promise<T>;
   info(): Promise<PageInfo>;
   takeShot(): Promise<ImageData>;
+  /** Decodes a PNG (Blob or data URL) with the run's codec. */
+  decode(src: Blob | string): Promise<ImageData>;
   /** The shared lossless screenshot, taken once and saved as shot.png. */
   shot(): Promise<ImageData>;
   save(name: string, data: SaveData): Promise<void>;
@@ -79,6 +92,7 @@ export function makeContext(host: Host, opts: Partial<RunOptions> = {}, codec: C
     },
     info: () => ctx.once("info", () => host.page(pageInfo)),
     takeShot: async () => codec.decode(await host.shot()),
+    decode: (src) => codec.decode(typeof src === "string" ? dataUrlToBlob(src) : src),
     shot: () =>
       ctx.once("shot", async () => {
         await host.page(settle);
@@ -119,6 +133,9 @@ export interface Registry {
 
 const message = (e: unknown) => String((e as Error)?.message ?? e);
 
+/** The typed output of an approach that ran (the caller names the type it expects). */
+export const outOf = <T extends ApproachResult>(ctx: Context, id: string) => ctx.out[id] as T;
+
 export async function run(
   host: Host,
   ids: string[],
@@ -154,6 +171,7 @@ export async function run(
     const shot = await ctx.shot();
     report.shot = { pixelSize: [shot.width, shot.height] };
     for (const a of chosen) {
+      await host.ping?.();
       onProgress(`${a.id} · ${a.title}`);
       const t = performance.now();
       try {
@@ -165,6 +183,7 @@ export async function run(
     }
     for (const c of registry.combinations) {
       if (!c.needs.every((id) => ctx.out[id])) continue;
+      await host.ping?.();
       onProgress(c.id);
       const t = performance.now();
       try {

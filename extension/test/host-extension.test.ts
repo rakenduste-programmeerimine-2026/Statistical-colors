@@ -77,6 +77,11 @@ describe("makeExtensionHost", () => {
     expect(chrome.tabs.captureVisibleTab).not.toHaveBeenCalled();
   });
 
+  it("pings Chrome to keep the service worker alive", async () => {
+    await host().ping?.();
+    expect(chrome.runtime.getPlatformInfo).toHaveBeenCalled();
+  });
+
   it("saves into the capture folder without asking", async () => {
     await host().save("shot.png", new Blob(["x"], { type: "image/png" }));
     expect(chrome.downloads.download).toHaveBeenCalledWith({

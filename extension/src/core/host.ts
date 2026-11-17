@@ -20,4 +20,9 @@ export interface Host {
   shot(): Promise<Blob>;
   /** Saves one output file of this capture. */
   save(name: string, blob: Blob): Promise<void>;
+  /**
+   * A cheap call that tells the environment the run is still going. Chrome stops
+   * an extension service worker after 30 idle seconds (P-025 item 5).
+   */
+  ping?(): Promise<void>;
 }

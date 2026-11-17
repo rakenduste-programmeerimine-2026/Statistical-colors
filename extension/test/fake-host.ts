@@ -15,20 +15,26 @@ export const PAGE: PageInfo = {
   ua: "test",
 };
 
-/** A host that records every call. `page` answers pageInfo with PAGE and anything else with true. */
-export function fakeHost() {
+/**
+ * A host that records every call. `page` answers pageInfo with PAGE, a
+ * function named in `pageResults` with that value, and anything else with true.
+ */
+export function fakeHost(pageResults: Record<string, unknown> = {}) {
   const calls: string[] = [];
   const saved = new Map<string, Blob>();
   const host = {
     attach: vi.fn(async () => void calls.push("attach")),
     detach: vi.fn(async () => void calls.push("detach")),
-    cdp: vi.fn(async (method: string) => {
+    cdp: vi.fn(async (method: string, params?: unknown): Promise<unknown> => {
+      void params;
       calls.push(`cdp ${method}`);
       return {};
     }),
-    cdpOnce: vi.fn(async () => ({})),
-    page: vi.fn(async (func: { name: string }) => {
+    cdpOnce: vi.fn(async (): Promise<unknown> => ({})),
+    page: vi.fn(async (func: { name: string }, ...args: unknown[]): Promise<unknown> => {
+      void args;
       calls.push(`page ${func.name}`);
+      if (func.name in pageResults) return pageResults[func.name];
       return func.name === "pageInfo" ? PAGE : true;
     }),
     shot: vi.fn(async () => {
@@ -48,3 +54,12 @@ export const fakeCodec: Codec = {
   decode: async () => ({ width: 4, height: 2, data: new Uint8ClampedArray(32) }) as ImageData,
   encode: async () => new Blob(["encoded"], { type: "image/png" }),
 };
+
+/** A codec whose decode hands out the given images in order; the last one repeats. */
+export function queuedCodec(images: { width: number; height: number; data: Uint8ClampedArray }[]): Codec {
+  let i = 0;
+  return {
+    decode: async () => images[Math.min(i++, images.length - 1)] as ImageData,
+    encode: fakeCodec.encode,
+  };
+}

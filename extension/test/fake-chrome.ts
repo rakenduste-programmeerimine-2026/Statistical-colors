@@ -4,6 +4,7 @@ import { vi } from "vitest";
 export function fakeChrome({ debuggerGranted = true } = {}) {
   const listeners = new Set<(src: { tabId?: number }, method: string, params?: object) => void>();
   return {
+    runtime: { getPlatformInfo: vi.fn(async () => ({ os: "win", arch: "x86-64" })) },
     permissions: { contains: vi.fn(async () => debuggerGranted), request: vi.fn(async () => true) },
     debugger: {
       attach: vi.fn(async () => {}),

@@ -45,6 +45,14 @@ describe("run", () => {
     expect(progress).toHaveBeenCalledWith("B · Approach B");
   });
 
+  it("pings the host before every approach and combination", async () => {
+    const { host } = fakeHost();
+    const ping = vi.fn(async () => {});
+    const registry = { approaches: [approach("A"), approach("B")], combinations: [combo("A+B", ["A", "B"])] };
+    await run(Object.assign(host, { ping }), ["A", "B"], {}, undefined, registry, fakeCodec);
+    expect(ping).toHaveBeenCalledTimes(3);
+  });
+
   it("records a failing approach and carries on", async () => {
     const { host } = fakeHost();
     const bad: Approach = { id: "X", title: "Bad", needsDebugger: false, run: async () => Promise.reject(new Error("boom")) };

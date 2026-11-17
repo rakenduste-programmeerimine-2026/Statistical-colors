@@ -67,6 +67,9 @@ export function makeExtensionHost(tabId: number, windowId: number, folder: strin
       lastCapture = Date.now();
       return dataUrlToBlob(await chrome.tabs.captureVisibleTab(windowId, { format: "png" }));
     },
+    async ping() {
+      await chrome.runtime.getPlatformInfo();
+    },
     async save(name, blob) {
       await chrome.downloads.download({
         url: await blobToDataUrl(blob),
