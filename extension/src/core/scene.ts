@@ -40,6 +40,8 @@ export interface NodeSource {
   role?: string;
   label?: string;
   testid?: string;
+  /** Set on canvases whose bitmap F1 replaced with fitted vectors. */
+  fitted?: boolean;
 }
 
 export interface TextInfo {

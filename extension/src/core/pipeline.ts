@@ -72,6 +72,8 @@ export interface Context {
   takeShot(): Promise<ImageData>;
   /** Decodes a PNG (Blob or data URL) with the run's codec. */
   decode(src: Blob | string): Promise<ImageData>;
+  /** Encodes pixels as PNG with the run's codec. */
+  encode(img: Pixels): Promise<Blob>;
   /** The shared lossless screenshot, taken once and saved as shot.png. */
   shot(): Promise<ImageData>;
   save(name: string, data: SaveData): Promise<void>;
@@ -93,6 +95,7 @@ export function makeContext(host: Host, opts: Partial<RunOptions> = {}, codec: C
     info: () => ctx.once("info", () => host.page(pageInfo)),
     takeShot: async () => codec.decode(await host.shot()),
     decode: (src) => codec.decode(typeof src === "string" ? dataUrlToBlob(src) : src),
+    encode: (img) => codec.encode(img),
     shot: () =>
       ctx.once("shot", async () => {
         await host.page(settle);
