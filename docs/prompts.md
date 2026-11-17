@@ -314,3 +314,32 @@ Issue: #25
 
 1. The work for #25, #27 and #36 ships as one Pull Request, #26.
 2. Claude never comments on, reviews or otherwise acts on other people's Pull Requests. They are outside its scope. Findings about them go to the user only.
+
+## P-022 (2026-11-17): The screenshot plugin
+
+Type: requirement
+Issue: #44, #45, #46, #47
+
+> commit it and open the pull request and begin staging the plugin screenshot tool
+
+Answers to the clarifying questions: tool "Extension + Figma plugin"; scope "Capture + recovery approaches"; connection "Feed the analyser (Recommended)"; form "TypeScript, own folder (Recommended)"; debugger "Optional permission (Recommended)"; new tooling "Approve all (Recommended)".
+
+> the screen capture is inseperable part of the minimal viable product the info gathered by the analysis here gets added as optional metadata for figma as the end deliverable
+
+> analysis gets performed in the backend and was described on the slides, so the database, start up a new brach for plugin work, but it gets handled by the person and agents doing frontend
+
+## P-023 (2026-11-17): Decisions from P-022
+
+Type: approved decision
+Source: P-022
+Issue: #44, #45, #46, #47, #48
+
+1. The Chrome extension (`feedback-shot/2-extension/`) and the Figma plugin (`feedback-shot/figma-plugin/`) are ported from the reference material to TypeScript, in `extension/` and `figma-plugin/`. They are rewritten, not copied, as with P-017. Assets are not copied verbatim. The `ontology/` tests and font fixture are out of scope for now.
+2. Scope: the lossless capture (#44), all seven recovery approaches and their combinations (#45), the Figma plugin (#46), and opening captures in the analyser (#47). #47 and the Figma metadata are approved exceptions to P-017's "do not add features not allready in the original code".
+3. The pipeline is the MVP (milestone M2): capture with the extension, analyse in the backend, store the result in the database, and build the Figma file with the analysis attached as optional metadata. The Figma file is the end deliverable. This replaces the roadmap's "This comes from outside the project (#35)".
+4. Analysis runs in the backend and is stored in the database (team scope). The plugin reads it through #48 and runs without it until then (`PLACEHOLDER(#48)`).
+5. Plugin and extension work is frontend work, done by the frontend developer and Claude. It lives on its own branch, `feat/44-screenshot-plugin`, started from `chore/25-claude-setup` (#26) so the Claude setup is present. It does not depend on the app-port branches (#41, #43).
+6. The `debugger` permission is optional (`optional_permissions`) and requested only when K1, S1 or S3 is chosen. Plain capture uses `tabs.captureVisibleTab` without it.
+7. Approved tooling (heavy-tech and dependency review): the MV3 background service worker, plain `tsc` builds with no bundler, and the type-only devDependencies `@types/chrome` and `@figma/plugin-typings`. Chrome APIs are tested with hand-written fakes. No browser-mode tests for now.
+8. Per the library audit: the old hand-written PDF path reader, tracer and diff are kept, because no library fits exactly. [UNDERSTANDING] `parseColor` also falls back to the browser (a 1×1 canvas) for colours the regex does not read, such as `oklch()`.
+9. OKLCH applies to the popup and plugin UI. Captured and rendered content stays 8-bit sRGB (P-011).
