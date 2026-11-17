@@ -35,7 +35,8 @@ describe("K1", () => {
   it("re-renders at k× and goes back to the pinned viewport", async () => {
     const { host } = fakeHost({ boxes: [0, 0, 10, 10] });
     host.cdp.mockImplementation(async (method: string) => (method === "Page.captureScreenshot" ? { data: "AAAA" } : {}));
-    const ctx = makeContext(host, { scale: 4 }, queuedCodec([img(3200, 2400, [0, 0, 0])]));
+    // K1 reads only the size of the decoded image, so no 30 MB of pixels are needed.
+    const ctx = makeContext(host, { scale: 4 }, queuedCodec([{ width: 3200, height: 2400, data: new Uint8ClampedArray(0) }]));
     ctx.baseMetrics = { width: 800, height: 600, deviceScaleFactor: 0, mobile: false };
     const res = await K1.run(ctx);
 
