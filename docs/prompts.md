@@ -379,3 +379,16 @@ Issue: #45
 2. The patch step stops scoring after 120 seconds as well as after 60 patches; the rest become bitmaps, and the report says which and why.
 3. S1's report keeps the reference field `paintRecordUnavailable`, so report.json still says why there is no paint record.
 4. Open question for the user: `extension/src/core/control-templates.ts` holds the reference's template data for Chrome's form-control art unchanged, because its generator needs a Chrome test setup that is not in this repository. P-023 item 1 says assets are not copied verbatim; whether this data counts as an asset is for the user to decide.
+
+## P-027 (2026-11-17): The debugger permission is required, not optional
+
+Type: approved decision
+Source: the user's report from loading the extension, and their answer
+Issue: #44
+
+> Permission 'debugger' cannot be listed as optional. This permission will be omitted.
+
+Answer: "Required, attach on demand (Recommended)".
+
+1. Chrome does not allow `debugger` in `optional_permissions`, so P-023 item 6 cannot be done as written. This replaces it.
+2. `debugger` is a normal permission, which Chrome shows once at install. The extension still attaches only while K1, S1 or S3 runs, so a plain capture never shows Chrome's debugging bar. The popup no longer asks for the permission.
