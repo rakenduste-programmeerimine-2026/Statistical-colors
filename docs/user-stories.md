@@ -70,3 +70,52 @@ Acceptance criteria:
 - Given 9 canvases, then F1 fits the first 8 and reports the ninth as skipped.
 - Given 61 native controls, then 60 are scored route by route and the 61st becomes a bitmap.
 - Given a run without the debugger, then Chrome is pinged before every step, so the service worker is not stopped after 30 idle seconds.
+
+## Figma plugin
+
+### US-201: Import a capture as editable Figma layers
+
+Automaton: Figma plugin import, Ready → Importing → Ready
+Source: [PROMPT P-022] "Extension + Figma plugin"; P-023 item 3, "The Figma file is the end deliverable"
+
+As a designer, I want to turn a capture into native Figma layers, so that I can edit the page instead of tracing a screenshot.
+
+Acceptance criteria:
+- Given scene-final.svg and shot.png are dropped in, when I press Import, then a frame "Capture · <url>" appears with frames, text, vectors and images in their captured places, a hidden, locked "shot.png (reference)" layer, and an "Import report" text layer beside it.
+- Given a box with fill, radii, shadow and border, then the frame has the same fill, corner radii, drop shadow and inside stroke.
+- Given borders of different colours per side, then each side is a thin rectangle named border-top, border-right and so on.
+
+### US-202: Keep text where it was
+
+Automaton: Figma plugin import, Importing (text)
+Source: [UNDERSTANDING] ported from the reference plugin
+
+As a designer, I want text in the right font and width, so that it does not reflow into its neighbours.
+
+Acceptance criteria:
+- Given the browser's font is installed, then it is used; given only its open substitute (Arial → Arimo), then the substitute is used; given neither, then Inter, Roboto or Arial.
+- Given "Prefer open substitute fonts" is ticked, then the substitute comes first.
+- Given a run's width differs from the captured width by more than 0.5 px, then its letter spacing is adjusted to match, and the report marks it "pinned".
+
+### US-203: Never leave a hole
+
+Automaton: Figma plugin import, Importing (fallbacks)
+Source: [UNDERSTANDING] ported from the reference plugin
+
+As a designer, I want every part of the page to appear in Figma, so that nothing is silently missing.
+
+Acceptance criteria:
+- Given a node that cannot be built (for example an image whose bytes are missing), then it becomes a bitmap layer named "patch · build-failed · <name>", and the report lists why.
+- Given no screenshot was dropped, then patches become dashed placeholders and the pixel check is skipped.
+- Given an SVG without capture metadata, then I see that it has none and Import stays disabled.
+
+### US-204: Carry the colour analysis into Figma
+
+Automaton: Figma plugin import, Importing (analysis)
+Source: [PROMPT P-022] "the info gathered by the analysis here gets added as optional metadata for figma as the end deliverable"
+
+As a designer, I want the colour analysis attached to the imported frame, so that the Figma file holds the statistics with the design.
+
+Acceptance criteria:
+- Given an analysis for the capture, then it is stored on the frame as plugin data `fs-analysis` and the report says "Colour analysis: attached".
+- Given none (until the backend read, #48, exists), then the import still works and the report says "not attached".
