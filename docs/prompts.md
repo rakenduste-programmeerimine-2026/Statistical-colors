@@ -351,3 +351,18 @@ Source: P-023 item 5
 Issue: #44
 
 P-017 to P-021 (the app port, #37, and the pixel preview, #42) are recorded on those branches, which this branch does not contain. They join this file when those Pull Requests merge. P-023 refers to them by number.
+
+## P-025 (2026-11-17): Claude's decisions for the recovery approaches
+
+Type: decision, not yet confirmed by the user
+Source: `performance-analyst` run for #45 (no heavy technology recommended)
+Issue: #45
+
+[UNDERSTANDING] These change the reference behaviour to keep runs inside Chrome's limits. They stand until the user says otherwise.
+
+1. K1 limits its scale: the k× image stays within 16384 px per side and 64 MP. The scale halves from the chosen one until it fits; report.json records the requested and effective scale. At 8× on a 2× display, 1920 × 1080, the reference asked for about 531 MP, past Chrome's canvas limits.
+2. K1 saves the PNG Chrome returned instead of decoding and encoding it again. D1 does not keep its black and white shots, which nothing reads.
+3. D2 prepares each palette pair once and skips pairs a colour cannot reach. The skip is exact: a test checks that results equal the reference algorithm's.
+4. F1, the patch step and the PDF reader get time and size limits: one time budget per call with checks inside the shape searches, a drawing area the size of the region being fitted, a cap on targets and patches, and no local quantising of regions the tracer would reject anyway.
+5. The pipeline pings Chrome between steps, so the service worker is not stopped after 30 idle seconds.
+6. S1's paint-record replay at k× is not ported. Chrome does not let extensions use the LayerTree domain, so the extension always uses the layout record.
