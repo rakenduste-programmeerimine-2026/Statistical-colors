@@ -392,3 +392,16 @@ Answer: "Required, attach on demand (Recommended)".
 
 1. Chrome does not allow `debugger` in `optional_permissions`, so P-023 item 6 cannot be done as written. This replaces it.
 2. `debugger` is a normal permission, which Chrome shows once at install. The extension still attaches only while K1, S1 or S3 runs, so a plain capture never shows Chrome's debugging bar. The popup no longer asks for the permission.
+
+## P-028 (2026-11-17): Decisions while porting the Figma plugin
+
+Type: decision, not yet confirmed by the user
+Source: the library audit for #44 to #46 and Claude's port of #46
+Issue: #46
+
+[UNDERSTANDING] Stands until the user says otherwise.
+
+1. Figma loads the plugin as one plain script plus one HTML page. `figma-plugin/build.mjs` compiles with `tsc` and joins the modules itself, with no bundler, as the library audit suggested.
+2. The pure decisions (fonts, paints, gradients, borders, checks, report) live in `src/logic.ts` with unit tests. `src/code.ts` uses the Figma API, and `src/ui.ts` handles files and pixels in the plugin's window.
+3. The colour analysis is attached to the imported frame as plugin data under the key `fs-analysis`, and the report layer says whether it was attached. Until the backend read exists (#48), the UI sends none (`PLACEHOLDER(#48)`), and the manifest allows no network access.
+4. The plugin is named "Värvi tükeldaja · Intent Capture Import", with the id `statistical-colors-intent-import`.
