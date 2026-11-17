@@ -7,11 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "next typegen && tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit && tsc -p extension/tsconfig.test.json",
     "test": "vitest run",
     "test:integration": "vitest run --config vitest.integration.config.mts",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "build:extension": "tsc -p extension"
   },
   "dependencies": {
     "@radix-ui/react-select": "2.4.1",
@@ -25,6 +26,7 @@
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.12",
+    "@types/chrome": "0.3.7",
     "@types/node": "^24.19.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",

@@ -375,3 +375,94 @@ Issue: #42
 4. A new file releases the previous decoded image (`performance-analyst`: memory retention).
 5. The upload page previews a file only after it passes the upload rules (type and 25 MB).
 6. The demo CSVs and BMP are stored byte for byte (`public/demo/** -text` in `.gitattributes`). `src/adapters/demo/palette-analysis.json` is generated once from the original app's `palette_1__1dab3c06aafd1d68.json` and summary CSV.
+
+## P-022 (2026-11-17): The screenshot plugin
+
+Type: requirement
+Issue: #44, #45, #46, #47
+
+> commit it and open the pull request and begin staging the plugin screenshot tool
+
+Answers to the clarifying questions: tool "Extension + Figma plugin"; scope "Capture + recovery approaches"; connection "Feed the analyser (Recommended)"; form "TypeScript, own folder (Recommended)"; debugger "Optional permission (Recommended)"; new tooling "Approve all (Recommended)".
+
+> the screen capture is inseperable part of the minimal viable product the info gathered by the analysis here gets added as optional metadata for figma as the end deliverable
+
+> analysis gets performed in the backend and was described on the slides, so the database, start up a new brach for plugin work, but it gets handled by the person and agents doing frontend
+
+## P-023 (2026-11-17): Decisions from P-022
+
+Type: approved decision
+Source: P-022
+Issue: #44, #45, #46, #47, #48
+
+1. The Chrome extension (`feedback-shot/2-extension/`) and the Figma plugin (`feedback-shot/figma-plugin/`) are ported from the reference material to TypeScript, in `extension/` and `figma-plugin/`. They are rewritten, not copied, as with P-017. Assets are not copied verbatim. The `ontology/` tests and font fixture are out of scope for now.
+2. Scope: the lossless capture (#44), all seven recovery approaches and their combinations (#45), the Figma plugin (#46), and opening captures in the analyser (#47). #47 and the Figma metadata are approved exceptions to P-017's "do not add features not allready in the original code".
+3. The pipeline is the MVP (milestone M2): capture with the extension, analyse in the backend, store the result in the database, and build the Figma file with the analysis attached as optional metadata. The Figma file is the end deliverable. This replaces the roadmap's "This comes from outside the project (#35)".
+4. Analysis runs in the backend and is stored in the database (team scope). The plugin reads it through #48 and runs without it until then (`PLACEHOLDER(#48)`).
+5. Plugin and extension work is frontend work, done by the frontend developer and Claude. It lives on its own branch, `feat/44-screenshot-plugin`, started from `chore/25-claude-setup` (#26) so the Claude setup is present. It does not depend on the app-port branches (#41, #43).
+6. The `debugger` permission is optional (`optional_permissions`) and requested only when K1, S1 or S3 is chosen. Plain capture uses `tabs.captureVisibleTab` without it.
+7. Approved tooling (heavy-tech and dependency review): the MV3 background service worker, plain `tsc` builds with no bundler, and the type-only devDependencies `@types/chrome` and `@figma/plugin-typings`. Chrome APIs are tested with hand-written fakes. No browser-mode tests for now.
+8. Per the library audit: the old hand-written PDF path reader, tracer and diff are kept, because no library fits exactly. [UNDERSTANDING] `parseColor` also falls back to the browser (a 1×1 canvas) for colours the regex does not read, such as `oklch()`.
+9. OKLCH applies to the popup and plugin UI. Captured and rendered content stays 8-bit sRGB (P-011).
+
+## P-024 (2026-11-17): Note on this branch's copy of this file
+
+Type: approved decision (clarification only)
+Source: P-023 item 5
+Issue: #44
+
+P-017 to P-021 (the app port, #37, and the pixel preview, #42) are recorded on those branches, which this branch does not contain. They join this file when those Pull Requests merge. P-023 refers to them by number.
+
+## P-025 (2026-11-17): Claude's decisions for the recovery approaches
+
+Type: decision, not yet confirmed by the user
+Source: `performance-analyst` run for #45 (no heavy technology recommended)
+Issue: #45
+
+[UNDERSTANDING] These change the reference behaviour to keep runs inside Chrome's limits. They stand until the user says otherwise.
+
+1. K1 limits its scale: the k× image stays within 16384 px per side and 64 MP. The scale halves from the chosen one until it fits; report.json records the requested and effective scale. At 8× on a 2× display, 1920 × 1080, the reference asked for about 531 MP, past Chrome's canvas limits.
+2. K1 saves the PNG Chrome returned instead of decoding and encoding it again. D1 does not keep its black and white shots, which nothing reads.
+3. D2 prepares each palette pair once and skips pairs a colour cannot reach. The skip is exact: a test checks that results equal the reference algorithm's.
+4. F1, the patch step and the PDF reader get time and size limits: one time budget per call with checks inside the shape searches, a drawing area the size of the region being fitted, a cap on targets and patches, and no local quantising of regions the tracer would reject anyway.
+5. The pipeline pings Chrome between steps, so the service worker is not stopped after 30 idle seconds.
+6. S1's paint-record replay at k× is not ported. Chrome does not let extensions use the LayerTree domain, so the extension always uses the layout record.
+
+## P-026 (2026-11-17): Limits added after the compliance review of #45
+
+Type: decision, not yet confirmed by the user
+Source: `prompt-compliance-reviewer` run for #45
+Issue: #45
+
+[UNDERSTANDING] Completes P-025 item 4, which the first version did not fully implement. Stands until the user says otherwise.
+
+1. The PDF reader refuses files over 64 MB, keeps at most 100,000 paths, and stops after 30 seconds. When it stops early, the page says why (`truncated`).
+2. The patch step stops scoring after 120 seconds as well as after 60 patches; the rest become bitmaps, and the report says which and why.
+3. S1's report keeps the reference field `paintRecordUnavailable`, so report.json still says why there is no paint record.
+4. Open question for the user: `extension/src/core/control-templates.ts` holds the reference's template data for Chrome's form-control art unchanged, because its generator needs a Chrome test setup that is not in this repository. P-023 item 1 says assets are not copied verbatim; whether this data counts as an asset is for the user to decide.
+
+## P-027 (2026-11-17): The debugger permission is required, not optional
+
+Type: approved decision
+Source: the user's report from loading the extension, and their answer
+Issue: #44
+
+> Permission 'debugger' cannot be listed as optional. This permission will be omitted.
+
+Answer: "Required, attach on demand (Recommended)".
+
+1. Chrome does not allow `debugger` in `optional_permissions`, so P-023 item 6 cannot be done as written. This replaces it.
+2. `debugger` is a normal permission, which Chrome shows once at install. The extension still attaches only while K1, S1 or S3 runs, so a plain capture never shows Chrome's debugging bar. The popup no longer asks for the permission.
+
+## P-029 (2026-11-18): Plugin pull requests are stacked on the app port
+
+Type: approved decision
+Source: the user's answers on syncing the branches
+Issue: #44, #46
+
+> avoid the merge conflict
+
+Answer: "Stack plugins on app (Recommended)".
+
+1. The app-port branch (`feat/42-pixel-preview-demo`) is merged once into `feat/44-capture-extension`, which resolves the shared docs and tooling there. The pull requests form one line, #26 → #41 → #43 → #51 → #52, and merge in that order. This replaces P-023 item 5's independence from the app-port branches.
+2. P-024 no longer applies: P-017 to P-021 are now in this branch's copy of this file.

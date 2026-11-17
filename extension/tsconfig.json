@@ -1,0 +1,21 @@
+{
+  // Builds the extension with plain tsc, no bundler (P-023 item 7).
+  // Chrome loads the output as ES modules; target ES2022 so tsc emits no helpers
+  // into functions that run inside the page (src/core/page-fns.ts).
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["chrome"],
+    "strict": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "rewriteRelativeImportExtensions": true,
+    "noEmitOnError": true,
+    "rootDir": "src",
+    "outDir": "dist"
+  },
+  "include": ["src"]
+}

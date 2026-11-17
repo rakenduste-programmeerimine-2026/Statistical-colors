@@ -12,8 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // Uncommitted reference material (P-011).
+    // Uncommitted reference material (P-011) and built extension output.
     "claude-setup/**",
+    "extension/dist/**",
   ]),
 ]);
 
