@@ -33,7 +33,7 @@ People enter the real tokens by hand (#19). A record is flagged when the predict
 
 - **PNG, BMP, lossless WebP:** exact pixels, no structure behind them.
 - **JPEG:** colours are approximate. Contrast checks need a margin. Different decoders can give slightly different pixels, so exact counts hold for one decoder only.
-- **Scene capture** (feedback-shot extension or Figma plugin): declared colours tied to elements. This comes from outside the project (#35).
+- **Scene capture** (the capture extension and Figma plugin, now in this repository): a lossless PNG plus declared colours tied to elements. Capture (#44), recovery approaches (#45), Figma plugin (#46), captures into the analyser (#47). The analysis is done in the backend and stored in the database. The Figma file, with the analysis attached as optional metadata read through #48, is the end deliverable (P-023).
 - A result that re-renders to the same pixels is **consistent** with the input, not proven to be the original. The UI says so (#32).
 
 ## Milestones
@@ -41,10 +41,10 @@ People enter the real tokens by hand (#19). A record is flagged when the predict
 | Milestone | Due | Issues |
 |---|---|---|
 | M1: Setup and database | 2026-11-18 | #4–#10, #25 |
-| M2: MVP, images in, statistics out | 2026-11-21 | #11–#17 |
+| M2: MVP, images in, statistics out | 2026-11-21 | #11–#17, #44–#48 |
 | M3: Colour space and user test | 2026-11-25 | #18–#21, #27–#32, #36 |
 | M4: Polish and presentation | 2026-12-09 | #33, #34 |
-| Backlog | — | #35 |
+| Backlog | — | #35 (component roles and relations; its scene data now comes from #44–#46) |
 
 ## Ownership
 
