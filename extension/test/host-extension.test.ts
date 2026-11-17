@@ -15,11 +15,6 @@ afterEach(() => {
 });
 
 describe("makeExtensionHost", () => {
-  it("refuses to attach without the optional debugger permission", async () => {
-    vi.stubGlobal("chrome", fakeChrome({ debuggerGranted: false }));
-    await expect(host().attach()).rejects.toThrow("debugger permission was not granted");
-  });
-
   it("attaches, sends commands to its tab and detaches", async () => {
     const h = host();
     await h.attach();

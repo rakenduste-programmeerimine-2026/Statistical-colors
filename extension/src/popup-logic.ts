@@ -1,26 +1,16 @@
 // The popup's decisions, kept apart from the DOM wiring in popup.ts so they can be tested.
 import type { RunMessage, StatusMessage } from "./background.ts";
-import type { Approach, RunOptions } from "./core/pipeline.ts";
+import type { RunOptions } from "./core/pipeline.ts";
 
 export interface StartApi {
-  /** Asks Chrome for the optional debugger permission. Only works during a click. */
-  requestDebugger(): Promise<boolean>;
   activeTab(): Promise<{ id?: number; windowId: number } | undefined>;
   send(msg: RunMessage): Promise<{ ok: boolean; error?: string } | undefined>;
 }
 
 export type StartResult = { ok: true } | { ok: false; error: string };
 
-/** Asks for the debugger only when a chosen approach needs it (P-023 item 6), then hands the run to the service worker. */
-export async function startCapture(
-  api: StartApi,
-  ids: string[],
-  approaches: Pick<Approach, "id" | "needsDebugger">[],
-  opts: Partial<RunOptions>,
-): Promise<StartResult> {
-  if (approaches.some((a) => a.needsDebugger && ids.includes(a.id)) && !(await api.requestDebugger())) {
-    return { ok: false, error: "The chosen approaches need the debugger permission." };
-  }
+/** Hands the run to the service worker. The debugger is a normal permission, so nothing is asked here (P-027). */
+export async function startCapture(api: StartApi, ids: string[], opts: Partial<RunOptions>): Promise<StartResult> {
   const tab = await api.activeTab();
   if (tab?.id === undefined) return { ok: false, error: "No active tab." };
   const res = await api.send({ type: "run", tabId: tab.id, windowId: tab.windowId, ids, opts });

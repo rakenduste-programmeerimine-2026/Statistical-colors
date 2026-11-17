@@ -17,10 +17,7 @@ export function makeExtensionHost(tabId: number, windowId: number, folder: strin
 
   const host: Host = {
     async attach() {
-      // Optional permission (P-023 item 6): the popup asks for it when a debugger approach is chosen.
-      if (!(await chrome.permissions.contains({ permissions: ["debugger"] }))) {
-        throw new Error("The debugger permission was not granted.");
-      }
+      // Called only when K1, S1 or S3 runs, so a plain capture never shows Chrome's debugging bar (P-027).
       await chrome.debugger.attach({ tabId }, "1.3");
       chrome.debugger.onEvent.addListener(onEvent);
       attached = true;

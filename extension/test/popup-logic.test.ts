@@ -1,13 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { doneStatus, singleChoice, startCapture, type StartApi } from "../src/popup-logic.ts";
 
-const approaches = [
-  { id: "S2", needsDebugger: false },
-  { id: "K1", needsDebugger: true },
-];
 function api(overrides: Partial<StartApi> = {}) {
   return {
-    requestDebugger: vi.fn(async () => true),
     activeTab: vi.fn(async () => ({ id: 5, windowId: 9 })),
     send: vi.fn(async () => ({ ok: true })),
     ...overrides,
@@ -15,37 +10,24 @@ function api(overrides: Partial<StartApi> = {}) {
 }
 
 describe("startCapture", () => {
-  it("does not ask for the debugger when no chosen approach needs it", async () => {
+  it("hands the run to the service worker without asking for any permission", async () => {
     const a = api();
-    await expect(startCapture(a, ["S2"], approaches, { scale: 4 })).resolves.toEqual({ ok: true });
-    expect(a.requestDebugger).not.toHaveBeenCalled();
-    expect(a.send).toHaveBeenCalledWith({ type: "run", tabId: 5, windowId: 9, ids: ["S2"], opts: { scale: 4 } });
-  });
-
-  it("asks for the debugger when a chosen approach needs it, and starts once granted", async () => {
-    const a = api();
-    await expect(startCapture(a, ["K1"], approaches, {})).resolves.toEqual({ ok: true });
-    expect(a.requestDebugger).toHaveBeenCalledTimes(1);
-  });
-
-  it("stops without capturing when the debugger is refused", async () => {
-    const a = api({ requestDebugger: vi.fn(async () => false) });
-    await expect(startCapture(a, ["S2", "K1"], approaches, {})).resolves.toEqual({ ok: false, error: "The chosen approaches need the debugger permission." });
-    expect(a.send).not.toHaveBeenCalled();
+    await expect(startCapture(a, ["S2", "K1"], { scale: 4 })).resolves.toEqual({ ok: true });
+    expect(a.send).toHaveBeenCalledWith({ type: "run", tabId: 5, windowId: 9, ids: ["S2", "K1"], opts: { scale: 4 } });
   });
 
   it.each([
     ["no tab", undefined],
     ["a tab without an id", { windowId: 1 }],
   ])("reports %s", async (_, tab) => {
-    await expect(startCapture(api({ activeTab: vi.fn(async () => tab) }), [], approaches, {})).resolves.toEqual({ ok: false, error: "No active tab." });
+    await expect(startCapture(api({ activeTab: vi.fn(async () => tab) }), [], {})).resolves.toEqual({ ok: false, error: "No active tab." });
   });
 
   it.each([
     ["the service worker's reason", { ok: false, error: "A capture is already running." }, "A capture is already running."],
     ["a generic message without a reply", undefined, "Could not start."],
   ])("passes on %s when the start is refused", async (_, reply, error) => {
-    await expect(startCapture(api({ send: vi.fn(async () => reply) }), [], approaches, {})).resolves.toEqual({ ok: false, error });
+    await expect(startCapture(api({ send: vi.fn(async () => reply) }), [], {})).resolves.toEqual({ ok: false, error });
   });
 });
 

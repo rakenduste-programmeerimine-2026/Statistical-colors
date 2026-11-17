@@ -86,15 +86,12 @@ $("go").addEventListener("click", async () => {
   const ids = [...$("approaches").querySelectorAll<HTMLInputElement>("input:checked")].map((b) => b.value);
   const chosen = (g: string) => $(g).querySelector<HTMLInputElement>("input:checked")?.value ?? null;
   const env = envFrom({ os: chosen("os"), browser: chosen("browser") }, detected);
-  // Runs inside the click, because Chrome shows the permission prompt only during one (P-023 item 6).
   const result = await startCapture(
     {
-      requestDebugger: () => chrome.permissions.request({ permissions: ["debugger"] }),
       activeTab: async () => (await chrome.tabs.query({ active: true, currentWindow: true }))[0],
       send: (msg: RunMessage) => chrome.runtime.sendMessage(msg),
     },
     ids,
-    REGISTRY.approaches,
     { scale: Number($<HTMLSelectElement>("scale").value), env },
   );
   if (!result.ok) {

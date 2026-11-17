@@ -4,7 +4,7 @@
  * fake. The same approach code runs on either.
  */
 export interface Host {
-  /** Attaches the DevTools protocol. Needs the optional `debugger` permission (P-023 item 6). */
+  /** Attaches the DevTools protocol. Only for approaches that need it (P-027). */
   attach(): Promise<void>;
   detach(): Promise<void>;
   /** Sends one DevTools protocol command. Only while attached. */
