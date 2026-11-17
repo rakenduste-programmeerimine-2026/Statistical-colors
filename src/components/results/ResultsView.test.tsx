@@ -98,6 +98,17 @@ describe("ResultsView", () => {
     expect(screen.getByRole("link", { name: "Töötle teine pilt" })).toHaveAttribute("href", "/");
   });
 
+  it("says so when a CSV file cannot be found", async () => {
+    const services = servicesWith(analysis);
+    vi.spyOn(services.analysis, "getCsv").mockResolvedValue(null);
+    renderWithServices(<ResultsView />, services);
+
+    await userEvent.setup().click(await screen.findByRole("button", { name: "Laadi alla värvide kokkuvõtte CSV" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Faili ei leitud.");
+    expect(saveFile).not.toHaveBeenCalled();
+  });
+
   it("downloads both CSV files", async () => {
     const services = servicesWith(analysis);
     const csv = { fileName: "x.csv", content: new Blob(["a"]) };

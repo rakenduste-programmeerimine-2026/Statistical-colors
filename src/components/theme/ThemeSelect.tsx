@@ -44,7 +44,7 @@ export function ThemeSelect({ themes, currentId, onSelect, shown, labelId }: Pro
         <Select.Content
           position="popper"
           sideOffset={8}
-          className="z-10 max-h-65 w-(--radix-select-trigger-width) overflow-auto rounded-xl border border-line bg-page p-1.5 text-ink shadow-xl"
+          className="z-10 max-h-65 w-(--radix-select-trigger-width) overflow-auto rounded-xl border border-line bg-page p-1.5 text-ink shadow-xl shadow-[oklch(0_0_0/0.12)]"
         >
           <Select.Viewport>
             {themes.map((theme) => (

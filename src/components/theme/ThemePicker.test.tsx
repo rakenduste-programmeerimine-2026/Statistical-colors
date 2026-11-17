@@ -1,4 +1,4 @@
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { addTheme, DEFAULT_THEME_STATE } from "@/core/theme/theme";
@@ -30,6 +30,38 @@ describe("ThemePicker", () => {
 
     expect(text).toHaveValue("#12");
     expect(screen.getByLabelText("Tekst: värvivalija")).toHaveValue("#111111");
+  });
+
+  it("puts the last valid colour back when a half-typed value loses focus", async () => {
+    renderWithServices(<ThemePicker />);
+    const text = screen.getByRole("textbox", { name: "Tekst" });
+    const u = userEvent.setup();
+
+    await u.clear(text);
+    await u.type(text, "#12");
+    await u.tab();
+
+    expect(text).toHaveValue("#111111");
+  });
+
+  it("caps the hex field at 7 characters", async () => {
+    renderWithServices(<ThemePicker />);
+    const bg = screen.getByRole("textbox", { name: "Taust" });
+    const u = userEvent.setup();
+
+    await u.clear(bg);
+    await u.type(bg, "#abcdef0");
+
+    expect(bg).toHaveValue("#abcdef");
+  });
+
+  it("updates the hex field and the page from the colour picker", () => {
+    renderWithServices(<ThemePicker />);
+
+    fireEvent.input(screen.getByLabelText("Taust: värvivalija"), { target: { value: "#ff0000" } });
+
+    expect(screen.getByRole("textbox", { name: "Taust" })).toHaveValue("#ff0000");
+    expect(pageVar("--theme-bg")).toBe("oklch(from #ff0000 l c h)");
   });
 
   it("saves a theme to the store and makes it current", async () => {
