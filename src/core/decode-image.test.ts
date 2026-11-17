@@ -92,4 +92,11 @@ describe("decodeImage", () => {
       /expected 16/,
     );
   });
+
+  it("uses the browser decoder by default", async () => {
+    // jsdom has no createImageBitmap, so the browser decoder refuses to decode.
+    await expect(decodeImage(pngFile())).rejects.toBeInstanceOf(
+      ExactDecodingUnsupportedError,
+    );
+  });
 });

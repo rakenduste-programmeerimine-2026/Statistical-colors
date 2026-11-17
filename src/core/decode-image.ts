@@ -1,3 +1,4 @@
+import { browserPixelDecoder } from "./browser-pixel-decoder";
 import { detectImageFormat, type ImageFormat } from "./image-format";
 import { UnsupportedImageFormatError, type PixelDecoder } from "./pixel-decoder";
 
@@ -22,13 +23,14 @@ const SIGNATURE_LENGTH = 12;
 /**
  * Decodes an image file into raw RGBA pixels without changing its colours.
  *
- * @param decoder pixel decoder to use. Inject a fake in tests.
+ * @param decoder pixel decoder to use; defaults to the browser decoder
+ *   (createImageBitmap + canvas 2D). Inject a fake in tests.
  * @throws UnsupportedImageFormatError if the file is not PNG, JPEG, GIF, WebP or BMP.
  * @throws ExactDecodingUnsupportedError from the decoder if exact decoding is not possible.
  */
 export async function decodeImage(
   file: Blob,
-  decoder: PixelDecoder,
+  decoder: PixelDecoder = browserPixelDecoder,
 ): Promise<DecodedImage> {
   const header = new Uint8Array(
     await file.slice(0, SIGNATURE_LENGTH).arrayBuffer(),
