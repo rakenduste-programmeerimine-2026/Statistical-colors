@@ -92,7 +92,14 @@ export const S1 = {
       palette,
       nodes,
       textBoxes,
-      report: { mode: "layout-record", layoutNodes: nodes.length, textBoxes: textBoxes.length, declaredColours: palette.length },
+      report: {
+        mode: "layout-record",
+        // Kept from the reference report, so readers of report.json see why.
+        paintRecordUnavailable: "Chrome does not let extensions use the LayerTree domain",
+        layoutNodes: nodes.length,
+        textBoxes: textBoxes.length,
+        declaredColours: palette.length,
+      },
     };
   },
 };

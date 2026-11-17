@@ -64,7 +64,8 @@ describe("S1.run", () => {
     const res = await S1.run(makeContext(host, {}, fakeCodec));
     expect(host.cdp).toHaveBeenCalledWith("DOMSnapshot.captureSnapshot", { computedStyles: [...STYLES], includePaintOrder: true });
     // The default page is DPR 1 and not scrolled, so the second node is on screen here.
-    expect(res.report).toEqual({ mode: "layout-record", layoutNodes: 2, textBoxes: 2, declaredColours: 2 });
+    expect(res.report).toMatchObject({ mode: "layout-record", layoutNodes: 2, textBoxes: 2, declaredColours: 2 });
+    expect(res.report?.paintRecordUnavailable).toContain("LayerTree");
     expect(JSON.parse(await saved.get("layout.json")!.text())).toMatchObject({ viewport: [800, 600], dpr: 1 });
   });
 });
