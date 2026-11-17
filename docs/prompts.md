@@ -298,3 +298,19 @@ Clarification only; no earlier entry is rewritten.
 1. P-001 to P-003 belong to issue #25. They were written before this repository's history began.
 2. Q-2, Q-3 and Q-4, named in P-002 and P-003, were open questions in a version of this file that came before the repository. Their answers are recorded in P-003.
 3. P-008 supersedes the "Prepare the Pull Request" workflow step in `CLAUDE.md`, not an entry in this file.
+
+## P-015 (2026-11-17): One setup PR, no comments on others' Pull Requests
+
+Type: instruction
+Issue: #25
+
+> roll all 3 into one, do not comment on others pull requests those are outside your scope
+
+## P-016 (2026-11-17): Decisions from P-015
+
+Type: approved decision
+Source: P-015
+Issue: #25
+
+1. The work for #25, #27 and #36 ships as one Pull Request, #26.
+2. Claude never comments on, reviews or otherwise acts on other people's Pull Requests. They are outside its scope. Findings about them go to the user only.
