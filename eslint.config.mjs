@@ -15,6 +15,8 @@ const eslintConfig = defineConfig([
     // Uncommitted reference material (P-011) and built extension output.
     "claude-setup/**",
     "extension/dist/**",
+    "figma-plugin/dist/**",
+    "figma-plugin/.build/**",
   ]),
 ]);
 

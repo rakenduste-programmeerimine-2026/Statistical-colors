@@ -1,0 +1,6 @@
+{
+  // Type-checks the plugin's source and tests together; emits nothing.
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "noEmit": true, "rootDir": "..", "types": ["@figma/plugin-typings", "node"] },
+  "include": ["src", "test", "../extension/src/core/scene.ts"]
+}

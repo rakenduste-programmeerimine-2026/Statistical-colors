@@ -1,0 +1,21 @@
+{
+  // Compiled by build.mjs. Figma's sandbox runs code.js as a classic script, so
+  // the target stays conservative; the build removes the module statements.
+  "compilerOptions": {
+    "target": "ES2017",
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    // ES2017 APIs only: Figma's sandbox support for newer ones is not verified.
+    "lib": ["ES2017", "DOM", "DOM.Iterable"],
+    "types": ["@figma/plugin-typings"],
+    "strict": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "rewriteRelativeImportExtensions": true,
+    "noEmitOnError": true,
+    "rootDir": "..",
+    "outDir": ".build"
+  },
+  "include": ["src"]
+}

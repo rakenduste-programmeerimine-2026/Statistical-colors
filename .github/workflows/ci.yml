@@ -44,3 +44,6 @@ jobs:
 
       - name: Build extension
         run: npm run build:extension
+
+      - name: Build Figma plugin
+        run: npm run build:figma
