@@ -9,3 +9,5 @@
 
 # Generated files: collapsed in GitHub PR diffs and excluded from language stats
 package-lock.json linguist-generated=true
+# Demo files are the original app's output, byte for byte (P-020 item 2).
+public/demo/** -text

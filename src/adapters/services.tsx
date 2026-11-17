@@ -4,6 +4,7 @@ import { createContext, useContext, type ReactNode } from "react";
 import type { AnalysisService } from "@/core/analysis/analysis-service";
 import type { ThemeStore } from "@/core/theme/theme-store";
 import { LocalThemeStore } from "./browser/local-theme-store";
+import { withDemo } from "./demo/with-demo";
 import { StubAnalysisService } from "./stub/stub-analysis-service";
 
 export interface Services {
@@ -15,7 +16,7 @@ export interface Services {
 function defaultServices(): Services {
   const session = typeof window === "undefined" ? undefined : window.sessionStorage;
   return {
-    analysis: new StubAnalysisService(session),
+    analysis: withDemo(new StubAnalysisService(session)),
     themes: new LocalThemeStore(),
   };
 }

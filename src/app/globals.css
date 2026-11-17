@@ -19,6 +19,8 @@
   /* Original muted grey #666666, mixed with the theme so it stays readable on dark themes. */
   --color-muted: color-mix(in oklch, var(--theme-text) 60%, var(--theme-bg));
   --color-error: oklch(0.577 0.215 27.3);
+  /* Neutral backdrop behind the pixel preview, from the reference viewer. */
+  --color-stage: oklch(0.6588 0.0128 257.4);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }

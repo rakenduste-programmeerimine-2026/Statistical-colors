@@ -340,3 +340,38 @@ Issue: #37
 6. TIFF is dropped from the allowed formats, because browsers cannot decode it.
 7. Backend features the port needs: #38 (pixel-by-pixel CSV), #39 (read an analysis by id), #40 (real adapter).
 8. For this task, issues, commits and the Pull Request waited for the user's go-ahead, which P-017's second quote gives.
+
+## P-019 (2026-11-17): Exact pixel preview and a demo result
+
+Type: requirement
+Issue: #42
+
+> add a exact pixel viewer like preview when a user adds a file currently have the results of a file being processed in the frontend as dummy data when someone presses the demo button and open the bmp included with it in the preview screen. Use an example from the previously uploaded statistical analysis of color pickers
+
+## P-020 (2026-11-17): Decisions from P-019
+
+Type: approved decision
+Source: P-019, the user's answers to the conflict review
+Issue: #42
+
+1. The viewer and the demo are an explicit exception to P-017's "do not add features not allready in the original code". The viewer is ported from `claude-setup/old code/Exact Pixel Viewer (1).html`, without its own colour counting (the analysis service counts colours) and without paste or drag and drop (#15).
+2. The demo image is `palette (1).bmp` from the old app's `uploads/` (`palette_1__1dab3c06aafd1d68`). It is copied into the repository with its colour summary and its original pixel CSV (user's answer: "BMP + summary + pixel CSV"). This is an approved exception to P-011: only these copies are committed, `claude-setup/` itself still is not.
+3. The demo results are labelled as an example result from the earlier colour picker study (user's answer: "Mark as example"). It is permanent, not a placeholder.
+4. The preview appears on the upload page for the picked file and on the demo results page (user's answer: "Upload + demo results"). `ImageAnalysis` gets an optional `imageUrl`, which the real adapter (#39, #40) may fill later.
+5. The branch for #42 is stacked on `feat/37-flask-frontend-nextjs` until #41 merges (user's answer: "Stack on #37").
+6. Library audit: platform `createImageBitmap` with `colorSpaceConversion: "none"` and `premultiplyAlpha: "none"`, plus canvas 2D. No dependency. If the browser rejects those options, the preview shows an error instead of an inexact decode.
+
+## P-021 (2026-11-17): Claude's decisions while building #42
+
+Type: decision, not yet confirmed by the user
+Source: browser check, `performance-analyst` and `prompt-compliance-reviewer` runs for #42
+Issue: #42
+
+[UNDERSTANDING] These change the reference viewer's behaviour. They stand until the user says otherwise.
+
+1. Plain scrolling over the preview scrolls the page; Ctrl (or Cmd) + scroll zooms. The reference viewer filled the window, so plain scrolling zoomed there; embedded in a page it trapped scrolling.
+2. Until the user zooms or pans, the preview keeps fitting when its size changes. The first size the browser reports can be smaller than the final layout, which gave a too-small first fit.
+3. The preview decodes images up to 4096 × 4096 pixels (`MAX_PREVIEW_PIXELS`, about 16.7 MP, the iOS Safari canvas limit) and explains when an image is larger. The analysis is not limited by this. Per `performance-analyst`: the main thread is fine, so no Worker or WebAssembly.
+4. A new file releases the previous decoded image (`performance-analyst`: memory retention).
+5. The upload page previews a file only after it passes the upload rules (type and 25 MB).
+6. The demo CSVs and BMP are stored byte for byte (`public/demo/** -text` in `.gitattributes`). `src/adapters/demo/palette-analysis.json` is generated once from the original app's `palette_1__1dab3c06aafd1d68.json` and summary CSV.

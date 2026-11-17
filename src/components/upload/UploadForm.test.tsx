@@ -8,6 +8,10 @@ import { UploadForm } from "./UploadForm";
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+// The preview decodes with browser APIs jsdom lacks; it has its own tests.
+vi.mock("../preview/PixelViewer", () => ({
+  PixelViewer: ({ name }: { name: string }) => <p data-testid="preview">{name}</p>,
+}));
 
 // Let the test pick files the `accept` filter would hide, to check our own validation.
 const user = () => userEvent.setup({ applyAccept: false });
@@ -83,5 +87,31 @@ describe("UploadForm", () => {
     renderWithServices(<UploadForm />, services);
     await submitWith(file("photo.png"));
     expect(analyze).toHaveBeenCalledWith(expect.any(File), { includeAlpha: false, topN: 5000 });
+  });
+});
+
+describe("UploadForm preview and demo", () => {
+  it("previews the picked file before it is sent", async () => {
+    renderWithServices(<UploadForm />);
+    expect(screen.queryByTestId("preview")).not.toBeInTheDocument();
+
+    await user().upload(screen.getByLabelText("Vali pilt"), file("palette.bmp"));
+
+    expect(screen.getByTestId("preview")).toHaveTextContent("palette.bmp");
+    expect(push).not.toHaveBeenCalled();
+  });
+
+  it.each([["scan.tiff"], ["huge.png", 25 * 1024 * 1024 + 1]])(
+    "does not preview %s, which the upload rules reject",
+    async (name, size?: number) => {
+      renderWithServices(<UploadForm />);
+      await user().upload(screen.getByLabelText("Vali pilt"), file(name, size));
+      expect(screen.queryByTestId("preview")).not.toBeInTheDocument();
+    },
+  );
+
+  it("links to the demo result", () => {
+    renderWithServices(<UploadForm />);
+    expect(screen.getByRole("link", { name: "Ava demo" })).toHaveAttribute("href", "/results/demo");
   });
 });
