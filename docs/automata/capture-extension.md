@@ -30,7 +30,7 @@ stateDiagram-v2
 |---|---|---|
 | Idle | No capture running; `busy = false` | [UNDERSTANDING] ported from the reference `background.js` |
 | Attached | DevTools protocol attached and the viewport pinned to its size before attaching | [UNDERSTANDING] same, `core/pipeline.js` |
-| Capturing | The shared screenshot, the chosen approaches and combinations run; outputs are saved to `Downloads/intent-capture-<time>/` | [PROMPT P-022] "Capture + recovery approaches" |
+| Capturing | The shared screenshot, the chosen approaches and combinations run; outputs are saved to `Downloads/intent-capture-<time>/`. Chrome is pinged before every step (P-025 item 5) | [PROMPT P-022] "Capture + recovery approaches" |
 
 Initial and final state: Idle.
 
@@ -68,8 +68,11 @@ stateDiagram-v2
 
 The popup closes when it loses focus. Reopened during a run, it starts in Ready, and pressing Capture is refused by the service worker (above).
 
+Inside Capturing, K1 changes the device scale, S3 the emulated media and D1 injects a style that forces all text black, then white (`__fs_matte`). Each puts things back in a `finally`, so they are not states of the run. F1 fits canvases one at a time; a canvas is skipped, with the reason in fit.json, when it is past the eighth, when the whole-run budget (120 s) is spent, or when it is scaled on screen. Inside one fit, a band is skipped once the 45 s budget is spent. The patch step tries its routes (pdf, dom, traced, bitmap) in a fixed order and stops at the first accepted one; it holds no state between patches.
+
 ## Unknowns
 
-- The service worker is stopped by Chrome during a long run: [UNDERSTANDING] the run is lost with no "done" message, and the debugger may stay attached until the tab closes. Not tested.
+- The service worker is stopped by Chrome during a long run: [UNDERSTANDING] the pings between steps make this unlikely, but one step that computes for more than 30 seconds without a Chrome call (D2 on a photo-heavy page) could still be stopped. The run is then lost with no "done" message, and the debugger may stay attached until the tab closes. Not measured.
+- A single page call that runs long: one F1 fit can take up to 45 s, and the D1+F1+S2 fits 20 to 30 s each, inside one `executeScript` call with no ping. [UNDERSTANDING] Chrome may keep the service worker alive while that call is pending; not measured.
 - The popup is closed during a run: the run continues; the result is only visible in Downloads.
 - The debugger permission is removed between the popup check and `attach`: `attach` throws "The debugger permission was not granted." and the run ends with `errors.run`.
