@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { srgbToOklab, oklabToLinearSrgb, linearToSrgb8 } from "@/core/color/oklch";
-import { basis, defaultCamera, GAMUT_CENTER, look, move, orbitCamera, orbitOf, project, type Camera } from "@/core/gamut/camera";
+import { applyKeys, basis, defaultCamera, GAMUT_CENTER, look, move, MOVE_CODES, orbitCamera, orbitOf, project, type Camera } from "@/core/gamut/camera";
+import { frameLoop, type FrameLoop } from "@/core/gamut/frame-loop";
 import type { Lattice } from "@/core/gamut/lattice";
 import type { SelectionResult } from "@/core/gamut/select";
 import type { SnappedColors } from "@/core/gamut/snap";
@@ -63,8 +64,10 @@ export function GamutCanvas({ lattice, selection, snapped, mode, resetKey, label
   const camRef = useRef<Camera>(defaultCamera(lattice.space.abLimit * lattice.space.scale));
   const frameRef = useRef<Frame | null>(null);
   const drawRef = useRef<() => void>(() => {});
-  const rafRef = useRef(0);
+  // One explicit loop draws frames and moves the camera while keys are held (docs/automata/gamut-view.md).
+  const loopRef = useRef<FrameLoop | null>(null);
   const keysRef = useRef(new Set<string>());
+  const modeRef = useRef(mode);
   const [size, setSize] = useState(FALLBACK_SIZE);
   // The hover readout belongs to one view; a new space or a reset makes it stale, so it is not shown.
   const view = `${lattice.space.id}:${resetKey}`;
@@ -82,11 +85,21 @@ export function GamutCanvas({ lattice, selection, snapped, mode, resetKey, label
   }, [lattice]);
 
   const schedule = () => {
-    if (rafRef.current) return;
-    rafRef.current = requestAnimationFrame(() => {
-      rafRef.current = 0;
-      drawRef.current();
-    });
+    loopRef.current ??= frameLoop(
+      (dt) => {
+        const keys = keysRef.current;
+        if (keys.size > 0) {
+          camRef.current = applyKeys(camRef.current, modeRef.current, keys, dt);
+          // The readout no longer points at its point once the camera moves.
+          setHover(null);
+        }
+        drawRef.current();
+        return keys.size > 0;
+      },
+      (cb) => requestAnimationFrame(cb),
+      (id) => cancelAnimationFrame(id),
+    );
+    loopRef.current.request();
   };
 
   // Size the canvas to its box, capped at twice the CSS pixels.
@@ -109,6 +122,7 @@ export function GamutCanvas({ lattice, selection, snapped, mode, resetKey, label
 
   // Fly → orbit aims the orbit at the gamut centre from where the camera is.
   useEffect(() => {
+    modeRef.current = mode;
     if (mode === "orbit") {
       const o = orbitOf(camRef.current, GAMUT_CENTER);
       camRef.current = orbitCamera(GAMUT_CENTER, o.distance, o.yaw, o.pitch);
@@ -161,7 +175,6 @@ export function GamutCanvas({ lattice, selection, snapped, mode, resetKey, label
     const keys = keysRef.current;
     if (!canvas) return;
     let drag: { x: number; y: number } | null = null;
-    let last = 0;
     const rotate = (dx: number, dy: number) => {
       const cam = camRef.current;
       if (mode === "orbit") {
@@ -191,6 +204,7 @@ export function GamutCanvas({ lattice, selection, snapped, mode, resetKey, label
       setHover(k < 0 ? null : { x: e.clientX - rect.left, y: e.clientY - rect.top, text: describePoint(lattice, k, snapped), view });
     };
     const onUp = () => (drag = null);
+    const onLeave = () => setHover(null);
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       const cam = camRef.current;
@@ -198,48 +212,25 @@ export function GamutCanvas({ lattice, selection, snapped, mode, resetKey, label
         const o = orbitOf(cam, GAMUT_CENTER);
         camRef.current = orbitCamera(GAMUT_CENTER, Math.min(6, Math.max(0.3, o.distance * Math.exp(e.deltaY * 0.001))), o.yaw, o.pitch);
       } else camRef.current = move(cam, -e.deltaY * 0.001, 0, 0);
+      setHover(null);
       schedule();
     };
-    const step = (t: number) => {
-      const dt = Math.min(0.05, last ? (t - last) / 1000 : 0.016);
-      last = t;
-      const k = keysRef.current;
-      if (k.size === 0) {
-        last = 0;
-        return;
-      }
-      const has = (...names: string[]) => names.some((n) => k.has(n));
-      const speed = 0.7 * dt;
-      if (mode === "fly") {
-        const f = (has("w", "arrowup") ? 1 : 0) - (has("s", "arrowdown") ? 1 : 0);
-        const r = (has("d", "arrowright") ? 1 : 0) - (has("a", "arrowleft") ? 1 : 0);
-        const u = (has("e") ? 1 : 0) - (has("q") ? 1 : 0);
-        camRef.current = move(camRef.current, f * speed, r * speed, u * speed);
-      } else {
-        const o = orbitOf(camRef.current, GAMUT_CENTER);
-        const turn = (has("a", "arrowleft") ? 1 : 0) - (has("d", "arrowright") ? 1 : 0);
-        const tilt = (has("arrowup") ? 1 : 0) - (has("arrowdown") ? 1 : 0);
-        const zoom = (has("s", "-") ? 1 : 0) - (has("w", "+", "=") ? 1 : 0);
-        camRef.current = orbitCamera(GAMUT_CENTER, Math.min(6, Math.max(0.3, o.distance * Math.exp(zoom * dt * 1.5))), o.yaw + turn * dt * 1.5, o.pitch + tilt * dt * 1.5);
-      }
-      drawRef.current();
-      requestAnimationFrame(step);
-    };
-    const MOVE_KEYS = new Set(["w", "a", "s", "d", "q", "e", "arrowup", "arrowdown", "arrowleft", "arrowright", "+", "=", "-"]);
     const onKey = (e: KeyboardEvent) => {
-      const key = e.key.toLowerCase();
-      if (!MOVE_KEYS.has(key)) return;
+      // Physical keys, so Shift cannot strand a key; leave Ctrl/Cmd shortcuts to the browser.
+      if (!MOVE_CODES.has(e.code) || e.ctrlKey || e.metaKey || e.altKey) return;
       e.preventDefault();
-      const wasIdle = keysRef.current.size === 0;
-      keysRef.current.add(key);
-      if (wasIdle) requestAnimationFrame(step);
+      keysRef.current.add(e.code);
+      schedule();
     };
-    const onKeyUp = (e: KeyboardEvent) => keysRef.current.delete(e.key.toLowerCase());
+    const onKeyUp = (e: KeyboardEvent) => keysRef.current.delete(e.code);
     const onBlur = () => keysRef.current.clear();
     canvas.addEventListener("pointerdown", onDown);
     canvas.addEventListener("pointermove", onMove);
     canvas.addEventListener("pointerup", onUp);
-    canvas.addEventListener("pointerleave", () => setHover(null));
+    // A cancelled touch or a lost capture ends the drag too.
+    canvas.addEventListener("pointercancel", onUp);
+    canvas.addEventListener("lostpointercapture", onUp);
+    canvas.addEventListener("pointerleave", onLeave);
     canvas.addEventListener("wheel", onWheel, { passive: false });
     canvas.addEventListener("keydown", onKey);
     canvas.addEventListener("keyup", onKeyUp);
@@ -248,6 +239,9 @@ export function GamutCanvas({ lattice, selection, snapped, mode, resetKey, label
       canvas.removeEventListener("pointerdown", onDown);
       canvas.removeEventListener("pointermove", onMove);
       canvas.removeEventListener("pointerup", onUp);
+      canvas.removeEventListener("pointercancel", onUp);
+      canvas.removeEventListener("lostpointercapture", onUp);
+      canvas.removeEventListener("pointerleave", onLeave);
       canvas.removeEventListener("wheel", onWheel);
       canvas.removeEventListener("keydown", onKey);
       canvas.removeEventListener("keyup", onKeyUp);
@@ -256,11 +250,11 @@ export function GamutCanvas({ lattice, selection, snapped, mode, resetKey, label
     };
   }, [mode, lattice, pts, selection, snapped, view]);
 
-  // Clear the pending id too: otherwise a remount (React's development double mount) never draws again.
+  // Dispose returns the loop to idle, so a remount (React's development double mount) draws again.
   useEffect(
     () => () => {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = 0;
+      loopRef.current?.dispose();
+      loopRef.current = null;
     },
     [],
   );
