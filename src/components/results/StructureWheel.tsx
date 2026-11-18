@@ -4,8 +4,8 @@ import { useId, useState } from "react";
 import type { ColorStructure, PaletteCluster } from "@/core/analysis/color-analysis";
 import { MODEL_LABELS, structureLabel } from "@/core/analysis/ontology";
 import { modelHue, wheelColor, type ColorModel } from "@/core/color/models";
-import { formatOklch, oklchCss, oklchToSrgb, srgbToOklch, type Oklch } from "@/core/color/oklch";
-import { arcPath, chromaRadius, deltaERadius, polar, ringSegments, WHEEL_C, WHEEL_L } from "@/core/color/wheel";
+import { clampChroma, formatOklch, oklchCss, oklchToSrgb, srgbToOklch, type Oklch } from "@/core/color/oklch";
+import { arcPath, chromaRadius, deltaERadius, lightnessRingWidth, medianLightness, polar, ringChroma, ringSegments } from "@/core/color/wheel";
 import { hint } from "../ui";
 
 const SIZE = 320;
@@ -46,8 +46,15 @@ export function StructureWheel({ structure, palette }: Props) {
       : model === "oklch"
         ? [...new Set(structure.points.map((p) => p.ideal.h).filter((h): h is number => h !== null))]
         : [];
+  // Lightness is always OKLCH, whichever wheel is shown (P-033 item 4).
+  const lightnesses = structure.points.map((p) => p.actual.l);
+  const median = medianLightness(lightnesses);
+  const darkest = Math.min(...lightnesses);
+  const chroma = ringChroma(median);
   const ringColor = (h: number): string =>
-    model === "oklch" ? oklchCss({ l: WHEEL_L, c: WHEEL_C, h }) : oklchCss(srgbToOklch(wheelColor(model, h)));
+    model === "oklch"
+      ? oklchCss({ l: median, c: chroma, h })
+      : oklchCss(clampChroma({ ...srgbToOklch(wheelColor(model, h)), l: median }));
   const at = (color: Oklch) => {
     const h = hueOn(model, color);
     return h === null ? { x: C, y: C } : polar(h, chromaRadius(color.c, CORE, PLOT), C, C);
@@ -57,7 +64,9 @@ export function StructureWheel({ structure, palette }: Props) {
   const description =
     `${label}, ${structure.points.length} punkti, leitud ${MODEL_LABELS[structure.model]} mudelis` +
     `${structure.rotation === undefined ? "" : `, pööre ${structure.rotation}°`}. ` +
-    `Keskmine ΔE ideaalist ${meanDeltaE.toFixed(3)}, suurim ${maxDeltaE.toFixed(3)}. Ratas: ${MODEL_LABELS[model]}.`;
+    `Keskmine ΔE ideaalist ${meanDeltaE.toFixed(3)}, suurim ${maxDeltaE.toFixed(3)}. ` +
+    `Ratas: ${MODEL_LABELS[model]}, OKLCH mediaanheledusel L ${median.toFixed(3)}. ` +
+    `Heledusvahe tumedaimast kuni ${(Math.max(...lightnesses) - darkest).toFixed(3)}.`;
 
   return (
     <figure className="group m-0">
@@ -101,21 +110,34 @@ export function StructureWheel({ structure, palette }: Props) {
           const actual = at(p.actual);
           const cluster = byId.get(p.clusterId);
           const r = 4 + Math.sqrt(cluster?.share ?? 1) * 1.6;
+          const deltaL = p.actual.l - darkest;
+          const ringWidth = lightnessRingWidth(deltaL);
           return (
             <g key={`${p.clusterId}-${i}`}>
               <line x1={ideal.x} y1={ideal.y} x2={actual.x} y2={actual.y} stroke="var(--color-ink)" strokeOpacity={0.5} />
               <circle data-testid="ideal" cx={ideal.x} cy={ideal.y} r={deltaERadius(p.deltaE)} fill="none" stroke="var(--color-ink)" strokeWidth={1.5}>
                 <title>{`Ideaal: ${formatOklch(p.ideal)}, ΔE ${p.deltaE.toFixed(3)}`}</title>
               </circle>
+              {/* Thicker the lighter than the darkest colour, in OKLCH L. */}
+              <circle
+                data-testid="lightness"
+                cx={actual.x}
+                cy={actual.y}
+                r={r + 1 + ringWidth / 2}
+                fill="none"
+                stroke="var(--color-ink)"
+                strokeWidth={ringWidth}
+              />
               <circle data-testid="actual" cx={actual.x} cy={actual.y} r={r} fill={oklchCss(p.actual)} stroke="var(--color-page)" strokeWidth={2}>
-                <title>{`Tegelik: ${formatOklch(p.actual)}${cluster ? `, osakaal ${cluster.share.toFixed(2)}%` : ""}`}</title>
+                <title>{`Tegelik: ${formatOklch(p.actual)}, L ${p.actual.l.toFixed(3)}, ΔL tumedaimast ${deltaL.toFixed(3)}${cluster ? `, osakaal ${cluster.share.toFixed(2)}%` : ""}`}</title>
               </circle>
             </g>
           );
         })}
       </svg>
       <figcaption className={`${hint} mt-1`}>
-        Tühi ring: ideaalne punkt (mida suurem, seda suurem ΔE). Täidetud täpp: tegelik värv. Keskne ala: madal küllastus, toon
+        Tühi ring: ideaalne punkt (mida suurem, seda suurem ΔE). Täidetud täpp: tegelik värv; selle ümber olev rõngas on seda
+        paksem, mida heledam on värv tumedaimast (OKLCH L). Ratas on värvide OKLCH mediaanheledusel. Keskne ala: madal küllastus, toon
         ebakindel.
       </figcaption>
 
@@ -124,7 +146,7 @@ export function StructureWheel({ structure, palette }: Props) {
         <table className="mt-2 w-full border-collapse text-sm">
           <thead>
             <tr>
-              {["Tegelik", "Ideaalne", "ΔE"].map((h) => (
+              {["Tegelik", "Ideaalne", "ΔE", "L", "ΔL"].map((h) => (
                 <th key={h} className="border-b border-line-soft p-1.5 text-left">
                   {h}
                 </th>
@@ -137,6 +159,8 @@ export function StructureWheel({ structure, palette }: Props) {
                 <td className="border-b border-line-soft p-1.5 font-mono">{formatOklch(p.actual)}</td>
                 <td className="border-b border-line-soft p-1.5 font-mono">{formatOklch(p.ideal)}</td>
                 <td className="border-b border-line-soft p-1.5 font-mono">{p.deltaE.toFixed(3)}</td>
+                <td className="border-b border-line-soft p-1.5 font-mono">{p.actual.l.toFixed(3)}</td>
+                <td className="border-b border-line-soft p-1.5 font-mono">{(p.actual.l - darkest).toFixed(3)}</td>
               </tr>
             ))}
           </tbody>
