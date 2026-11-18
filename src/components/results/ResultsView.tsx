@@ -8,6 +8,7 @@ import { clampTopN } from "@/core/analysis/upload-rules";
 import type { CsvKind, ImageAnalysis } from "@/core/analysis/types";
 import { PixelViewer } from "../preview/PixelViewer";
 import { button, card, hint } from "../ui";
+import { ColorAnalysisSection } from "./ColorAnalysisSection";
 import { ColorTable } from "./ColorTable";
 import { saveFile } from "./download";
 
@@ -106,6 +107,8 @@ export function ResultsView() {
           <PixelViewer source={analysis.imageUrl} name={analysis.fileName} />
         </div>
       )}
+
+      {analysis.colorAnalysis && <ColorAnalysisSection analysis={analysis.colorAnalysis} />}
 
       <section className={card} aria-labelledby="top-heading">
         <h2 id="top-heading" className="text-xl font-bold">

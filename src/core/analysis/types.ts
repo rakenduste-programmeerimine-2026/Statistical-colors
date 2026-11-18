@@ -1,3 +1,5 @@
+import type { ColorAnalysis } from "./color-analysis";
+
 /** Options the user picks on the upload form. */
 export interface AnalysisOptions {
   /** Count colours as RGBA instead of RGB. */
@@ -37,6 +39,8 @@ export interface ImageAnalysis {
   example?: boolean;
   /** URL of the analysed image for the pixel preview, when it is stored (#39). */
   imageUrl?: string;
+  /** The server's colour analysis (P-031); absent until the server sends one. */
+  colorAnalysis?: ColorAnalysis;
 }
 
 export type CsvKind = "pixels" | "summary";

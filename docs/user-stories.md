@@ -293,3 +293,64 @@ As a designer, I want the colour analysis attached to the imported frame, so tha
 Acceptance criteria:
 - Given an analysis for the capture, then it is stored on the frame as plugin data `fs-analysis` and the report says "Colour analysis: attached".
 - Given none (until the backend read, #48, exists), then the import still works and the report says "not attached".
+
+## Results colour analysis (#54)
+
+### US-205: Read every colour as OKLCH
+
+Automaton: (readouts, no state)
+Source: [PROMPT P-030] "add OKLCH as information wherever hex and rgb are shown as text" (quoted in full in P-030)
+
+As a designer, I want each colour's OKLCH value next to its hex and rgb, so that I can reuse it in OKLCH-based tools without converting.
+
+Acceptance criteria:
+- Given the colour table, then each row shows `oklch(L% C h)` with 2, 5 and 2 decimals, and greys show hue `none`.
+- Given a pixel under the cursor, then the readout ends with ` · oklch(…)`, with `/ alpha` when alpha is below 1.
+- Boundaries: `#000000` → `oklch(0.00% 0 none)`, `#FFFFFF` → `oklch(100.00% 0 none)`.
+
+### US-206: See a harmony and how far each colour is from it
+
+Automaton: Results colour analysis, (load) → Harmony / OKLCH
+Source: [PROMPT P-030] "Display the delta E from the ideal oklch harmony visually by increasing the size of the empty circle on the wheel"
+
+As a designer, I want the harmony drawn on an OKLCH wheel with an empty circle per ideal point, so that I can see at a glance which colours are off.
+
+Acceptance criteria:
+- Given a harmony, then each point has an empty circle at the ideal position and a filled dot at the actual colour, joined by a line.
+- Given ΔE 0, then the circle has the base size; larger ΔE gives a larger circle, up to a maximum.
+- Given a screen reader, then the wheel names the structure, its model, rotation and mean and largest ΔE, and a table lists each point.
+
+### US-207: See the harmony on the wheel it was built on
+
+Automaton: Results colour analysis, Harmony / OKLCH → Harmony / OtherModel
+Source: [PROMPT P-030] "add an option of showing them on the color wheel in their original colorwheel, but default view is oklch and on hover they can choose other colomodels"
+
+As a designer, I want to switch the wheel to HSL, HSV, HWB or RYB, so that I can see that a palette built in HSL is exact there.
+
+Acceptance criteria:
+- Given the wheel, then OKLCH is selected, and the other models appear on hover or focus.
+- Given a structure found in HSL, then the HSL button says "algne ratas".
+- Given I choose HSL, then the points move to their HSL hue and the description says "Ratas: HSL".
+
+### US-208: See several structures, including ramps
+
+Automaton: Results colour analysis, Harmony ↔ Strip
+Source: [PROMPT P-030] "Allow for multible per image. Remember to support more than just hormonies"
+
+As a designer, I want a list of every structure found, so that I can inspect harmonies and ramps in the same image.
+
+Acceptance criteria:
+- Given three structures, then the list shows each with family, model, score, coverage and mean and largest ΔE.
+- Given I select an equal-step ramp, then a strip shows each colour in OKLCH and the ΔE of each step.
+
+### US-209: Read findings, including dark mode, with how they were found
+
+Automaton: (findings, no state)
+Source: [PROMPT P-030] "detect stuff like this is a ui with dark mode but keep it to stuff that can be detected reasonably and reliably without machine learning"
+
+As a designer, I want findings grouped by area with confidence and what they needed, so that I know how far to trust them.
+
+Acceptance criteria:
+- Given a dark-mode finding, then it shows under "Kasutajaliides" with severity as text, confidence, provenance, "pikslid ja paigutus" and its caveats.
+- Given a kind the UI does not know, then it renders with the server's title.
+- Given a simulated analysis, then a note says it is example data.

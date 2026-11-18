@@ -43,8 +43,8 @@ People enter the real tokens by hand (#19). A record is flagged when the predict
 |---|---|---|
 | M1: Setup and database | 2026-11-18 | #4–#10, #25 |
 | M2: MVP, images in, statistics out | 2026-11-21 | #11–#17, #37–#40, #42, #44–#48 |
-| M3: Colour space and user test | 2026-11-25 | #18–#21, #27–#32, #36 |
-| M4: Polish and presentation | 2026-12-09 | #33, #34 |
+| M3: Colour space and user test | 2026-11-25 | #18–#21, #27–#32, #36, #54–#56, #60, #65 |
+| M4: Polish and presentation | 2026-12-09 | #33, #34, #57–#59, #61–#64, #66–#68 |
 | Backlog | — | #35 (component roles and relations; its scene data now comes from #44–#46) |
 
 ## Frontend and backend boundary
@@ -55,6 +55,18 @@ The UI (#37, ported from the original Flask app) talks to the backend only throu
 - `ThemeStore` (`src/core/theme/theme-store.ts`): saved themes, kept in the browser.
 
 The exact pixel preview (#42) decodes the picked file in the browser for display only; it does not count colours. The demo result (`/results/demo`) is a fixed example from the earlier colour picker study, served by the `withDemo` adapter in front of any `AnalysisService`. If #39 stores the uploaded image, the real adapter can fill the optional `imageUrl` so the results page previews it too.
+
+### Colour analysis (#54, P-031)
+
+The server computes the colour analysis (palette clusters, structures with per-point ΔE, contrast, tokens, Figma features, findings) and sends it as the optional `colorAnalysis` field (#55); #29–#31, #33 and #34 are backend. The frontend only converts sRGB to OKLCH for text readouts (#28) and displays the rest. Contract: `docs/api/color-analysis.md`. Ontology: `docs/ontology/`. Until #55, the stub and the demo send a simulated analysis, labelled as such. Unverified detector prototypes for the backend team: `prototypes/colour-analysis/`.
+
+| Area | Issues |
+|---|---|
+| Contract and findings engine | #55, #65 |
+| Structures, harmonies, ramps, palette types | #56, #57, #58, #59 |
+| UI structure and dark mode | #60, #61 (extension) |
+| Lighting, artefacts, accessibility | #62, #63, #64 |
+| Figma features and tokens | #66 (plugin), #67, #68 |
 
 ## Ownership
 

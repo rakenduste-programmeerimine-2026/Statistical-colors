@@ -44,6 +44,20 @@ describe("ThemePicker", () => {
     expect(text).toHaveValue("#111111");
   });
 
+  it("describes each field with its colour in OKLCH, following committed colours only", async () => {
+    renderWithServices(<ThemePicker />);
+    const bg = screen.getByRole("textbox", { name: "Taust" });
+    expect(bg).toHaveAccessibleDescription("OKLCH: oklch(100.00% 0 none)");
+    const u = userEvent.setup();
+
+    await u.clear(bg);
+    await u.type(bg, "#ff");
+    // Half-typed: the colour and its description stay as they were.
+    expect(bg).toHaveAccessibleDescription("OKLCH: oklch(100.00% 0 none)");
+    await u.type(bg, "0000");
+    expect(bg).toHaveAccessibleDescription("OKLCH: oklch(62.80% 0.25768 29.23)");
+  });
+
   it("caps the hex field at 7 characters", async () => {
     renderWithServices(<ThemePicker />);
     const bg = screen.getByRole("textbox", { name: "Taust" });

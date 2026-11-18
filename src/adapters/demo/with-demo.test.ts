@@ -26,6 +26,8 @@ describe("withDemo", () => {
       imageUrl: "/demo/palette.bmp",
     });
     expect(demo?.simulated).toBeUndefined();
+    // Real study colours, with a simulated colour analysis until the server sends one.
+    expect(demo?.colorAnalysis?.status).toBe("simulated");
     expect(demo?.colors).toHaveLength(295);
     expect(demo?.colors[0]).toEqual({
       r: 255,

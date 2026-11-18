@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { cssColor, formatHex } from "@/core/analysis/format";
+import { formatOklch, srgbToOklch } from "@/core/color/oklch";
 import {
   fit,
   GRID_MIN_FACTOR,
@@ -267,7 +268,8 @@ export function PixelViewer({ source, name }: { source: Blob | string; name: str
               />
               x {shownHover.x}, y {shownHover.y} · {formatHex({ r: shownHover.r, g: shownHover.g, b: shownHover.b })} ·
               rgb {shownHover.r}, {shownHover.g}, {shownHover.b}
-              {shownHover.a < 255 && `, a ${shownHover.a}`}
+              {shownHover.a < 255 && `, a ${shownHover.a}`} ·{" "}
+              {formatOklch(srgbToOklch(shownHover.a < 255 ? shownHover : { r: shownHover.r, g: shownHover.g, b: shownHover.b }))}
             </>
           ) : (
             image && <span className="text-muted">Liigu pildil, et näha pikslit.</span>
