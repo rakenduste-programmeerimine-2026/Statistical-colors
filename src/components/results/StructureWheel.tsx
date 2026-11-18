@@ -59,6 +59,11 @@ export function StructureWheel({ structure, palette }: Props) {
     const h = hueOn(model, color);
     return h === null ? { x: C, y: C } : polar(h, chromaRadius(color.c, CORE, PLOT), C, C);
   };
+  const dotRadius = (clusterId: string) => 4 + Math.sqrt(byId.get(clusterId)?.share ?? 1) * 1.6;
+  // Outer edge of a dot with its lightness ring; ΔE circles start just outside the largest one,
+  // so they enclose the colour instead of hiding inside its ring.
+  const outerRadius = (p: (typeof structure.points)[number]) => dotRadius(p.clusterId) + 1 + lightnessRingWidth(p.actual.l - darkest);
+  const deltaEBase = Math.max(...structure.points.map(outerRadius)) + 3;
   const meanDeltaE = structure.points.reduce((s, p) => s + p.deltaE, 0) / structure.points.length;
   const maxDeltaE = Math.max(...structure.points.map((p) => p.deltaE));
   const description =
@@ -109,15 +114,12 @@ export function StructureWheel({ structure, palette }: Props) {
           const ideal = at(p.ideal);
           const actual = at(p.actual);
           const cluster = byId.get(p.clusterId);
-          const r = 4 + Math.sqrt(cluster?.share ?? 1) * 1.6;
+          const r = dotRadius(p.clusterId);
           const deltaL = p.actual.l - darkest;
           const ringWidth = lightnessRingWidth(deltaL);
           return (
             <g key={`${p.clusterId}-${i}`}>
               <line x1={ideal.x} y1={ideal.y} x2={actual.x} y2={actual.y} stroke="var(--color-ink)" strokeOpacity={0.5} />
-              <circle data-testid="ideal" cx={ideal.x} cy={ideal.y} r={deltaERadius(p.deltaE)} fill="none" className="stroke-delta" strokeWidth={1.5}>
-                <title>{`Ideaal: ${formatOklch(p.ideal)}, ΔE ${p.deltaE.toFixed(3)}`}</title>
-              </circle>
               {/* Thicker the lighter than the darkest colour, in OKLCH L. */}
               <circle
                 data-testid="lightness"
@@ -130,6 +132,20 @@ export function StructureWheel({ structure, palette }: Props) {
               />
               <circle data-testid="actual" cx={actual.x} cy={actual.y} r={r} fill={oklchCss(p.actual)} stroke="var(--color-page)" strokeWidth={2}>
                 <title>{`Tegelik: ${formatOklch(p.actual)}, L ${p.actual.l.toFixed(3)}, ΔL tumedaimast ${deltaL.toFixed(3)}${cluster ? `, osakaal ${cluster.share.toFixed(2)}%` : ""}`}</title>
+              </circle>
+            </g>
+          );
+        })}
+        {/* The ΔE circles go last, on top of every dot and ring; they have no fill, so nothing is hidden.
+            A page-coloured halo keeps them visible where they cross a dark ring. */}
+        {structure.points.map((p, i) => {
+          const ideal = at(p.ideal);
+          const r = deltaERadius(p.deltaE, deltaEBase, deltaEBase + 21);
+          return (
+            <g key={`ideal-${p.clusterId}-${i}`}>
+              <circle cx={ideal.x} cy={ideal.y} r={r} fill="none" stroke="var(--color-page)" strokeWidth={4} />
+              <circle data-testid="ideal" cx={ideal.x} cy={ideal.y} r={r} fill="none" className="stroke-delta" strokeWidth={1.5}>
+                <title>{`Ideaal: ${formatOklch(p.ideal)}, ΔE ${p.deltaE.toFixed(3)}`}</title>
               </circle>
             </g>
           );

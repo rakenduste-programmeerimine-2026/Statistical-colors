@@ -36,6 +36,12 @@ describe("StructureWheel", () => {
     ideals.forEach((c) => expect(c).toHaveAttribute("fill", "none"));
     // Halfway between the page and the lightness ring's colour (P-034).
     ideals.forEach((c) => expect(c).toHaveClass("stroke-delta"));
+    // Larger than any dot with its lightness ring, so a ΔE circle never hides inside a ring.
+    const outer = screen.getAllByTestId("lightness").map((c) => Number(c.getAttribute("r")) + Number(c.getAttribute("stroke-width")) / 2);
+    for (const r of radii) expect(r).toBeGreaterThan(Math.max(...outer));
+    // Drawn after every dot and lightness ring, so nothing covers them.
+    const marks = [...document.querySelectorAll("[data-testid]")].map((el) => el.getAttribute("data-testid"));
+    expect(marks.indexOf("ideal")).toBeGreaterThan(Math.max(marks.lastIndexOf("actual"), marks.lastIndexOf("lightness")));
     screen.getAllByTestId("lightness").forEach((c) => expect(c).toHaveAttribute("stroke", "var(--color-ink)"));
   });
 
