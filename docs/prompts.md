@@ -536,3 +536,17 @@ Issue: #70, #69
 6. [UNDERSTANDING] Share bands split the sorted log10 shares at gaps of at least 0.5 decades, into at most 6 bands; with no such gap they fall back to decade bands. This is presentation arithmetic on numbers the server sent, not clustering.
 7. [UNDERSTANDING] No library audit (project-specific display logic) and no `performance-analyst` run (sorting and filtering at most a few thousand rows in memory; rendering stays capped at N rows). The gamut clamp `clampChroma` (12 lines, a binary search on chroma using the existing hand-written conversion) extends P-031 item 11: a library would duplicate the conversion it already replaces.
 8. [UNDERSTANDING] Chosen thresholds, open to change: lightness ring 1 px plus 30 px per unit ΔL, at most 16 px; a colour counts as a likely artefact at a chance of 0.5 or more; a row with an empty `artefacts` list counts as having no value.
+
+## P-034 (2026-11-18): Colour of the ΔE circle
+
+Type: requirement
+Source: user prompt
+Issue: #70
+
+> use a color between the lightnesses of the background and the lightness circle for the circle representing how far the delta is from the ideal harmony
+
+Decisions:
+1. This replaces the clause "The ΔE circles are unchanged." in P-033 item 4, for the stroke colour only; the circle stays empty and its radius still grows with ΔE (P-031 item 4).
+2. [UNDERSTANDING] "Background" is the page background (`--color-page`) and the "lightness circle" is the lightness ring around each colour dot (`--color-ink`). The new token `--color-delta` is `color-mix(in oklch, var(--color-ink) 50%, var(--color-page))`, so it follows the user's theme. Like `--color-muted`, it is an OKLCH mix of OKLCH theme colours, which fits P-001. The 50 % point is a chosen value, open to change.
+3. [UNDERSTANDING] The line from the ideal point to the actual colour is unchanged.
+4. [UNDERSTANDING] With the default themes the circle keeps about 3.4–4:1 contrast against the page and the core; a user theme whose text and background are close in lightness can push it below the WCAG 1.4.11 non-text 3:1. The ΔE values remain in the points table and the description.
