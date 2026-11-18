@@ -1,15 +1,4 @@
-// PLACEHOLDER(#40): replace with an import from src/core/analysis/types.ts once it is on main.
-/** One unique colour and how often it occurs. */
-export interface ColorCount {
-  r: number;
-  g: number;
-  b: number;
-  /** Alpha 0–255, only present when the analysis includes alpha. */
-  a?: number;
-  count: number;
-  /** Share of all pixels, 0–100. */
-  percent: number;
-}
+import type { ColorCount } from "@/core/analysis/types";
 
 export interface ColorCounts {
   totalPixels: number;
