@@ -84,6 +84,19 @@ export function oklchToSrgb(o: Oklch): { r: number; g: number; b: number; inGamu
   return { r, g, b, inGamut };
 }
 
+/** The colour with the largest chroma ≤ `o.c` that is inside sRGB, keeping L and h (binary search, 1e-5). */
+export function clampChroma(o: Oklch): Oklch {
+  if (oklchToSrgb(o).inGamut) return o;
+  let lo = 0;
+  let hi = o.c;
+  while (hi - lo > 1e-5) {
+    const mid = (lo + hi) / 2;
+    if (oklchToSrgb({ ...o, c: mid }).inGamut) lo = mid;
+    else hi = mid;
+  }
+  return { ...o, c: lo };
+}
+
 /** ΔE_OK: Euclidean distance in OKLab. Just-noticeable is about 0.02. */
 export function deltaEOk(a: Oklch, b: Oklch): number {
   const p = oklchToOklab(a);

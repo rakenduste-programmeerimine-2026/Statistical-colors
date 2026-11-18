@@ -1,13 +1,46 @@
 // Geometry for the colour-structure wheel (P-031 item 4). Hue 0° points up and
 // angles grow clockwise; distance from the centre grows with chroma.
 
-/** The ring is drawn at this OKLCH lightness and chroma: the widest constant chroma inside sRGB for every hue (experiment E2). */
-export const WHEEL_L = 0.75;
-export const WHEEL_C = 0.127;
+import { clampChroma, oklchToSrgb } from "./oklch";
+
 /** Chroma below this is not trusted for hue (experiment E7: a one-step change moves the hue up to 9°). */
 export const LOW_CHROMA = 0.04;
 /** Chroma at the outer edge of the plot. */
 export const MAX_CHROMA = 0.32;
+
+/** Median OKLCH lightness (unweighted); the mean of the two middle values for an even count (P-033 item 4). */
+export function medianLightness(ls: number[]): number {
+  if (ls.length === 0) return 0.75;
+  const s = [...ls].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+const ringChromaCache = new Map<number, number>();
+/**
+ * The largest constant chroma inside sRGB for every hue at lightness `l`
+ * (P-033 item 5): 0.1275 at L 0.75 (experiment E2), near grey at L 0 and 1.
+ */
+export function ringChroma(l: number): number {
+  const key = Math.round(l * 1000);
+  const hit = ringChromaCache.get(key);
+  if (hit !== undefined) return hit;
+  let c = 0.4;
+  for (let h = 0; h < 360; h += 0.25) if (!oklchToSrgb({ l: key / 1000, c, h }).inGamut) c = clampChroma({ l: key / 1000, c, h }).c;
+  // Rounded down, so the ring never leaves sRGB.
+  const result = Math.floor(c * 1e4) / 1e4;
+  ringChromaCache.set(key, result);
+  return result;
+}
+
+/**
+ * Stroke width of the ring around a colour dot: thicker the lighter the colour
+ * is than the darkest colour of the structure, in OKLCH L (P-033 item 4).
+ * The darkest gets a 1 px hairline; 30 px per unit ΔL; at most 16 px.
+ */
+export function lightnessRingWidth(deltaL: number): number {
+  return Math.min(16, 1 + Math.max(0, deltaL) * 30);
+}
 
 export interface Point {
   x: number;

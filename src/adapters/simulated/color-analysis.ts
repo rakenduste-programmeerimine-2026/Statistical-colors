@@ -1,6 +1,6 @@
 import type { ColorAnalysis, ColorStructure, Finding, Meta, PaletteCluster, StructurePoint } from "@/core/analysis/color-analysis";
 import { wheelColor } from "@/core/color/models";
-import { deltaEOk, oklchToSrgb, srgbToOklch, type Oklch } from "@/core/color/oklch";
+import { clampChroma, deltaEOk, srgbToOklch, type Oklch } from "@/core/color/oklch";
 
 // PLACEHOLDER(#55, #56, #57, #58, #60, #65): the server computes the colour
 // analysis. Used by the stub and the demo until then. It never reads pixels: it builds a believable, internally
@@ -15,12 +15,8 @@ const stubMeta = (requires: Meta["requires"], method: string, confidence = 0.8):
   caveats: ["consistent-not-proven"],
 });
 
-/** Lowers chroma until the colour fits in sRGB (P-031 item 6). */
-function inSrgb(o: Oklch): Oklch {
-  let c = o.c;
-  while (c > 0 && !oklchToSrgb({ ...o, c }).inGamut) c -= 0.002;
-  return { ...o, c: Math.max(0, c) };
-}
+/** Keeps simulated colours inside sRGB (P-031 item 6). */
+const inSrgb = clampChroma;
 
 const wrap = (h: number) => ((h % 360) + 360) % 360;
 
