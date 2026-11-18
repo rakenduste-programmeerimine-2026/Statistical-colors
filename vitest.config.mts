@@ -12,7 +12,13 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
-    include: ["src/**/*.test.{ts,tsx}", "tests/unit/**/*.test.{ts,tsx}", "extension/test/**/*.test.ts", "figma-plugin/test/**/*.test.ts"],
+    include: [
+      "src/**/*.test.{ts,tsx}",
+      "tests/unit/**/*.test.{ts,tsx}",
+      "tests/db/**/*.test.ts",
+      "extension/test/**/*.test.ts",
+      "figma-plugin/test/**/*.test.ts",
+    ],
     css: false,
     restoreMocks: true,
     coverage: {

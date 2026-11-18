@@ -40,6 +40,43 @@ Rakendus avaneb aadressil http://localhost:3000.
 
 Värvituvastuse plaan, etapid ja milestone'id: [`docs/roadmap.md`](docs/roadmap.md).
 
+## Supabase
+
+Tiimil on **üks ühine Supabase projekt**. Kontot kasutaja ei loo: äpp kasutab
+Supabase'i *anonymous sign-in*'i, nii et iga brauser saab nähtamatu kasutaja ID
+ja RLS näitab igaühele ainult tema enda analüüse.
+
+### Ühendamine (iga tiimiliige)
+
+1. Kopeeri `.env.example` → `.env.local`.
+2. Küsi DB rollilt projekti URL ja **publishable key** ning pane need `.env.local`-i.
+   `.env.local` ei lähe Giti. *Secret* / `service_role` võtit ei jaga kunagi.
+
+### Andmebaasi skeem
+
+Kõik muudatused on SQL-migratsioonidena kaustas [`supabase/migrations`](supabase/migrations)
+ja käivad läbi PR-i.
+
+| Tabel          | Sisu                                                                  |
+| -------------- | --------------------------------------------------------------------- |
+| `images`       | Üks rida pildi kohta: formaat, mõõdud, unikaalsete värvide arv, CSV tee |
+| `image_colors` | Pildi top N värvi: r, g, b, (a), hex, pikslite arv, osakaal %, kasutaja lipp |
+
+Täielik värvide nimekiri (võib olla sadu tuhandeid ridu) salvestatakse CSV-na
+privaatsesse Storage bucketisse `reports`, kausta `{kasutaja_id}/`.
+
+### Migratsioonide rakendamine (DB roll)
+
+```bash
+npx supabase login
+npm run db:link    # vali tiimi projekt (küsib DB parooli)
+npm run db:push    # rakendab uued migratsioonid pilves olevale projektile (--remote)
+npm run db:types   # uuendab src/lib/supabase/database.types.ts
+```
+
+Andmebaasi testid (`tests/db`) käivitavad samad migratsioonid PGlite'is
+(Postgres mälus) – Dockerit ega päris Supabase'i pole testimiseks vaja.
+
 ## Töövoog
 
 - Iga töö algab **issue'st**. Branchi nimi: `<tüüp>/<issue-nr>-<lühikirjeldus>`,
