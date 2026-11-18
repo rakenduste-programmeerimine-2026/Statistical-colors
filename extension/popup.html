@@ -1,0 +1,55 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Capture</title>
+<style>
+  /* UI colours are OKLCH (P-023 item 9). */
+  :root {
+    --ink: oklch(0.1776 0 0);
+    --soft: oklch(0.3904 0 0);
+    --muted: oklch(0.5693 0 0);
+    --accent: oklch(0.5179 0.1745 259.6);
+    --warn: oklch(0.5262 0.1123 62.9);
+    --error: oklch(0.5148 0.1883 26.7);
+    --on-accent: oklch(1 0 0);
+  }
+  body { font: 13px/1.4 system-ui, sans-serif; margin: 0; padding: 12px 14px; width: 330px; color: var(--ink); }
+  h1 { font-size: 14px; margin: 0 0 8px; }
+  h2 { font-size: 12px; margin: 12px 0 4px; color: var(--soft); font-weight: 600; }
+  label { display: flex; gap: 6px; align-items: baseline; padding: 1px 0; }
+  label small { color: var(--muted); }
+  .row { display: flex; flex-wrap: wrap; gap: 2px 12px; }
+  button { font: inherit; width: 100%; margin-top: 12px; padding: 8px 12px; border-radius: 6px; border: 1px solid var(--accent); background: var(--accent); color: var(--on-accent); cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  select { font: inherit; }
+  #status { margin: 8px 0 0; font-size: 12px; color: var(--soft); min-height: 1.4em; white-space: pre-wrap; word-break: break-word; }
+  #status.error { color: var(--error); }
+  #approaches small { color: var(--warn); }
+  .note { font-size: 11px; color: var(--muted); margin: 2px 0 0; }
+  .links { font-size: 12px; margin: 2px 0 0; }
+  button.link { width: auto; margin: 0 10px 0 0; padding: 0; border: 0; background: none; color: var(--accent); cursor: pointer; text-decoration: underline; }
+</style>
+<h1>Capture this tab</h1>
+<label><input type="checkbox" checked disabled /> Lossless screenshot <small>always</small></label>
+
+<section id="recover">
+  <h2>Recover intent with</h2>
+  <div id="approaches"></div>
+  <p class="links" id="presets"></p>
+  <label style="margin-top: 6px"
+    >Zoom for k× outputs
+    <select id="scale">
+      <option>2</option>
+      <option selected>4</option>
+      <option>8</option>
+    </select></label
+  >
+</section>
+
+<h2>Rasteriser (optional, used by “Fit by re-rendering”)</h2>
+<div class="row" id="os"></div>
+<div class="row" id="browser" style="margin-top: 4px"></div>
+<p class="note" id="detected"></p>
+
+<button id="go">Capture</button>
+<p id="status"></p>
+<script type="module" src="dist/popup.js"></script>

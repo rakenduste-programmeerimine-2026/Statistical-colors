@@ -36,6 +36,10 @@ Rakendus avaneb aadressil http://localhost:3000.
 | `npm run test:watch`| Testid jälgimisrežiimis         |
 | `npm run test:coverage` | Testid + katvuse raport     |
 
+## Roadmap
+
+Värvituvastuse plaan, etapid ja milestone'id: [`docs/roadmap.md`](docs/roadmap.md).
+
 ## Supabase
 
 Tiimil on **üks ühine Supabase projekt**. Kontot kasutaja ei loo: äpp kasutab

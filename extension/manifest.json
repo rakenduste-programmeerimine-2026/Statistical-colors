@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Värvi tükeldaja capture",
+  "version": "0.1.0",
+  "description": "Lossless screenshot of a tab, with ways to recover the vectors and text behind it.",
+  "permissions": ["activeTab", "scripting", "downloads", "debugger"],
+  "background": { "service_worker": "dist/background.js", "type": "module" },
+  "action": { "default_title": "Capture", "default_popup": "popup.html" },
+  "commands": {
+    "_execute_action": { "suggested_key": { "default": "Alt+Shift+F" }, "description": "Open the capture box" }
+  }
+}

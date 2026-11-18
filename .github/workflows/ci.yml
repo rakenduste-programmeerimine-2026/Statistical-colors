@@ -1,10 +1,10 @@
 name: CI
 
 on:
-  # All PRs, also ones stacked on another feature branch.
   pull_request:
+    branches: [main, develop-frontend]
   push:
-    branches: [main]
+    branches: ['**']
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -41,3 +41,9 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Build extension
+        run: npm run build:extension
+
+      - name: Build Figma plugin
+        run: npm run build:figma
