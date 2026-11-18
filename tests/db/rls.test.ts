@@ -100,6 +100,7 @@ describe("images RLS", () => {
     ["owner_id", USER_B],
     ["unique_colors", 1],
     ["file_name", "renamed.png"],
+    ["top_n", 10],
   ])("owner cannot change %s after insert", async (column, value) => {
     await actAs(db, USER_A);
     await expect(
