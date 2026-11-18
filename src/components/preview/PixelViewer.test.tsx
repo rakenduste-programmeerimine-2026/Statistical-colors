@@ -67,11 +67,11 @@ describe("PixelViewer", () => {
 
     // Fitted at 1× and centred in 640 × 360: the image starts at (64, 160).
     fireEvent.pointerMove(canvas, { clientX: 64, clientY: 160 });
-    expect(readout).toHaveTextContent("x 0, y 0 · #032F29 · rgb 3, 47, 41");
+    expect(readout).toHaveTextContent("x 0, y 0 · #032F29 · rgb 3, 47, 41 · oklch(27.48% 0.04715 181.31)");
     expect(readout).not.toHaveTextContent(", a");
 
     fireEvent.pointerMove(canvas, { clientX: 65, clientY: 160 });
-    expect(readout).toHaveTextContent("x 1, y 0 · #0A141E · rgb 10, 20, 30, a 128");
+    expect(readout).toHaveTextContent("x 1, y 0 · #0A141E · rgb 10, 20, 30, a 128 · oklch(18.70% 0.02534 249.32 / 0.502)");
 
     fireEvent.pointerMove(canvas, { clientX: 63, clientY: 160 });
     expect(readout).toHaveTextContent("Liigu pildil, et näha pikslit.");

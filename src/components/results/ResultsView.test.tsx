@@ -65,7 +65,7 @@ describe("ResultsView", () => {
     const table = await screen.findByRole("table");
     const rows = within(table).getAllByRole("row");
     expect(rows).toHaveLength(1 + 2);
-    expect(rows[1]).toHaveTextContent("(255, 0, 0)#FF0000250.000000%");
+    expect(rows[1]).toHaveTextContent("(255, 0, 0)#FF0000oklch(62.80% 0.25768 29.23)250.000000%");
   });
 
   it.each([
@@ -85,7 +85,8 @@ describe("ResultsView", () => {
     renderWithServices(<ResultsView />, servicesWith(rgba));
     const table = await screen.findByRole("table");
     expect(within(table).getByRole("columnheader", { name: "Hex + alfa" })).toBeInTheDocument();
-    expect(table).toHaveTextContent("(1, 2, 3, 4)#010203 004");
+    expect(within(table).getByRole("columnheader", { name: "OKLCH" })).toBeInTheDocument();
+    expect(table).toHaveTextContent("(1, 2, 3, 4)#010203 004oklch(8.23% 0.00804 240.75 / 0.016)4100.000000%");
   });
 
   it("warns when the data is simulated", async () => {
