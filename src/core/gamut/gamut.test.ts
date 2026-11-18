@@ -200,6 +200,24 @@ describe("camera", () => {
   });
 });
 
+describe("default view per space (regression: the CIELAB solid was cut off)", () => {
+  it.each([
+    ["OKLab", OKLAB],
+    ["CIELAB", CIELAB],
+  ] as const)("keeps the sRGB extremes on a 4:3 canvas in %s", (_, space) => {
+    const cam = defaultCamera(space.abLimit * space.scale);
+    const b = basis(cam);
+    for (const c of [{ r: 0, g: 0, b: 0 }, { r: 255, g: 255, b: 255 }, { r: 255, g: 0, b: 0 }, { r: 0, g: 255, b: 0 }, { r: 0, g: 0, b: 255 }, { r: 255, g: 255, b: 0 }, { r: 255, g: 0, b: 255 }, { r: 0, g: 255, b: 255 }]) {
+      const [l, a, bb] = space.toCoords(c);
+      const p = project(cam, b, 400, 300, a * space.scale, bb * space.scale, l * space.scale)!;
+      expect(p.sx).toBeGreaterThan(0);
+      expect(p.sx).toBeLessThan(400);
+      expect(p.sy).toBeGreaterThan(0);
+      expect(p.sy).toBeLessThan(300);
+    }
+  });
+});
+
 describe("renderer", () => {
   const pts = { x: new Float32Array([0, 0]), y: new Float32Array([0, 0]), z: new Float32Array([0, 0.0001]) };
   const cam = orbitCamera([0, 0, 0], 1, 0, 0);
