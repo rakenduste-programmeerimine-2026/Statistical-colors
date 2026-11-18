@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Uncommitted reference material (P-011) and built extension output.
     "claude-setup/**",
+    // Unverified prototypes for the backend team (P-031 item 10), not app code.
+    "prototypes/**",
     "extension/dist/**",
     "figma-plugin/dist/**",
     "figma-plugin/.build/**",
