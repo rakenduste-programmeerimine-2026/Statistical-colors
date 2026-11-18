@@ -42,17 +42,19 @@ async function toBlob(source: Blob | string): Promise<Blob> {
   return response.blob();
 }
 
-/**
- * Exact pixel preview, ported from the reference Exact Pixel Viewer (P-019):
- * nearest-neighbour drawing at whole-number zoom, so every screen pixel shows a
- * stored image value and nothing is blended.
- */
+/** Stage colours the viewer offers (P-037); null is the reference viewer's own stage colour. */
 const STAGE_PRESETS: BackgroundPreset[] = [
   { label: "vaikimisi", hex: null },
   { label: "valge", hex: "#ffffff" },
   { label: "hall", hex: "#808080" },
   { label: "must", hex: "#000000" },
 ];
+
+/**
+ * Exact pixel preview, ported from the reference Exact Pixel Viewer (P-019):
+ * nearest-neighbour drawing at whole-number zoom, so every screen pixel shows a
+ * stored image value and nothing is blended.
+ */
 
 export function PixelViewer({ source, name }: { source: Blob | string; name: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);

@@ -89,6 +89,7 @@ These go on each row of `ImageAnalysis.colors`, the colour list behind the "sage
 - **Reference code:** the frontend uses the same lattice and snapping for drawing (`src/core/gamut/lattice.ts`, `snap.ts`), and the stub uses it to simulate the figure. An unverified prototype is `prototypes/colour-analysis/E10-gamut-lattice.mts`.
 - **Colours counted:** every colour of the image counts (all of them, not the top N; #69).
 - **Check:** `checkColorAnalysis` verifies that `coverage` equals `occupiedCells / totalCells`.
+- **Simulated values:** the stub's and the demo's figure carries `provenance: "measured"` (it is measured from their colours), and simulation is flagged by `colorAnalysis.status === "simulated"`, which the page shows as "Näidisandmed".
 - **The 3D view gets nothing else from the server.** It builds the lattice and snaps `analysis.colors` itself.
 
 ## Server steps and default parameters

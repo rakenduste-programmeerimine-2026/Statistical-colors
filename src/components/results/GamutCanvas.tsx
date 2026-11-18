@@ -278,7 +278,7 @@ export function GamutCanvas({ lattice, selection, snapped, mode, resetKey, label
       {hover && hover.view === view && (
         <div
           role="tooltip"
-          className="pointer-events-none absolute z-10 rounded-md border border-line bg-page px-2 py-1 font-mono text-xs whitespace-pre shadow"
+          className="pointer-events-none absolute z-10 rounded-md border border-line bg-page px-2 py-1 font-mono text-xs whitespace-pre shadow shadow-[oklch(0_0_0/0.12)]"
           style={{ left: Math.min(hover.x + 12, size.width - 220), top: hover.y + 12 }}
         >
           {hover.text}
