@@ -1,6 +1,8 @@
-import { screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { Activity } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ServicesProvider } from "@/adapters/services";
 import { AnalysisFailedError } from "@/core/analysis/analysis-service";
 import { MAX_UPLOAD_BYTES } from "@/core/analysis/upload-rules";
 import { renderWithServices, testServices } from "@/test/render";
@@ -87,6 +89,45 @@ describe("UploadForm", () => {
     renderWithServices(<UploadForm />, services);
     await submitWith(file("photo.png"));
     expect(analyze).toHaveBeenCalledWith(expect.any(File), { includeAlpha: false, topN: 5000 });
+  });
+});
+
+// With cacheComponents, Next.js hides a page in <Activity> on navigation and shows the same instance on return (#86).
+describe("UploadForm hidden by Next.js", () => {
+  beforeEach(() => push.mockReset());
+
+  function renderInActivity() {
+    const services = testServices();
+    const page = (mode: "visible" | "hidden") => (
+      <ServicesProvider services={services}>
+        <Activity mode={mode}>
+          <UploadForm />
+        </Activity>
+      </ServicesProvider>
+    );
+    const { rerender } = render(page("visible"));
+    return { hideAndShow: () => (rerender(page("hidden")), rerender(page("visible"))) };
+  }
+
+  it("is idle again after opening the results and coming back", async () => {
+    const { hideAndShow } = renderInActivity();
+    await submitWith(file("a.png"));
+    await waitFor(() => expect(push).toHaveBeenCalledOnce());
+
+    hideAndShow();
+
+    expect(screen.getByRole("button", { name: "Töötle pilti" })).toBeEnabled();
+    expect(screen.getByTestId("preview")).toHaveTextContent("a.png");
+  });
+
+  it("drops the old error message", async () => {
+    const { hideAndShow } = renderInActivity();
+    await submitWith();
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+
+    hideAndShow();
+
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });
 
