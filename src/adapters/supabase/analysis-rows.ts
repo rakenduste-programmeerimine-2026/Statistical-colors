@@ -74,16 +74,16 @@ export function toColorRows(
   }));
 }
 
-/**
- * A stored image and its colour rows (any order) as the results page needs
- * them. Holds at most 5000 colours; the full list is the summary CSV (#69, #73).
- */
 /** The colour columns getAnalysis reads. */
 export type StoredColor = Pick<
   Tables<"image_colors">,
   "rank" | "r" | "g" | "b" | "a" | "pixel_count" | "percent"
 >;
 
+/**
+ * A stored image and its colour rows (any order) as the results page needs
+ * them. Holds at most 5000 colours; the full list is the summary CSV (#69, #73).
+ */
 export function toImageAnalysis(
   image: Tables<"images">,
   colors: readonly StoredColor[],
