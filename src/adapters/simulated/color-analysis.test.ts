@@ -39,7 +39,11 @@ describe("generateAnalysis", () => {
     const file = { name: "a.png", size: 1234 };
     const options = { includeAlpha: false, topN: 10 };
     const result = generateAnalysis("id", file, options);
-    expect(result.colorAnalysis).toEqual(generateColorAnalysis(prng(hash("a.png:1234:false:color"))));
+    const { gamut, ...rest } = result.colorAnalysis!;
+    expect(rest).toEqual(generateColorAnalysis(prng(hash("a.png:1234:false:color"))));
+    // The gamut coverage is measured from the stub's own colours (P-035).
+    expect(gamut?.occupiedCells).toBeGreaterThan(0);
+    expect(gamut?.coverage).toBeCloseTo(gamut!.occupiedCells / gamut!.totalCells, 12);
     // The colours come from the original seed, as before the colour analysis existed.
     const random = prng(hash("a.png:1234:false"));
     const width = 16 + Math.floor(random() * 81);
