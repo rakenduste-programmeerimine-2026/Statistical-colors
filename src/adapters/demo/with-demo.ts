@@ -1,7 +1,7 @@
 import type { AnalysisService } from "@/core/analysis/analysis-service";
 import type { CsvKind, ImageAnalysis } from "@/core/analysis/types";
-import { hash, prng } from "../stub/stub-analysis-service";
-import { generateColorAnalysis } from "../stub/stub-color-analysis";
+import { generateColorAnalysis } from "../simulated/color-analysis";
+import { hash, prng } from "../simulated/random";
 
 /**
  * The built-in example: `palette (1).bmp` and the results the original Python
@@ -24,6 +24,7 @@ async function loadDemo(): Promise<ImageAnalysis> {
   const data = await import("./palette-analysis.json");
   const analysis = structuredClone(data.default) as ImageAnalysis;
   // The study's colours are real; the colour analysis is simulated and labelled so (P-031 item 10).
+  // PLACEHOLDER(#55): replace with the server's analysis of the demo image once it exists.
   return { ...analysis, colorAnalysis: generateColorAnalysis(prng(hash(`${DEMO_ID}:color`))) };
 }
 

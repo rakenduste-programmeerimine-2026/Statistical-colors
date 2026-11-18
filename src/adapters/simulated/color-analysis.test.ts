@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { deltaEOk, oklchToSrgb } from "@/core/color/oklch";
-import { generateAnalysis, hash, prng } from "./stub-analysis-service";
-import { generateColorAnalysis } from "./stub-color-analysis";
+import { generateAnalysis } from "../stub/stub-analysis-service";
+import { generateColorAnalysis } from "./color-analysis";
+import { hash, prng } from "./random";
 
 describe("generateColorAnalysis", () => {
   it("is deterministic for a seed", () => {

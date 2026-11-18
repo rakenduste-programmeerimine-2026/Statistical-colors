@@ -3,8 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ImageAnalysis } from "@/core/analysis/types";
 import { renderWithServices, testServices } from "@/test/render";
-import { prng } from "@/adapters/stub/stub-analysis-service";
-import { generateColorAnalysis } from "@/adapters/stub/stub-color-analysis";
+import { prng } from "@/adapters/simulated/random";
+import { generateColorAnalysis } from "@/adapters/simulated/color-analysis";
 import { ResultsView } from "./ResultsView";
 
 const route = { id: "", query: "" };

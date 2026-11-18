@@ -1,6 +1,7 @@
 import { AnalysisFailedError, InvalidImageError, type AnalysisService } from "@/core/analysis/analysis-service";
 import type { AnalysisOptions, ColorCount, CsvFile, CsvKind, ImageAnalysis } from "@/core/analysis/types";
-import { generateColorAnalysis } from "./stub-color-analysis";
+import { generateColorAnalysis } from "../simulated/color-analysis";
+import { hash, prng } from "../simulated/random";
 import { pixelsCsv, summaryCsv } from "./stub-csv";
 
 // PLACEHOLDER(#11, #12, #13, #39, #40): decoding, counting, saving and reading
@@ -11,25 +12,6 @@ import { pixelsCsv, summaryCsv } from "./stub-csv";
 const STORAGE_PREFIX = "stub-analysis:";
 const MAX_SIDE = 96;
 const MAX_UNIQUE = 300;
-
-/** Small seeded PRNG (mulberry32), so the same file always gives the same fake result. */
-export function prng(seed: number) {
-  let a = seed >>> 0;
-  return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
-    let t = a;
-    t = Math.imul(t ^ (t >>> 15), t | 1);
-    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-/** FNV-1a hash of a string. */
-export function hash(text: string): number {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193);
-  return h >>> 0;
-}
 
 /** Same idea as the original's `secure_filename(name)__token`. */
 function makeId(fileName: string, random: () => number): string {

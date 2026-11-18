@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { generateColorAnalysis } from "@/adapters/stub/stub-color-analysis";
-import { prng } from "@/adapters/stub/stub-analysis-service";
+import { generateColorAnalysis } from "@/adapters/simulated/color-analysis";
+import { prng } from "@/adapters/simulated/random";
 import { checkColorAnalysis } from "./color-analysis-check";
 import type { ColorAnalysis } from "./color-analysis";
 import { findingLabel, FINDING_LABELS, structureLabel, STRUCTURE_LABELS } from "./ontology";

@@ -3,7 +3,7 @@ import { wheelColor } from "@/core/color/models";
 import { deltaEOk, oklchToSrgb, srgbToOklch, type Oklch } from "@/core/color/oklch";
 
 // PLACEHOLDER(#55, #56, #57, #58, #60, #65): the server computes the colour
-// analysis. This stub never reads pixels: it builds a believable, internally
+// analysis. Used by the stub and the demo until then. It never reads pixels: it builds a believable, internally
 // consistent result (ideal points, real ΔE per point, an HSL-built pair with
 // its real drift) so the UI can be exercised, and marks it `simulated`.
 

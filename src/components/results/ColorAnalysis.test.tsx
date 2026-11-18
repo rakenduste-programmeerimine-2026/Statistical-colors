@@ -1,8 +1,8 @@
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import { prng } from "@/adapters/stub/stub-analysis-service";
-import { generateColorAnalysis } from "@/adapters/stub/stub-color-analysis";
+import { prng } from "@/adapters/simulated/random";
+import { generateColorAnalysis } from "@/adapters/simulated/color-analysis";
 import type { ColorAnalysis, Finding } from "@/core/analysis/color-analysis";
 import { ColorAnalysisSection } from "./ColorAnalysisSection";
 import { FindingsPanel } from "./FindingsPanel";
