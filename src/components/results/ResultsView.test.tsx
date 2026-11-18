@@ -3,6 +3,8 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ImageAnalysis } from "@/core/analysis/types";
 import { renderWithServices, testServices } from "@/test/render";
+import { prng } from "@/adapters/stub/stub-analysis-service";
+import { generateColorAnalysis } from "@/adapters/stub/stub-color-analysis";
 import { ResultsView } from "./ResultsView";
 
 const route = { id: "", query: "" };
@@ -113,6 +115,16 @@ describe("ResultsView", () => {
     renderWithServices(<ResultsView />, servicesWith(analysis));
     await screen.findByRole("table");
     expect(screen.queryByTestId("preview")).not.toBeInTheDocument();
+  });
+
+  it("shows the colour analysis only when the server sent one", async () => {
+    const { unmount } = renderWithServices(<ResultsView />, servicesWith(analysis));
+    await screen.findByRole("table");
+    expect(screen.queryByRole("heading", { name: "Värvianalüüs" })).not.toBeInTheDocument();
+    unmount();
+
+    renderWithServices(<ResultsView />, servicesWith({ ...analysis, colorAnalysis: generateColorAnalysis(prng(1)) }));
+    expect(await screen.findByRole("heading", { name: "Värvianalüüs" })).toBeInTheDocument();
   });
 
   it("says when the result is missing", async () => {
