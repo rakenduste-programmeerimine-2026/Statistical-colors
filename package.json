@@ -13,15 +13,21 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "build:extension": "tsc -p extension",
-    "build:figma": "node figma-plugin/build.mjs"
+    "build:figma": "node figma-plugin/build.mjs",
+    "db:link": "supabase link",
+    "db:push": "supabase db push --remote",
+    "db:types": "supabase gen types --lang typescript --remote --schema public > src/lib/supabase/database.types.ts"
   },
   "dependencies": {
     "@radix-ui/react-select": "2.4.1",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.119.0",
     "next": "16.4.6",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.16",
     "@figma/plugin-typings": "1.142.0",
     "@tailwindcss/turbopack": "4.3.3",
     "@testing-library/dom": "^10.4.2",
@@ -37,6 +43,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "jsdom": "^31.0.1",
+    "supabase": "^3.2.0",
     "tailwindcss": "4.3.3",
     "typescript": "^5",
     "vitest": "^5.1.0"
