@@ -42,6 +42,8 @@ describe("isAnalysisId", () => {
     ["a stub id", "missing__0000000000000000", false],
     ["an empty string", "", false],
     ["a UUID with extra characters", `${IMAGE_ID}x`, false],
+    ["a UUID one character short", IMAGE_ID.slice(0, -1), false],
+    ["a UUID with a non-hex character", `g${IMAGE_ID.slice(1)}`, false],
   ])("%s → %s", (_label, id, expected) => {
     expect(isAnalysisId(id)).toBe(expected);
   });

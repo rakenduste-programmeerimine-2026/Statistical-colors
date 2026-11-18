@@ -30,7 +30,7 @@ function fakeSupabase(
   o: {
     session?: string;
     insertImage?: Result;
-    insertColors?: Result;
+    insertColors?: Result | "throw";
     update?: Result;
     upload?: Result;
     image?: Result;
@@ -40,12 +40,16 @@ function fakeSupabase(
 ) {
   const calls: Call[] = [];
   const storage: { op: string; arg: unknown }[] = [];
+  const uploadedTypes: string[] = [];
 
   const filter = (call: Call, name: string) => call.filters.find(([c]) => c === name)?.[1] as number;
   const resolve = (call: Call): Result => {
     const key = `${call.table}:${call.op}`;
     if (key === "images:insert") return o.insertImage ?? { data: { id: IMAGE_ID }, error: null };
-    if (key === "image_colors:insert") return o.insertColors ?? { error: null };
+    if (key === "image_colors:insert") {
+      if (o.insertColors === "throw") throw new Error("network down");
+      return o.insertColors ?? { error: null };
+    }
     if (key === "images:update") return o.update ?? { error: null };
     if (key === "images:delete") return { error: null };
     if (key === "images:select") return o.image ?? { data: null, error: null };
@@ -53,8 +57,9 @@ function fakeSupabase(
       if (o.colorsError) return { data: null, error: o.colorsError };
       const lo = filter(call, "rank>=");
       const hi = filter(call, "rank<=");
+      // Values depend on the rank, so order, gaps and duplicates are visible.
       const data = Array.from({ length: hi - lo + 1 }, (_, i) => ({
-        rank: lo + i, r: 0, g: 0, b: 0, a: null, pixel_count: 1, percent: 0.04,
+        rank: lo + i, r: (lo + i) % 256, g: 0, b: 0, a: null, pixel_count: 10_000 - (lo + i), percent: 0.04,
       }));
       return { data, error: null };
     }
@@ -75,17 +80,20 @@ function fakeSupabase(
       order: () => b,
       single: async () => resolve(call),
       maybeSingle: async () => resolve(call),
-      then: (ok, fail) => Promise.resolve(resolve(call)).then(ok, fail),
+      then: (ok, fail) => new Promise<Result>((res) => res(resolve(call))).then(ok, fail),
     };
     return b;
   };
 
   const auth = {
+    getSession: vi.fn(async () => ({ data: { session: o.session ? { user: { id: o.session } } : null }, error: null })),
     getClaims: vi.fn(async () => ({ data: o.session ? { claims: { sub: o.session } } : null, error: null })),
     signInAnonymously: vi.fn(async () => ({ data: { user: { id: "anon-1" } }, error: null })),
   };
   const bucket = {
-    upload: async (path: string) => (storage.push({ op: "upload", arg: path }), o.upload ?? { error: null }),
+    upload: async (path: string, body: Blob) => (
+      storage.push({ op: "upload", arg: path }), uploadedTypes.push(body.type), o.upload ?? { error: null }
+    ),
     remove: async (paths: string[]) => (storage.push({ op: "remove", arg: paths }), { error: null }),
     download: async (path: string) => (
       storage.push({ op: "download", arg: path }), o.download ?? { data: new Blob(["r,g,b"]), error: null }
@@ -93,7 +101,7 @@ function fakeSupabase(
   };
   const client = { auth, from, storage: { from: () => bucket } } as unknown as AnalysisClient;
   const ops = () => calls.map((c) => `${c.table}:${c.op}`);
-  return { client, calls, storage, auth, ops };
+  return { client, calls, storage, auth, ops, uploadedTypes };
 }
 
 const colors = (n: number): ColorCount[] =>
@@ -121,6 +129,15 @@ describe("saveAnalysis", () => {
     expect(f.ops()).toEqual(["images:insert", "image_colors:insert", "images:update"]);
     expect(f.storage).toEqual([{ op: "upload", arg: `anon-1/${IMAGE_ID}.csv` }]);
     expect(f.calls[2].payload).toEqual({ summary_csv_path: `anon-1/${IMAGE_ID}.csv` });
+  });
+
+  it.each([
+    ["an untyped Blob", ""],
+    ["a Blob with a charset", "text/csv;charset=utf-8"],
+  ])("uploads %s as exactly text/csv, the type the bucket allows", async (_label, type) => {
+    const f = fakeSupabase();
+    await saveAnalysis(f.client, analysis({ summaryCsv: new Blob(["r,g,b"], { type }) }));
+    expect(f.uploadedTypes).toEqual(["text/csv"]);
   });
 
   it("reuses an existing session", async () => {
@@ -173,6 +190,13 @@ describe("saveAnalysis", () => {
     const f = fakeSupabase({ insertColors: { error: { message: "boom" } } });
     await expect(saveAnalysis(f.client, analysis({ summaryCsv: undefined }))).rejects.toThrow("boom");
     expect(f.storage).toEqual([]);
+    expect(f.ops().at(-1)).toBe("images:delete");
+  });
+
+  it("still removes the uploaded CSV when the colour request throws", async () => {
+    const f = fakeSupabase({ insertColors: "throw" });
+    await expect(saveAnalysis(f.client, analysis())).rejects.toThrow("network down");
+    expect(f.storage.map((s) => s.op)).toEqual(["upload", "remove"]);
     expect(f.ops().at(-1)).toBe("images:delete");
   });
 
@@ -232,13 +256,17 @@ describe("getAnalysis", () => {
     [1000, [[1, 1000]]],
     [1001, [[1, 1000], [1001, 1001]]],
     [2003, [[1, 1000], [1001, 2000], [2001, 2003]]],
+    [4999, [[1, 1000], [1001, 2000], [2001, 3000], [3001, 4000], [4001, 4999]]],
+    [5000, [[1, 1000], [1001, 2000], [2001, 3000], [3001, 4000], [4001, 5000]]],
+    [5001, [[1, 1000], [1001, 2000], [2001, 3000], [3001, 4000], [4001, 5000]]],
     [9000, [[1, 1000], [1001, 2000], [2001, 3000], [3001, 4000], [4001, 5000]]],
   ])("with %i unique colours reads the rank pages %j", async (uniqueColors, expected) => {
     const f = fakeSupabase({ session: "user-1", image: image(uniqueColors) });
     const a = await getAnalysis(f.client, IMAGE_ID);
+    const stored = Math.min(uniqueColors, STORED_COLORS_MAX);
     expect(pages(f)).toEqual(expected);
-    expect(a?.colors).toHaveLength(Math.min(uniqueColors, STORED_COLORS_MAX));
-    expect(a?.colors.map((_, i) => i)).toEqual([...Array(a?.colors.length).keys()]);
+    // Every rank 1..stored exactly once, most frequent first.
+    expect(a?.colors.map((c) => 10_000 - c.count)).toEqual(Array.from({ length: stored }, (_, i) => i + 1));
   });
 
   it("throws when reading the image fails", async () => {
@@ -258,6 +286,13 @@ describe("getSummaryCsv", () => {
     expect(await getSummaryCsv(f.client, "missing__0000000000000000")).toBeNull();
   });
 
+  it("returns null without a session and does not sign in", async () => {
+    const f = fakeSupabase();
+    expect(await getSummaryCsv(f.client, IMAGE_ID)).toBeNull();
+    expect(f.auth.signInAnonymously).not.toHaveBeenCalled();
+    expect(f.calls).toEqual([]);
+  });
+
   it("returns null when no CSV was stored", async () => {
     const f = fakeSupabase({ session: "user-1", image: { data: { summary_csv_path: null }, error: null } });
     expect(await getSummaryCsv(f.client, IMAGE_ID)).toBeNull();
@@ -272,12 +307,18 @@ describe("getSummaryCsv", () => {
     expect(f.storage).toEqual([{ op: "download", arg: path }]);
   });
 
-  it("returns null when the file is gone", async () => {
-    const f = fakeSupabase({
+  const missingFile = (error: object) =>
+    fakeSupabase({
       session: "user-1",
       image: { data: { summary_csv_path: "x/y.csv" }, error: null },
-      download: { data: null, error: { message: "Object not found" } },
+      download: { data: null, error: { message: "Object not found", ...error } },
     });
-    expect(await getSummaryCsv(f.client, IMAGE_ID)).toBeNull();
+
+  it.each([{ status: 400 }, { status: 404 }, { statusCode: "404" }])("returns null when the file is gone (%j)", async (e) => {
+    expect(await getSummaryCsv(missingFile(e).client, IMAGE_ID)).toBeNull();
+  });
+
+  it("throws on other storage errors", async () => {
+    await expect(getSummaryCsv(missingFile({ status: 500 }).client, IMAGE_ID)).rejects.toThrow("Downloading the CSV failed");
   });
 });
