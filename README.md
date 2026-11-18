@@ -73,8 +73,8 @@ ja käivad läbi PR-i.
 
 | Tabel          | Sisu                                                                  |
 | -------------- | --------------------------------------------------------------------- |
-| `images`       | Üks rida pildi kohta: formaat, mõõdud, unikaalsete värvide arv, CSV tee |
-| `image_colors` | Pildi top N värvi: r, g, b, (a), hex, pikslite arv, osakaal %, kasutaja lipp |
+| `images`       | Üks rida pildi kohta: formaat, mõõdud, unikaalsete värvide arv, `top_n`, CSV tee |
+| `image_colors` | Pildi kuni 5000 sagedasemat värvi (sõltumata `top_n`-ist): r, g, b, (a), hex, pikslite arv, osakaal %, kasutaja lipp |
 
 Täielik värvide nimekiri (võib olla sadu tuhandeid ridu) salvestatakse CSV-na
 privaatsesse Storage bucketisse `reports`, kausta `{kasutaja_id}/`.

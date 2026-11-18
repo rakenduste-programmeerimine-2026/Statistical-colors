@@ -63,6 +63,38 @@ describe("images table", () => {
   });
 });
 
+describe("images.top_n", () => {
+  async function insertWithTopN(topN: number | null) {
+    const { rows } = await db.query<{ top_n: number }>(
+      `insert into public.images (owner_id, file_name, format, width, height, unique_colors, top_n)
+       values ($1, 'top.png', 'png', 2, 2, 1, $2) returning top_n`,
+      [USER_A, topN],
+    );
+    return rows[0].top_n;
+  }
+
+  it("defaults to 5000 when the app does not send it", async () => {
+    const id = await insertImage(db);
+    const { rows } = await db.query<{ top_n: number }>(
+      "select top_n from public.images where id = $1",
+      [id],
+    );
+    expect(rows[0].top_n).toBe(5000);
+  });
+
+  it.each([1, 2, 4999, 5000])("accepts %i (inside 1–5000)", async (topN) => {
+    await expect(insertWithTopN(topN)).resolves.toBe(topN);
+  });
+
+  it.each([0, -1, 5001])("rejects %i (outside 1–5000)", async (topN) => {
+    await expect(insertWithTopN(topN)).rejects.toThrow(/images_top_n_range/);
+  });
+
+  it("rejects null", async () => {
+    await expect(insertWithTopN(null)).rejects.toThrow(/null value in column "top_n"/);
+  });
+});
+
 describe("image_colors table", () => {
   async function insertColor(
     imageId: string,
