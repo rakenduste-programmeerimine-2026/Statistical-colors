@@ -2,6 +2,7 @@
 // UI shows it. Returns every problem found instead of throwing.
 import type { Oklch } from "../color/oklch";
 import type { ColorAnalysis, Meta } from "./color-analysis";
+import type { ColorCount } from "./types";
 
 export function checkColorAnalysis(x: ColorAnalysis): string[] {
   const errors: string[] = [];
@@ -58,6 +59,20 @@ export function checkColorAnalysis(x: ColorAnalysis): string[] {
     f.gradient?.forEach((g, j) => color(`findings[${i}].gradient[${j}]`, g.color));
     if (!f.title) bad(`findings[${i}]`, "has no title");
     meta(`findings[${i}]`, f.meta);
+  });
+  return errors;
+}
+
+/** Checks the per-colour fields (#69): chances 0–1, non-empty kinds, known cluster ids. */
+export function checkColorRows(rows: ColorCount[], analysis?: ColorAnalysis): string[] {
+  const errors: string[] = [];
+  const clusters = analysis ? new Set(analysis.palette.map((c) => c.id)) : undefined;
+  rows.forEach((r, i) => {
+    r.artefacts?.forEach((a, j) => {
+      if (!a.kind) errors.push(`colors[${i}].artefacts[${j}]: kind is empty`);
+      if (!(a.chance >= 0 && a.chance <= 1)) errors.push(`colors[${i}].artefacts[${j}]: chance ${a.chance} is outside 0–1`);
+    });
+    if (r.clusterId !== undefined && clusters && !clusters.has(r.clusterId)) errors.push(`colors[${i}]: unknown cluster ${r.clusterId}`);
   });
   return errors;
 }
