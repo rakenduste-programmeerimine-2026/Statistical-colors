@@ -34,6 +34,9 @@ describe("StructureWheel", () => {
     const [lo, hi] = [order.indexOf(Math.min(...order)), order.indexOf(Math.max(...order))];
     if (order[lo] !== order[hi]) expect(radii[hi]).toBeGreaterThan(radii[lo]);
     ideals.forEach((c) => expect(c).toHaveAttribute("fill", "none"));
+    // Halfway between the page and the lightness ring's colour (P-034).
+    ideals.forEach((c) => expect(c).toHaveClass("stroke-delta"));
+    screen.getAllByTestId("lightness").forEach((c) => expect(c).toHaveAttribute("stroke", "var(--color-ink)"));
   });
 
   it("uses only OKLCH and theme colours, never hex or rgb()", () => {

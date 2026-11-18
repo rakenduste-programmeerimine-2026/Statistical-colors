@@ -115,7 +115,7 @@ export function StructureWheel({ structure, palette }: Props) {
           return (
             <g key={`${p.clusterId}-${i}`}>
               <line x1={ideal.x} y1={ideal.y} x2={actual.x} y2={actual.y} stroke="var(--color-ink)" strokeOpacity={0.5} />
-              <circle data-testid="ideal" cx={ideal.x} cy={ideal.y} r={deltaERadius(p.deltaE)} fill="none" stroke="var(--color-ink)" strokeWidth={1.5}>
+              <circle data-testid="ideal" cx={ideal.x} cy={ideal.y} r={deltaERadius(p.deltaE)} fill="none" className="stroke-delta" strokeWidth={1.5}>
                 <title>{`Ideaal: ${formatOklch(p.ideal)}, ΔE ${p.deltaE.toFixed(3)}`}</title>
               </circle>
               {/* Thicker the lighter than the darkest colour, in OKLCH L. */}
