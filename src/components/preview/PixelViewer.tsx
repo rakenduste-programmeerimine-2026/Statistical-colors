@@ -16,6 +16,7 @@ import {
   type Size,
   type View,
 } from "@/core/preview/zoom";
+import { BackgroundPicker, backgroundCss, type BackgroundPreset } from "../BackgroundPicker";
 import { button, hint } from "../ui";
 import { decodeImage, MAX_PREVIEW_PIXELS, PreviewTooLargeError, type DecodedImage } from "./decode";
 
@@ -41,11 +42,20 @@ async function toBlob(source: Blob | string): Promise<Blob> {
   return response.blob();
 }
 
+/** Stage colours the viewer offers (P-037); null is the reference viewer's own stage colour. */
+const STAGE_PRESETS: BackgroundPreset[] = [
+  { label: "vaikimisi", hex: null },
+  { label: "valge", hex: "#ffffff" },
+  { label: "hall", hex: "#808080" },
+  { label: "must", hex: "#000000" },
+];
+
 /**
  * Exact pixel preview, ported from the reference Exact Pixel Viewer (P-019):
  * nearest-neighbour drawing at whole-number zoom, so every screen pixel shows a
  * stored image value and nothing is blended.
  */
+
 export function PixelViewer({ source, name }: { source: Blob | string; name: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [decoded, setDecoded] = useState<Decoded | null>(null);
@@ -53,6 +63,8 @@ export function PixelViewer({ source, name }: { source: Blob | string; name: str
   // Until the user zooms or pans, the view follows Fit, so it adapts when the canvas is resized.
   const [manual, setManual] = useState<{ image: DecodedImage; view: View } | null>(null);
   const [grid, setGrid] = useState(false);
+  // Null keeps the reference viewer's stage colour (P-037).
+  const [stage, setStage] = useState<string | null>(null);
   const [hover, setHover] = useState<Hover | null>(null);
   const drag = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
 
@@ -230,6 +242,9 @@ export function PixelViewer({ source, name }: { source: Blob | string; name: str
           Pikslivõrk
         </label>
       </div>
+      <div className="mt-2">
+        <BackgroundPicker label="Taust" value={stage} onChange={setStage} presets={STAGE_PRESETS} defaultHex="#8a929c" defaultSwatch="bg-stage" />
+      </div>
 
       <canvas
         ref={canvasRef}
@@ -239,6 +254,7 @@ export function PixelViewer({ source, name }: { source: Blob | string; name: str
         role="img"
         aria-label={`${name} täpses eelvaates. Suurenda klahviga +, vähenda klahviga −, 1 on 1:1, 0 mahutab.`}
         className="mt-3 block h-90 w-full cursor-crosshair touch-none rounded-lg bg-stage"
+        style={stage ? { background: backgroundCss(stage) } : undefined}
         onKeyDown={onKeyDown}
         onPointerDown={(e) => {
           const [x, y] = toDevice(e.currentTarget, e);

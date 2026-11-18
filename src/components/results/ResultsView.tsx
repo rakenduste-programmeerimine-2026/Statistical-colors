@@ -10,6 +10,7 @@ import { PixelViewer } from "../preview/PixelViewer";
 import { button, card } from "../ui";
 import { ColorAnalysisSection } from "./ColorAnalysisSection";
 import { ColorTableSection } from "./ColorTableSection";
+import { GamutSection } from "./GamutSection";
 import { saveFile } from "./download";
 
 type Loaded = { status: "loading" } | { status: "missing" } | { status: "ready"; analysis: ImageAnalysis };
@@ -108,6 +109,13 @@ export function ResultsView() {
       )}
 
       {analysis.colorAnalysis && <ColorAnalysisSection analysis={analysis.colorAnalysis} />}
+
+      <GamutSection
+        key={`gamut-${analysis.id}`}
+        colors={analysis.colors}
+        coverage={analysis.colorAnalysis?.gamut}
+        simulated={analysis.colorAnalysis?.status === "simulated"}
+      />
 
       <ColorTableSection key={analysis.id} analysis={analysis} topN={topN} />
     </>

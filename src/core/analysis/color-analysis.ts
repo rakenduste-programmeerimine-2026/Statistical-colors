@@ -214,6 +214,21 @@ export interface FigmaColorFeatures {
   coverage: Record<string, "declared" | "inferred" | "not-detectable" | "not-implemented">;
 }
 
+// ---- gamut coverage: how much of sRGB the image's colours fill (P-035, P-036) ----------------
+
+export interface GamutCoverage {
+  /** The cells are a cubic OKLab grid; a cell is in the gamut when its centre is in sRGB. */
+  space: "oklab";
+  /** Cell size in ΔE_OK (0.02, about one just-noticeable difference). */
+  cellDeltaE: number;
+  /** In-gamut cells that at least one image colour snaps to, and all in-gamut cells. */
+  occupiedCells: number;
+  totalCells: number;
+  /** occupiedCells / totalCells, 0–1. */
+  coverage: number;
+  meta: Meta;
+}
+
 // ---- findings: everything else the ontology describes ------------------------------------
 
 export type OntologyArea =
@@ -260,5 +275,7 @@ export interface ColorAnalysis {
   contrast?: ContrastPair[];
   tokens?: TokenSet;
   figma?: FigmaColorFeatures;
+  /** How much of the sRGB gamut the image's colours occupy (P-035). */
+  gamut?: GamutCoverage;
   findings: Finding[];
 }

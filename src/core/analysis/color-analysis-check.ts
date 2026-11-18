@@ -60,6 +60,14 @@ export function checkColorAnalysis(x: ColorAnalysis): string[] {
     if (!f.title) bad(`findings[${i}]`, "has no title");
     meta(`findings[${i}]`, f.meta);
   });
+  if (x.gamut) {
+    const g = x.gamut;
+    if (!(g.cellDeltaE > 0)) bad("gamut", `cellDeltaE ${g.cellDeltaE} is not positive`);
+    if (!(g.totalCells > 0) || !(g.occupiedCells >= 0) || g.occupiedCells > g.totalCells) bad("gamut", `occupiedCells ${g.occupiedCells} of totalCells ${g.totalCells} is impossible`);
+    if (!(g.coverage >= 0 && g.coverage <= 1)) bad("gamut", `coverage ${g.coverage} is outside 0–1`);
+    else if (g.totalCells > 0 && Math.abs(g.coverage - g.occupiedCells / g.totalCells) > 1e-6) bad("gamut", "coverage is not occupiedCells / totalCells");
+    meta("gamut", g.meta);
+  }
   return errors;
 }
 

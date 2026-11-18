@@ -1,0 +1,94 @@
+import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it } from "vitest";
+import { simulateGamut } from "@/adapters/simulated/gamut";
+import type { ColorCount } from "@/core/analysis/types";
+import { latticeFor } from "@/core/gamut/lattice";
+import { snapColors } from "@/core/gamut/snap";
+import { OKLAB } from "@/core/gamut/space";
+import { describePoint } from "./GamutCanvas";
+import { GamutSection } from "./GamutSection";
+
+const colors: ColorCount[] = [
+  { r: 255, g: 255, b: 255, count: 50, percent: 50 },
+  { r: 200, g: 30, b: 30, count: 30, percent: 30 },
+  { r: 201, g: 30, b: 30, count: 20, percent: 20 },
+];
+const status = (term: string) => screen.getByText(term, { selector: "dt" }).nextElementSibling?.textContent;
+
+describe("GamutSection", () => {
+  it("shows the server's coverage, labelled when simulated", () => {
+    render(<GamutSection colors={colors} coverage={simulateGamut(colors)} simulated />);
+    expect(screen.getByRole("status")).toHaveTextContent("Pilt katab 0.03 % sRGB gamutist (2 / 6789 OKLab-rakku, ΔE 0.02).");
+    expect(screen.getByRole("status")).toHaveTextContent("Näidisandmed");
+  });
+
+  it("says so when the server sent no coverage", () => {
+    render(<GamutSection colors={colors} simulated={false} />);
+    expect(screen.getByRole("status")).toHaveTextContent("Katvust pole server veel saatnud.");
+  });
+
+  it("starts with the notebook's selection and counts (cell 19), in OKLab", () => {
+    render(<GamutSection colors={colors} simulated={false} />);
+    expect(status("Ruum")).toBe("OKLab (a, b, L)");
+    expect(status("Toon")).toBe("keskpunkt 270.0°, laius 30.0°");
+    expect(status("Kroom")).toBe("0.100 kuni 0.200");
+    expect(status("Neutraalsed kaasas")).toBe("ei");
+    expect(status("Võimalikke punkte")).toBe("6789");
+    expect(status("Neutraalseid punkte")).toBe("51");
+    expect(status("Pildi värve")).toBe("3 → 2 punkti");
+  });
+
+  it("switches to CIELAB with its own grid and chroma range", async () => {
+    render(<GamutSection colors={colors} simulated={false} />);
+    await userEvent.setup().click(screen.getByRole("radio", { name: "CIELAB (D50)" }));
+    expect(status("Ruum")).toBe("CIELAB (D50) (a*, b*, L*)");
+    expect(status("Kroom")).toBe("40.0 kuni 80.0");
+    // Estonian number format groups with a no-break space.
+    expect(status("Võimalikke punkte")).toBe("13 000");
+    expect(status("Võrk")).toBe("ΔL* = Δa* = Δb* = 4");
+  });
+
+  it("refuses a chroma minimum above the maximum, like the notebook", () => {
+    render(<GamutSection colors={colors} simulated={false} />);
+    fireEvent.change(screen.getByRole("slider", { name: /Kroom min C/ }), { target: { value: "0.3" } });
+    expect(screen.getByRole("alert")).toHaveTextContent("kroomi miinimum peab olema ≤ maksimum");
+    expect(status("Valitud punkte")).toBe("—");
+  });
+
+  it("selects every coloured point at a hue width of 360°, and the neutrals when asked", () => {
+    render(<GamutSection colors={colors} simulated={false} />);
+    fireEvent.change(screen.getByRole("slider", { name: /Tooni vahemiku laius/ }), { target: { value: "360" } });
+    fireEvent.change(screen.getByRole("slider", { name: /Kroom min C/ }), { target: { value: "0" } });
+    fireEvent.change(screen.getByRole("slider", { name: /Kroom max C/ }), { target: { value: "0.4" } });
+    expect(status("Valitud punkte")).toBe(String(6789 - 51));
+    fireEvent.click(screen.getByRole("checkbox", { name: /Kaasa neutraalsed/ }));
+    expect(status("Valitud punkte")).toBe("6789");
+  });
+
+  it("describes the view for screen readers, with or without the image's colours", async () => {
+    render(<GamutSection colors={colors} coverage={simulateGamut(colors)} simulated />);
+    const canvas = screen.getByRole("img", { name: /Värviruum 3D/ });
+    expect(canvas).toHaveAccessibleName("Värviruum 3D: OKLab, 6789 võimalikku värvi. Pildi 3 värvi täidavad 2 punkti. Pilt katab 0.03 % sRGB gamutist.");
+    expect(canvas).toHaveAttribute("tabindex", "0");
+    await userEvent.setup().click(screen.getByRole("checkbox", { name: "Näita pildi värve" }));
+    expect(canvas).toHaveAccessibleName("Värviruum 3D: OKLab, 6789 võimalikku värvi. Pilt katab 0.03 % sRGB gamutist.");
+  });
+
+  it("explains the camera keys for the chosen mode", async () => {
+    render(<GamutSection colors={colors} simulated={false} />);
+    expect(screen.getByText(/Tiirle: lohista pööramiseks/)).toBeInTheDocument();
+    await userEvent.setup().click(screen.getByRole("radio", { name: "Lenda" }));
+    expect(screen.getByText(/Lenda: W A S D või nooled liigutavad, Q ja E alla ja üles/)).toBeInTheDocument();
+  });
+});
+
+describe("describePoint", () => {
+  it("prints L, a, b and hex like the notebook's hover, plus the image's share when occupied", () => {
+    const lattice = latticeFor(OKLAB);
+    const snapped = snapColors(lattice, colors);
+    const white = snapped.occupied.find((i) => lattice.rgb[3 * i] === 255 && lattice.rgb[3 * i + 1] === 255)!;
+    expect(describePoint(lattice, white, snapped)).toBe("L=1.000  a=0.000  b=0.000  #FFFFFF\nPildi värve: 1, osakaal 50.00 %");
+    expect(describePoint(lattice, 0, null)).not.toMatch(/Pildi värve/);
+  });
+});
