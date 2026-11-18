@@ -42,15 +42,29 @@ Värvituvastuse plaan, etapid ja milestone'id: [`docs/roadmap.md`](docs/roadmap.
 
 ## Supabase
 
-Tiimil on **üks ühine Supabase projekt**. Kontot kasutaja ei loo: äpp kasutab
-Supabase'i *anonymous sign-in*'i, nii et iga brauser saab nähtamatu kasutaja ID
-ja RLS näitab igaühele ainult tema enda analüüse.
+Kontot kasutaja ei loo: äpp kasutab Supabase'i *anonymous sign-in*'i, nii et
+iga brauser saab nähtamatu kasutaja ID ja RLS näitab igaühele ainult tema enda
+analüüse.
 
-### Ühendamine (iga tiimiliige)
+| Keskkond             | Supabase                                         |
+| -------------------- | ------------------------------------------------ |
+| Arendus              | **kohalik** Supabase (`npx supabase start`)      |
+| Testid (`npm test`)  | PGlite – Postgres mälus, Dockerit pole vaja      |
+| Verceli preview      | tiimi pilves projekt                             |
+| Verceli production   | sama pilves projekt                              |
 
-1. Kopeeri `.env.example` → `.env.local`.
-2. Küsi DB rollilt projekti URL ja **publishable key** ning pane need `.env.local`-i.
-   `.env.local` ei lähe Giti. *Secret* / `service_role` võtit ei jaga kunagi.
+### Kohalik arendus (iga tiimiliige)
+
+Vajab Dockerit.
+
+```bash
+npx supabase start    # käivitab kohaliku Supabase'i ja rakendab migratsioonid
+npx supabase status   # näitab API URL-i ja publishable key't
+```
+
+Kopeeri `.env.example` → `.env.local` ja pane sinna `supabase status` väljundist
+API URL ja publishable key. `.env.local` ei lähe Giti. *Secret* / `service_role`
+võtit ei kasutata äpis ega jagata kunagi.
 
 ### Andmebaasi skeem
 
@@ -65,7 +79,16 @@ ja käivad läbi PR-i.
 Täielik värvide nimekiri (võib olla sadu tuhandeid ridu) salvestatakse CSV-na
 privaatsesse Storage bucketisse `reports`, kausta `{kasutaja_id}/`.
 
-### Migratsioonide rakendamine (DB roll)
+### Migratsioonide rakendamine pilves projektile (DB roll)
+
+Production ja preview kasutavad sama andmebaasi ning `main` läheb pärast rohelist
+CI-d kohe production'isse. Seepärast:
+
+1. Migratsioon tuleb **oma PR-is** ja rakendatakse pilves projektile kohe pärast
+   selle merge'i (DB testid rohelised).
+2. Kood, mis uut skeemi vajab, merge'itakse **alles pärast seda**.
+3. Migratsioon peab töötama ka juba deploy'tud koodiga (nt uus veerg vaikeväärtusega,
+   mitte olemasoleva ümbernimetamine).
 
 ```bash
 npx supabase login
@@ -76,6 +99,38 @@ npm run db:types   # uuendab src/lib/supabase/database.types.ts
 
 Andmebaasi testid (`tests/db`) käivitavad samad migratsioonid PGlite'is
 (Postgres mälus) – Dockerit ega päris Supabase'i pole testimiseks vaja.
+
+## Deploy
+
+Production: **https://statistical-colors.vercel.app**
+
+Deploy käib GitHub Actionsiga ([`.github/workflows/deploy.yml`](.github/workflows/deploy.yml))
+läbi Vercel CLI. Verceli GitHubi rakendust ei kasutata.
+
+- **Preview:** iga PR `main`-i või `develop-frontend`-i vastu saab oma preview
+  deploy ja lingi PR-i kommentaarina. Iga uus push uuendab sama kommentaari.
+- **Production:** iga merge `main`-i läheb production'isse, aga **alles siis,
+  kui CI** (lint, typecheck, testid, build) **on sellel commitil roheline**.
+- Preview ja production kasutavad **sama pilves Supabase projekti**. Preview,
+  mis vajab veel rakendamata migratsiooni, võib seetõttu ebaõnnestuda.
+
+Seadistus väljaspool repot (DB roll):
+
+| Kus           | Mis                                                                    |
+| ------------- | ---------------------------------------------------------------------- |
+| Vercel        | projekt `statistical-colors` (Hobby), env `NEXT_PUBLIC_SUPABASE_URL` ja `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (Production, Preview) |
+| GitHub        | repo secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID`      |
+| Vercel        | Git'iga ühendamata ([`vercel.json`](vercel.json) keelab Git-deploy'd); Deployment Protection → Vercel Authentication väljas, et preview-lingid oleksid tiimile nähtavad |
+| Supabase      | pilves projekt, anonymous sign-ins sees                                |
+
+- `VERCEL_TOKEN` kehtib ainult Verceli tiimi piires ja aegub 90 päevaga
+  (2027-02-16), siis tuleb luua uus token ja `gh secret set VERCEL_TOKEN`.
+- Forkidest tulnud PR-id deploy't ei saa. Kõigil, kellel on repos kirjutamisõigus,
+  on workflow kaudu ligipääs tokenile – see on teadlik valik ühe tokeniga tiimis.
+- **Rollback:** käivita GitHub Actionsis vana `main`-i commiti CI uuesti
+  ("Re-run") – roheline CI deploy'b selle commiti uuesti production'isse.
+- PR-id `develop-frontend`-i vastu saavad preview alles siis, kui `deploy.yml`
+  on ka `develop-frontend`-is.
 
 ## Töövoog
 

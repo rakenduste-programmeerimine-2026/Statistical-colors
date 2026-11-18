@@ -47,6 +47,14 @@ People enter the real tokens by hand (#19). A record is flagged when the predict
 | M4: Polish and presentation | 2026-12-09 | #33, #34, #57–#59, #61–#64, #66–#68 |
 | Backlog | — | #35 (component roles and relations; its scene data now comes from #44–#46) |
 
+## Deployment and environments
+
+Set up outside the repository for #9; details in the README "Deploy" section.
+
+- Production is https://statistical-colors.vercel.app, deployed by `.github/workflows/deploy.yml` after CI passes on `main`. Every pull request into `main` or `develop-frontend` gets a preview.
+- Development uses local Supabase, and tests use PGlite. Vercel preview and production share one hosted Supabase project. Migrations reach it through `npm run db:push`, run by the database role after the migration's pull request merges.
+- External items: the Vercel project `statistical-colors` (Hobby, not connected to Git), the repository secrets `VERCEL_TOKEN`, `VERCEL_ORG_ID` and `VERCEL_PROJECT_ID`, and the hosted Supabase project. `VERCEL_TOKEN` expires on 2027-02-16.
+
 ## Frontend and backend boundary
 
 The UI (#37, ported from the original Flask app) talks to the backend only through two ports:
