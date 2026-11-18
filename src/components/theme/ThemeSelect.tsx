@@ -4,6 +4,7 @@ import * as Select from "@radix-ui/react-select";
 import type { Theme } from "@/core/theme/theme";
 import { input } from "../ui";
 import { toOklch } from "./ThemeProvider";
+import { formatOklch, hexToOklch } from "@/core/color/oklch";
 
 /** Split swatch: left half background, right half text colour, as in the original. */
 function ThemeSwatch({ theme }: { theme: Pick<Theme, "bg" | "text"> }) {
@@ -54,11 +55,17 @@ export function ThemeSelect({ themes, currentId, onSelect, shown, labelId }: Pro
                 className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2.5 py-2 outline-none data-highlighted:bg-ink/5 data-[state=checked]:outline-2 data-[state=checked]:outline-ink/25"
               >
                 <ThemeSwatch theme={theme} />
-                <Select.ItemText>
-                  <span className="font-mono">
-                    {theme.bg} / {theme.text}
+                <span className="flex flex-col">
+                  <Select.ItemText>
+                    <span className="font-mono">
+                      {theme.bg} / {theme.text}
+                    </span>
+                  </Select.ItemText>
+                  {/* Outside ItemText, so typeahead and the trigger keep the hex label. */}
+                  <span className="font-mono text-xs text-muted">
+                    {formatOklch(hexToOklch(theme.bg))} / {formatOklch(hexToOklch(theme.text))}
                   </span>
-                </Select.ItemText>
+                </span>
               </Select.Item>
             ))}
           </Select.Viewport>
