@@ -16,6 +16,10 @@ Also known, with no separate kind yet:
 - **premultiplied-alpha halos:** dark fringes around transparent edges;
 - **recompression:** reposted images, caveat `reposted-recompressed`.
 
+## Per-colour chance (#69, P-033)
+
+The server also reports, per colour in the results table, the chance that the colour is an artefact rather than a chosen colour (`ColorCount.artefacts`). [UNDERSTANDING] For `artefact.antialias-blend` this is the share of that colour's pixels that blend snap assigned to two neighbours. A colour that only appears at edges scores near 1; a flat swatch that is also a blend of two others, by coincidence, scores near 0. The table filters at 0.5 ("tõenäoline" / "puhas").
+
 ## Effect on other results
 
 - [UNDERSTANDING] Antialias blends and ClearType create **fake hues** between real colours. They can complete a false harmony or ramp unless removed first (`11`).

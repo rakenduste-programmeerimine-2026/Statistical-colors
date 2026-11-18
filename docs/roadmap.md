@@ -43,7 +43,7 @@ People enter the real tokens by hand (#19). A record is flagged when the predict
 |---|---|---|
 | M1: Setup and database | 2026-11-18 | #4–#10, #25 |
 | M2: MVP, images in, statistics out | 2026-11-21 | #11–#17, #37–#40, #42, #44–#48 |
-| M3: Colour space and user test | 2026-11-25 | #18–#21, #27–#32, #36, #54–#56, #60, #65 |
+| M3: Colour space and user test | 2026-11-25 | #18–#21, #27–#32, #36, #54–#56, #60, #65, #69, #70 |
 | M4: Polish and presentation | 2026-12-09 | #33, #34, #57–#59, #61–#64, #66–#68 |
 | Backlog | — | #35 (component roles and relations; its scene data now comes from #44–#46) |
 
@@ -67,6 +67,7 @@ The server computes the colour analysis (palette clusters, structures with per-p
 | UI structure and dark mode | #60, #61 (extension) |
 | Lighting, artefacts, accessibility | #62, #63, #64 |
 | Figma features and tokens | #66 (plugin), #67, #68 |
+| Per-colour artefact chance, cluster id, all colours (table filters, #70) | #69 |
 
 ## Ownership
 

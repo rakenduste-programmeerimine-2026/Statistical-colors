@@ -55,6 +55,19 @@ stateDiagram-v2
 
 The model buttons are always in the DOM and keyboard-reachable. The inactive ones are dimmed (40 % opacity) until the wheel is hovered or anything inside it has focus, so they can still be found and tapped on touch devices; the active one is always fully visible.
 
+## Colour table filters (#70)
+
+Code: `src/components/results/ColorTableSection.tsx` (`filter`: band, cluster, artefact). Status: implicit, kept implicit [UNDERSTANDING]: one value object, every combination valid, keyed on the analysis id so a new analysis starts unfiltered.
+
+| From | Event | To | Source |
+|---|---|---|---|
+| Unfiltered | choose a share band, cluster or artefact class | Filtered (that part set) | [PROMPT P-032] "add filtering by equivalance class" |
+| Filtered | choose another value in the same group | Filtered (replaced) | [UNDERSTANDING] one value per group |
+| Filtered | choose "kõik" in every group | Unfiltered | [UNDERSTANDING] |
+| Filtered | the matches are empty | Filtered, "Ükski värv ei vasta filtrile." | [UNDERSTANDING] |
+
+Groups combine with AND [PROMPT P-033 item 2]. Filters run over every colour held and show up to N matches [PROMPT P-033 item 3]. Colours without an artefact value match neither "tõenäoline" nor "puhas" [UNDERSTANDING].
+
 ## Unknowns
 
 - A new analysis for the same page (re-fetch) whose structure ids no longer contain `selectedId`: `selected` becomes undefined and the right column is empty until the user selects again. [UNDERSTANDING] The results page does not re-fetch today, so this cannot happen yet.

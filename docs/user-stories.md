@@ -354,3 +354,53 @@ Acceptance criteria:
 - Given a dark-mode finding, then it shows under "Kasutajaliides" with severity as text, confidence, provenance, "pikslid ja paigutus" and its caveats.
 - Given a kind the UI does not know, then it renders with the server's title.
 - Given a simulated analysis, then a note says it is example data.
+
+## Harmony lightness and colour table filters (#70)
+
+### US-210: See how light each harmony colour is
+
+Automaton: Results colour analysis, Harmony (any model)
+Source: [PROMPT P-032] "use the outer thickness of the ring around the color point to indicate the difference visually the thicker the lighter it is perceptually compared to the lowest perceptual brightness color"
+
+As a designer, I want each colour's ring to thicken with its lightness above the darkest colour, so that I can compare lightness without reading numbers.
+
+Acceptance criteria:
+- Given a harmony, then the darkest colour (OKLCH L) has a 1 px ring and lighter colours thicker ones (30 px per unit ΔL, at most 16 px).
+- Given I switch to HSL, HSV, HWB or RYB, then the ring widths do not change (OKLCH L everywhere).
+- Given the wheel, then its hue ring is drawn at the median OKLCH lightness of the harmony's colours, on every model.
+
+### US-211: See which colours are probably blend pixels or artefacts
+
+Automaton: (table column, no state)
+Source: [PROMPT P-032] "show the chance of segupikslid, artefacts in the 5000 colors thinghy"
+
+As a designer, I want each colour's chance of being a blend pixel or artefact, so that I can ignore colours nobody chose.
+
+Acceptance criteria:
+- Given the server sent a chance, then the row shows the most likely kind, its chance in percent and a meter.
+- Given none, then the cell shows "—".
+- Given simulated values, then a note above the table says so.
+
+### US-212: Filter colours by rough share
+
+Automaton: Colour table filters, Unfiltered → Filtered
+Source: [PROMPT P-032] "if there are are rough percentage clusters allow to filter by them not just the 5000 most common"
+
+As a designer, I want to pick a share band, so that I can look at, say, all the colours around 1 % at once.
+
+Acceptance criteria:
+- Given shares with gaps of at least half a decade, then each group is a band chip with its range and colour count; with no gaps, decade bands.
+- Given I pick a band, then the table shows its colours, including ones beyond the top N, and a status line says how many match.
+- Boundary: a gap of exactly 0.5 decades splits; 0.4996 does not.
+
+### US-213: Filter by colour cluster and artefact class
+
+Automaton: Colour table filters, Filtered → Filtered
+Source: [PROMPT P-033] items 2 and 3
+
+As a designer, I want to combine a cluster and an artefact class with the share band, so that I can find, for example, the clean colours of one hue family.
+
+Acceptance criteria:
+- Given a cluster chip, then only colours the server put in that cluster remain.
+- Given "tõenäoline (≥ 50 %)", then colours with a chance of exactly 0.5 are included; "puhas (< 50 %)" includes 0.49.
+- Given filters that match nothing, then the status says "Ükski värv ei vasta filtrile.".
