@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { AnalysisFailedError, InvalidImageError } from "@/core/analysis/analysis-service";
 import { describeAnalysisServiceContract } from "@/core/analysis/analysis-service.contract";
-import type { PixelDecoder } from "@/core/decode-image";
+import { ExactDecodingUnsupportedError, type PixelDecoder } from "@/core/decode-image";
 import { memorySupabase, type FailingCall } from "@/test/memory-supabase";
 import { SupabaseAnalysisService } from "./supabase-analysis-service";
 
@@ -50,4 +51,48 @@ describe("SupabaseAnalysisService", () => {
     expect(await reloaded.getAnalysis(id)).toEqual(first);
   });
 
+  it("builds the pixel CSV from the latest analysis", async () => {
+    const { service: s } = service();
+    const id = await s.analyze(png(), options);
+    const csv = (await s.getCsv(id, "pixels"))!;
+    expect(csv.fileName).toBe(`${id}_pixels.csv`);
+    expect(await csv.content.text()).toBe(
+      "x,y,r,g,b,a\r\n0,0,255,0,0,255\r\n1,0,255,0,0,255\r\n2,0,0,255,0,128\r\n" +
+        "0,1,0,0,255,255\r\n1,1,255,0,0,255\r\n2,1,255,255,255,255\r\n",
+    );
+  });
+
+  it("has no pixel CSV for an earlier analysis or after a reload (PLACEHOLDER #38)", async () => {
+    const { service: s, db } = service();
+    const first = await s.analyze(png(), options);
+    const second = await s.analyze(png(), options);
+    expect(await s.getCsv(first, "pixels")).toBeNull();
+    expect(await s.getCsv(second, "pixels")).not.toBeNull();
+    expect(await new SupabaseAnalysisService(() => db.client).getCsv(second, "pixels")).toBeNull();
+  });
+
+  it("drops the previous pixels even when the next analysis fails", async () => {
+    const fail: FailingCall[] = [];
+    const { service: s } = service(fail);
+    const id = await s.analyze(png(), options);
+    fail.push("images:insert");
+    await expect(s.analyze(png(), options)).rejects.toBeInstanceOf(AnalysisFailedError);
+    expect(await s.getCsv(id, "pixels")).toBeNull();
+  });
+
+  it.each([
+    ["an unsupported format", new File(["GIF7"], "x.gif"), fakeDecoder()],
+    ["a file the browser cannot decode", png(), fakeDecoder(() => Promise.reject(new DOMException("bad", "InvalidStateError")))],
+  ])("rejects %s as an invalid image", async (_label, file, decoder) => {
+    await expect(service([], decoder).service.analyze(file, options)).rejects.toBeInstanceOf(InvalidImageError);
+  });
+
+  it.each<[string, FailingCall[], PixelDecoder]>([
+    ["exact decoding is not supported", [], fakeDecoder(() => Promise.reject(new ExactDecodingUnsupportedError()))],
+    ["anonymous sign-in fails", ["auth:signIn"], fakeDecoder()],
+    ["saving the image fails", ["images:insert"], fakeDecoder()],
+    ["uploading the summary CSV fails", ["storage:upload"], fakeDecoder()],
+  ])("reports a failed analysis when %s", async (_label, fail, decoder) => {
+    await expect(service(fail, decoder).service.analyze(png(), options)).rejects.toBeInstanceOf(AnalysisFailedError);
+  });
 });
