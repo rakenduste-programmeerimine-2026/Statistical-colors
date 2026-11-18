@@ -1,7 +1,7 @@
 // The colour table's equivalence-class filter (P-032, P-033 items 2 and 3):
 // share band, colour cluster and artefact chance, combined with AND.
 import { bandOf, type ShareBand } from "./share-bands";
-import type { ColorCount } from "./types";
+import type { ColorArtefact, ColorCount } from "./types";
 
 /** At or above this chance a colour counts as a likely blend pixel or artefact. */
 export const LIKELY_ARTEFACT = 0.5;
@@ -14,9 +14,9 @@ export interface ColorFilter {
 
 export const NO_FILTER: ColorFilter = { band: null, cluster: null, artefact: "all" };
 
-/** The highest artefact chance the server sent for a colour, or undefined. */
-export function topArtefact(c: ColorCount) {
-  return c.artefacts?.reduce((best, a) => (a.chance > best.chance ? a : best));
+/** The highest artefact chance the server sent for a colour; undefined when there is none (including an empty list). */
+export function topArtefact(c: ColorCount): ColorArtefact | undefined {
+  return c.artefacts?.reduce<ColorArtefact | undefined>((best, a) => (!best || a.chance > best.chance ? a : best), undefined);
 }
 
 export function isFiltered(f: ColorFilter): boolean {

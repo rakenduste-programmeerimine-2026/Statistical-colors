@@ -45,5 +45,8 @@ describe("topArtefact", () => {
   it("picks the highest chance, or nothing", () => {
     expect(topArtefact({ ...row(1), artefacts: [{ kind: "a", chance: 0.2 }, { kind: "b", chance: 0.7 }] })?.kind).toBe("b");
     expect(topArtefact(row(1))).toBeUndefined();
+    // A server may send an empty list; it must not throw.
+    expect(topArtefact({ ...row(1), artefacts: [] })).toBeUndefined();
+    expect(filterColors([{ ...row(1), artefacts: [] }], { ...NO_FILTER, artefact: "likely" }, shareBands([1]))).toEqual([]);
   });
 });
