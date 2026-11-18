@@ -73,6 +73,24 @@ These go on each row of `ImageAnalysis.colors`, the colour list behind the "sage
 - **Check:** `checkColorRows()` checks these fields (chance 0–1, non-empty kind, known cluster ids).
 - **Share bands** are computed in the browser from `percent` alone (`src/core/analysis/share-bands.ts`), so the server sends nothing for them.
 
+## Gamut coverage (#74, P-035, P-036)
+
+`colorAnalysis.gamut` says how much of the sRGB gamut the image's colours occupy. The 3D view on the results page shows it as a headline (#75).
+
+| Field | Meaning |
+|---|---|
+| `space` | `"oklab"` |
+| `cellDeltaE` | Lattice step, 0.02 ΔE_OK |
+| `totalCells` | In-gamut points of a cubic OKLab grid with that step: 6,789 [AUDIT: experiment E10] |
+| `occupiedCells` | Points that at least one image colour snaps to (its nearest in-gamut point) |
+| `coverage` | `occupiedCells / totalCells`, 0–1 |
+| `meta` | As everywhere |
+
+- **Reference code:** the frontend uses the same lattice and snapping for drawing (`src/core/gamut/lattice.ts`, `snap.ts`), and the stub uses it to simulate the figure. An unverified prototype is `prototypes/colour-analysis/E10-gamut-lattice.mts`.
+- **Colours counted:** every colour of the image counts (all of them, not the top N; #69).
+- **Check:** `checkColorAnalysis` verifies that `coverage` equals `occupiedCells / totalCells`.
+- **The 3D view gets nothing else from the server.** It builds the lattice and snaps `analysis.colors` itself.
+
 ## Server steps and default parameters
 
 [UNDERSTANDING] Suggested order and defaults; the backend team decides the final values.

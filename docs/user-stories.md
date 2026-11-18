@@ -404,3 +404,54 @@ Acceptance criteria:
 - Given a cluster chip, then only colours the server put in that cluster remain.
 - Given "tõenäoline (≥ 50 %)", then colours with a chance of exactly 0.5 are included; "puhas (< 50 %)" includes 0.49.
 - Given filters that match nothing, then the status says "Ükski värv ei vasta filtrile.".
+
+## 3D colour-space view (#75)
+
+### US-214: Browse the sRGB gamut like the notebook
+
+Automaton: 3D colour-space view, controls
+Source: [PROMPT P-035] "step one is feature parity"
+
+As a designer, I want the sampled sRGB gamut in 3D with a hue and chroma range selection, so that I can see where a range of colours lies.
+
+Acceptance criteria:
+- Given the view, then every in-gamut lattice point shows in faint grey and the selected range in its own colour, with counts of all, selected and neutral points.
+- Given a hue width of 360°, then every coloured point is selected; given "include neutrals", the grey axis is too.
+- Given a chroma minimum above the maximum, then "Vigane valik" is shown and nothing is selected.
+- Given I switch to CIELAB, then the lattice is rebuilt with ΔE*ab 4 and the chroma range becomes 40–80.
+
+### US-215: See how much of the gamut the image covers
+
+Automaton: 3D colour-space view, image colours
+Source: [PROMPT P-035] "The idea is to show visually how much of the whole the pixels cover."
+
+As a designer, I want the image's colours coloured in on an even lattice with the coverage figure, so that I see at a glance how much of sRGB the image uses.
+
+Acceptance criteria:
+- Given an image, then each of its colours colours in its nearest lattice point, sized by its summed share, with a contrasting ring.
+- Given the server's coverage, then the headline reads "Pilt katab X % sRGB gamutist"; given a simulated one, it says so; given none, it says the server has not sent it.
+- Given I hover an occupied point, then I see L, a, b, hex, and the number of image colours and their share.
+
+### US-216: Move freely through the colour space
+
+Automaton: 3D colour-space view, camera
+Source: [PROMPT P-035] "allowing the user to move around the camera in open space"
+
+As a designer, I want to orbit around the gamut or fly through it, so that I can look at any part closely.
+
+Acceptance criteria:
+- Given orbit mode, then dragging turns around the gamut centre and scrolling zooms (distance 0.3–6).
+- Given fly mode and focus on the view, then W A S D or the arrows move, Q and E go down and up, and dragging looks around.
+- Given "Lähtesta vaade", or a new space, then the default three-quarter view returns.
+
+### US-217: Choose the background of a viewer
+
+Automaton: (setting, no state machine)
+Source: [PROMPT P-037] "allow to change the background color of the 3d pointcloud and the picture viewer thingy"
+
+As a designer, I want to set the background of the 3D view and the pixel viewer, so that colours can be judged against white, grey or black.
+
+Acceptance criteria:
+- Given a preset or any colour, then only that view's background changes; the page theme does not.
+- Given a dark background in the 3D view, then its text, rings and faint lattice turn light.
+- Given "vaikimisi" or "lehe taust", then the view returns to its default.
