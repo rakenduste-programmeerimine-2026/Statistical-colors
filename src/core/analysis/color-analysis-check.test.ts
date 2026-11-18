@@ -1,15 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { generateColorAnalysis } from "@/adapters/simulated/color-analysis";
 import { prng } from "@/adapters/simulated/random";
+import { simulateGamut } from "@/adapters/simulated/gamut";
 import { checkColorAnalysis } from "./color-analysis-check";
 import type { ColorAnalysis } from "./color-analysis";
 import { findingLabel, FINDING_LABELS, structureLabel, STRUCTURE_LABELS } from "./ontology";
 
 const valid = () => generateColorAnalysis(prng(7));
+const gamut = () => simulateGamut([{ r: 9, g: 9, b: 9, count: 1, percent: 100 }]);
 
 describe("checkColorAnalysis", () => {
-  it("accepts a consistent analysis", () => {
+  it("accepts a consistent analysis, with and without gamut coverage", () => {
     expect(checkColorAnalysis(valid())).toEqual([]);
+    expect(checkColorAnalysis({ ...valid(), gamut: gamut() })).toEqual([]);
   });
 
   it.each<[string, (x: ColorAnalysis) => void, RegExp]>([
@@ -28,6 +31,9 @@ describe("checkColorAnalysis", () => {
     ["contrast ratio under 1", (x) => void (x.contrast![0].ratio = 0.9), /ratio 0.9 is outside 1–21/],
     ["confidence over 1", (x) => void (x.findings[0].meta.confidence = 1.5), /confidence 1.5 is outside 0–1/],
     ["finding without a title", (x) => void (x.findings[0].title = ""), /has no title/],
+    ["gamut coverage over 1", (x) => void (x.gamut = { ...gamut(), coverage: 1.5 }), /gamut: coverage 1.5 is outside 0–1/],
+    ["gamut cells that do not add up", (x) => void (x.gamut = { ...gamut(), occupiedCells: 9000 }), /occupiedCells 9000 of totalCells 6789 is impossible/],
+    ["gamut coverage that is not the cell share", (x) => void (x.gamut = { ...gamut(), coverage: 0.5 }), /coverage is not occupiedCells \/ totalCells/],
   ])("reports %s", (_, spoil, message) => {
     const x = valid();
     spoil(x);
