@@ -7,8 +7,8 @@ Code locations:
 
 Decision:
 - Settings and camera: keep implicit. [UNDERSTANDING] The settings are independent values, every combination is valid, and the selection is derived from them.
-- Redraw scheduler and held-key loop (machines 1 and 2 below): `state-machine-analyst` recommends making them explicit as one tested frame-loop helper; awaiting the user's go-ahead (Standing rule 9).
-- Hover readout and pointer drag (machines 3 and 4): keep implicit, with small fixes.
+- Redraw scheduler and held-key loop (machines 1 and 2 below): made explicit (#75) as one tested loop, `src/core/gamut/frame-loop.ts` (states idle and pending), on `state-machine-analyst`'s recommendation and with the user's go-ahead ("Yes, refactor", 2026-11-18). Key movement is the pure, tested `applyKeys` in `src/core/gamut/camera.ts`.
+- Hover readout and pointer drag (machines 3 and 4): kept implicit, with small fixes (the readout clears when the camera moves; a cancelled touch or lost capture ends a drag; the leave listener is removed on cleanup).
 
 Analysis: `state-machine-analyst`, 2026-11-18, after the blank-canvas bug in `docs/bugs/README.md`. Its findings are tagged [AUDIT: state-machine-analyst] below.
 
@@ -85,7 +85,17 @@ stateDiagram-v2
 
 | Machine | State lives in | Invalid combinations [AUDIT: state-machine-analyst] | Verdict |
 |---|---|---|---|
-| 1 Redraw scheduler | `rafRef`, `schedule`, the unmount cleanup | A pending id with no queued frame: the logged blank-canvas bug, fixed by resetting the id. A frame can also draw twice while a key loop runs (wasted work) | Make explicit (with 2), awaiting approval |
-| 2 Held-key loop | `keysRef`, `last`, `step`, `onKey` | Two loops at once when one key is released and another pressed within a frame (extra full redraws). A loop from an earlier effect can keep running with the old mode. A key stays held after Shift changes its name (`=` vs `+`). Ctrl/Cmd shortcuts are swallowed | Make explicit (with 1), awaiting approval |
+| 1 Redraw scheduler | was `rafRef`; now `frameLoop` | A pending id with no queued frame: the logged blank-canvas bug, fixed by resetting the id. A frame can also draw twice while a key loop runs (wasted work) | Made explicit (with 2) |
+| 2 Held-key loop | was `keysRef`, `last`, `step`; now `frameLoop` with `keysRef` of physical key codes | Two loops at once when one key is released and another pressed within a frame (extra full redraws). A loop from an earlier effect can keep running with the old mode. A key stays held after Shift changes its name (`=` vs `+`). Ctrl/Cmd shortcuts are swallowed | Made explicit (with 1); keys are physical codes, and Ctrl, Cmd and Alt combinations are left to the browser |
 | 3 Hover readout | `hover` scoped by `view` | Reappears after switching space and back; stays while the wheel or keys move the camera; the `pointerleave` listener is not removed on cleanup | Keep implicit; small fixes |
 | 4 Pointer drag | `drag` (effect-local) | Stays set after a cancelled touch or a release outside the canvas without capture; multi-touch jumps | Keep implicit; small fixes |
+
+### The explicit frame loop
+
+| From | Event | To | Source |
+|---|---|---|---|
+| idle | request (a redraw, or a movement key goes down) | pending (one frame queued) | [AUDIT: frame-loop.test.ts] |
+| pending | request | pending (ignored, no second frame) | [AUDIT: frame-loop.test.ts] |
+| pending | frame fires, keys still held | pending (next frame queued, dt from the clock, 0–0.05 s) | [AUDIT: frame-loop.test.ts] |
+| pending | frame fires, no keys held | idle | [AUDIT: frame-loop.test.ts] |
+| any | dispose (unmount) | idle, queued frame cancelled | [AUDIT: frame-loop.test.ts], regression test for the blank canvas |
