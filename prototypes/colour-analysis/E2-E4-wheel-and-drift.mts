@@ -6,7 +6,7 @@
 // E2: the largest constant chroma that stays inside sRGB for every hue, per
 // lightness (for drawing the OKLCH hue ring). E4: harmonies built in HSL, HSV
 // and RYB, measured in OKLCH (how far each spoke drifts from the ideal).
-// Run: node claude-setup/experiments/E2-E4-wheel-and-drift.mts
+// Run: node prototypes/colour-analysis/E2-E4-wheel-and-drift.mts
 
 const toLin = (v: number) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
 const fromLin = (c: number) => (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055);

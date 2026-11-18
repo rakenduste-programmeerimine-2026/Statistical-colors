@@ -10,7 +10,7 @@
 //   moves h to the spoke, so ΔE_OK is the distance to the ideal OKLCH structure.
 // - Ramps by axis and path laws in OKLab: tonal ladder (h const, L equal steps),
 //   iso-lightness equal-ΔE (L const, collinear, equal steps), hue sweep (L, C const, h equal steps).
-// Run: node claude-setup/experiments/E3-E8-structures.mts
+// Run: node prototypes/colour-analysis/E3-E8-structures.mts
 import { readFileSync } from "node:fs";
 
 // ---------- colour maths (CSS Color 4 matrices) ----------

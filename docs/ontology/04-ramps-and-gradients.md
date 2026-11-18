@@ -17,7 +17,7 @@ h const, L arith or mono, and C usually rising and then falling (highest in the 
 
 ## Equal-lightness, equal-step ramps (`ramp.iso-lightness-equal-step`)
 
-[PROMPT P-031] "a gradiant of colors with a same lightness where every color is some delta E apart from other colors"
+[PROMPT P-030] "a gradiant of colors with a same lightness where every color is some delta E apart from other colors"
 
 - L `const` (spread ≤ 0.02), path `collinear` or `arc`, and consecutive ΔE equal (CV ≤ 0.15).
 - `step.target` is the mean step and `step.deltaEs` lists each step. The UI shows the strip with each step's ΔE.

@@ -10,8 +10,8 @@ Each statement is tagged by source:
 
 ## Scope
 
-- [PROMPT P-031] 8-bit sRGB only: "No hdr or wider color spaces stick to srgb".
-- [PROMPT P-031] Only what is detectable "reasonably and reliably without machine learning for now based on the pictures or with the extra information from screenshot tools".
+- [PROMPT P-030] 8-bit sRGB only: "No hdr or wider color spaces stick to srgb".
+- [PROMPT P-030] Only what is detectable "reasonably and reliably without machine learning for now based on the pictures or with the extra information from screenshot tools".
 - [UNDERSTANDING] The **reliability rule**: every code lists what it needs (`pixels`, `pixels+layout` or `scene`), the test it runs, its thresholds, and the inputs where it stays undetermined. A kind with no such test is not in the registry.
 
 **Out of scope:**

@@ -311,7 +311,7 @@ Acceptance criteria:
 ### US-206: See a harmony and how far each colour is from it
 
 Automaton: Results colour analysis, (load) → Harmony / OKLCH
-Source: [PROMPT P-031] "Display the delta E from the ideal oklch harmony visually by increasing the size of the empty circle on the wheel"
+Source: [PROMPT P-030] "Display the delta E from the ideal oklch harmony visually by increasing the size of the empty circle on the wheel"
 
 As a designer, I want the harmony drawn on an OKLCH wheel with an empty circle per ideal point, so that I can see at a glance which colours are off.
 
@@ -323,7 +323,7 @@ Acceptance criteria:
 ### US-207: See the harmony on the wheel it was built on
 
 Automaton: Results colour analysis, Harmony / OKLCH → Harmony / OtherModel
-Source: [PROMPT P-031] "add an option of showing them on the color wheel in their original colorwheel, but default view is oklch and on hover they can choose other colomodels"
+Source: [PROMPT P-030] "add an option of showing them on the color wheel in their original colorwheel, but default view is oklch and on hover they can choose other colomodels"
 
 As a designer, I want to switch the wheel to HSL, HSV, HWB or RYB, so that I can see that a palette built in HSL is exact there.
 
@@ -335,7 +335,7 @@ Acceptance criteria:
 ### US-208: See several structures, including ramps
 
 Automaton: Results colour analysis, Harmony ↔ Strip
-Source: [PROMPT P-031] "Allow for multible per image. Remember to support more than just hormonies"
+Source: [PROMPT P-030] "Allow for multible per image. Remember to support more than just hormonies"
 
 As a designer, I want a list of every structure found, so that I can inspect harmonies and ramps in the same image.
 
@@ -346,7 +346,7 @@ Acceptance criteria:
 ### US-209: Read findings, including dark mode, with how they were found
 
 Automaton: (findings, no state)
-Source: [PROMPT P-031] "detect stuff like this is a ui with dark mode but keep it to stuff that can be detected reasonably and reliably without machine learning"
+Source: [PROMPT P-030] "detect stuff like this is a ui with dark mode but keep it to stuff that can be detected reasonably and reliably without machine learning"
 
 As a designer, I want findings grouped by area with confidence and what they needed, so that I know how far to trust them.
 

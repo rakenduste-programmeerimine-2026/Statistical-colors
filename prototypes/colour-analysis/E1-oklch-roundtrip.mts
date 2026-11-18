@@ -6,7 +6,7 @@
 // E1: does `oklch(L% C h)` text with 2/5/2 decimals round-trip every 8-bit sRGB
 // colour, with the CSS Color 4 matrices browsers use? Plus E7: hue error for a
 // one-step change in an 8-bit channel, as a function of chroma (gives c0).
-// Run: node claude-setup/experiments/E1-oklch-roundtrip.mts
+// Run: node prototypes/colour-analysis/E1-oklch-roundtrip.mts
 
 const toLin = (v: number) => {
   const c = v / 255;

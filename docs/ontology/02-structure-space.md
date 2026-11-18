@@ -1,6 +1,6 @@
 # 02 The structure space
 
-[PROMPT P-031] "support more than just hormonies eg that this is a gradiant of colors with a same lightness where every color is some delta E apart from other colors map the possibility space thoroughly and mathamatically"
+[PROMPT P-030] "support more than just hormonies eg that this is a gradiant of colors with a same lightness where every color is some delta E apart from other colors map the possibility space thoroughly and mathamatically"
 
 ## Setting
 
@@ -52,7 +52,7 @@ Separate from the grid are the set-level laws:
 
 ## Per-point ΔE
 
-[PROMPT P-031] "backend sends delta E for each harmony point seperately along side its code and meta info"
+[PROMPT P-030] "backend sends delta E for each harmony point seperately along side its code and meta info"
 
 For each point the server gives the **ideal** OKLCH point and ΔE_OK to the actual cluster:
 - **Harmonies:** ideal h = r + offset, with L and C from the actual cluster (so ΔE measures the hue error at that chroma).
@@ -61,7 +61,7 @@ For each point the server gives the **ideal** OKLCH point and ΔE_OK to the actu
 
 ## Several structures per image
 
-[PROMPT P-031] "Allow for multible per image."
+[PROMPT P-030] "Allow for multible per image."
 
 1. **Candidates:** every law test on every subset the search reaches. Harmonies use templates × 360 rotations on the chromatic clusters; ramps use greedy chains in sorted L, C or h.
 2. **Cost:** J(S) = Σ wᵢ · errorᵢ² + λ|S|, with λ = 2 per point (slides; [AUDIT: experiment E3]). Lower is better; the λ term prefers simpler structures.

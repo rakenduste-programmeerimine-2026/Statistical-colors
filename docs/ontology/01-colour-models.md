@@ -2,8 +2,8 @@
 
 ## Input: 8-bit sRGB
 
-- [PROMPT P-031] Input and output are 8-bit sRGB; there are 16,777,216 colours, and alpha is 0–255.
-- [PROMPT P-031] A Display P3-tagged image or Figma file is read as sRGB. The result gets `sourceProfile: "display-p3"`, the caveat `tagged-p3-read-as-srgb` and the finding `input.p3-read-as-srgb`. Colours may differ from the original.
+- [PROMPT P-031 item 6] Input and output are 8-bit sRGB; there are 16,777,216 colours, and alpha is 0–255.
+- [PROMPT P-031 item 6] A Display P3-tagged image or Figma file is read as sRGB. The result gets `sourceProfile: "display-p3"`, the caveat `tagged-p3-read-as-srgb` and the finding `input.p3-read-as-srgb`. Colours may differ from the original.
 - [UNDERSTANDING] An untagged PNG is assumed to be sRGB (the web default).
 
 ## OKLab and OKLCH
@@ -34,7 +34,7 @@ So **c₀ = 0.04**: hue-based laws ignore clusters below it, and they get the ca
 
 ## Other models (construction models)
 
-[PROMPT P-031] Harmonies found in other models are shown on that model's own wheel, while the default view is OKLCH.
+[PROMPT P-031 item 4] Harmonies found in other models are shown on that model's own wheel, while the default view is OKLCH.
 
 | Model | Hue | Notes |
 |---|---|---|

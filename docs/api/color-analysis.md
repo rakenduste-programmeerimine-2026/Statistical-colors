@@ -14,7 +14,7 @@ Sources: [PROMPT P-030], [PROMPT P-031]. Thresholds marked [AUDIT: experiment �
 2. **Every colour is an `Oklch` object** `{ l: 0–1, c: ≥ 0, h: 0 ≤ h < 360 or null, alpha?: 0–1 }`. `h` is `null` when C < 0.000005 (greys). The UI prints it as `oklch(L% C h)` with 2, 5 and 2 decimals, which is lossless for 8-bit sRGB [AUDIT: experiment E1]. The only RGB field is `PaletteCluster.representativeRgb`, which is for exports.
 3. **ΔE is ΔE_OK**: Euclidean distance in OKLab, on the 0–1 scale (0.02 ≈ just noticeable).
 4. **Shares** are percentages, 0–100. **Coverage, score and confidence** are 0–1.
-5. **No machine learning.** Each result says what it needed in `meta.requires`: `pixels`, `pixels+layout`, or `scene` (data from the capture extension or the Figma plugin). Anything that needs recognising objects or scenes is out of scope (P-031 item 8).
+5. **No machine learning.** Each result says what it needed in `meta.requires`: `pixels`, `pixels+layout`, or `scene` (data from the capture extension or the Figma plugin). Anything that needs recognising objects or scenes is out of scope (P-031 item 5).
 6. **Unknown codes and kinds are allowed.** The UI falls back to the server's Estonian `title`. Add new ones to `docs/ontology/README.md`.
 
 ## Fields

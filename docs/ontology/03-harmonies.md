@@ -27,7 +27,7 @@ A harmony is a structure whose hue follows `sym`: the chromatic clusters' hues m
 
 ## Construction models
 
-[PROMPT P-031] "when detecting color harmonies inn other colorspaces eg hsv, hsl add an option of showing them on the color wheel in their original colorwheel, but default view is oklch"
+[PROMPT P-030] "when detecting color harmonies inn other colorspaces eg hsv, hsl add an option of showing them on the color wheel in their original colorwheel, but default view is oklch"
 
 - The server also fits the templates on HSL, HSV, HWB and RYB hue. If a model's fit is clearly better than OKLCH's (lower J by a margin), the structure gets `model: "hsl"` etc., and the finding `structure.hsl-constructed` or `structure.ryb-constructed`.
 - [AUDIT: experiment E4] An HSL triad from pure red lands at OKLCH hues 29.2°, 142.5° and 264.1° (gaps 113°, 122°, 125°). Over all base hues the worst drift is 17–25° in HSL and HSV and 25–38° in RYB, far above the noise level of a good OKLCH fit.

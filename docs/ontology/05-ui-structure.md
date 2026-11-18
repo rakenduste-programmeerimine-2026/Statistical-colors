@@ -1,6 +1,6 @@
 # 05 UI structure
 
-[PROMPT P-031] "also detect stuff like this is a ui with dark mode but keep it to stuff that can be detected reasonably and reliably without machine learning for now based on the pictures or with the extra information from screenshot tools."
+[PROMPT P-030] "also detect stuff like this is a ui with dark mode but keep it to stuff that can be detected reasonably and reliably without machine learning for now based on the pictures or with the extra information from screenshot tools."
 
 ## Dark and light mode (`ui.dark-mode`, `ui.light-mode`)
 

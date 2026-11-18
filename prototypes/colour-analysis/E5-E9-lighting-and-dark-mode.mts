@@ -6,7 +6,7 @@
 // E5: teal–orange grading vs an orange object under neutral light, from pixel
 // statistics only (hue by lightness band). E9: dark vs light UI from pixel
 // statistics (a dominant flat background and small high-contrast text clusters).
-// Synthetic pixels in OKLCH; no images needed. Run: node claude-setup/experiments/E5-E9-lighting-and-dark-mode.mts
+// Synthetic pixels in OKLCH; no images needed. Run: node prototypes/colour-analysis/E5-E9-lighting-and-dark-mode.mts
 type Px = { L: number; C: number; h: number };
 let seed = 11;
 const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);

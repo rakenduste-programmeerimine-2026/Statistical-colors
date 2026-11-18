@@ -5,7 +5,7 @@
 
 // E3b: fixes found on the real demo palette. Harmonies are fitted on the top-k
 // chromatic clusters by share, and ramps must have steps of at least minStep ΔE.
-// Run: node claude-setup/experiments/E3b-demo-subsets.mts
+// Run: node prototypes/colour-analysis/E3b-demo-subsets.mts
 import { readFileSync } from "node:fs";
 import { cluster, findRamps, fitHarmonies, rgbToLab } from "./E3-E8-structures.mts";
 

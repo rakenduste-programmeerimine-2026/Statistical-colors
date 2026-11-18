@@ -23,7 +23,7 @@ Brand colours appear as declared tokens (`09`). Drift from them is `tokens.brand
 
 ## Out of scope
 
-- **Print:** CMYK, spot colours, paper white and ink limits. sRGB only [PROMPT P-031].
+- **Print:** CMYK, spot colours, paper white and ink limits. sRGB only [PROMPT P-031 item 6].
 - **Colour psychology and meaning:** not measurable from pixels.
 - **Nature and seasonal palettes** ("autumn", "pastel"): pastel is expressible as a region (L ≥ 0.8, C ≤ 0.08), but the name is a judgement. A region test may be added later as `palette.region-*`; nothing is reported now.
 - **Cultural colour meanings.**
