@@ -550,3 +550,47 @@ Decisions:
 2. [UNDERSTANDING] "Background" is the page background (`--color-page`) and the "lightness circle" is the lightness ring around each colour dot (`--color-ink`). The new token `--color-delta` is `color-mix(in oklch, var(--color-ink) 50%, var(--color-page))`, so it follows the user's theme. Like `--color-muted`, it is an OKLCH mix of OKLCH theme colours, which fits P-001. The 50 % point is a chosen value, open to change.
 3. [UNDERSTANDING] The line from the ideal point to the actual colour is unchanged.
 4. [UNDERSTANDING] With the default themes the circle keeps about 3.4–4:1 contrast against the page and the core; a user theme whose text and background are close in lightness can push it below the WCAG 1.4.11 non-text 3:1. The ΔE values remain in the points table and the description.
+
+## P-035 (2026-11-18): 3D colour-space view from the visualisation notebook
+
+Type: requirement
+Source: user prompt and answers
+Issue: #75 (frontend), #74 (backend)
+
+> there is visualisatsioonid code now in the old code folder the goal is to find the most advanced suitable version of it with minimal extra features eg cam16 is overkill and refactor it for this project step one is feature parity and step 2 is taking the colors as broken down in the backend and visually showing their distribution in 3d space and allowing the user to move around the camera in open space while sticking to nextjs and its ecosystem. The idea is to show visually how much of the whole the pixels cover. do not begin commiting before the end result has been approved by me if nessassary use backend code for testing that isn't put on github following the principles from before in tests
+
+Answers:
+- Renderer: "use canvas 2D as suggested and make sure the points that will be rendered as possibilities are perceptually distributed and the picture colors snap to them and color them in. change the plan for assotiated stages accordingly"
+- Space: both OKLab and CIELAB, switchable.
+- Coverage: the server sends it; the stub simulates it.
+- Commits: hold everything (prompt record, issues, commits) until the user approves the result. The user approved it on 2026-11-18: "you have approval to proceed".
+
+## P-036 (2026-11-18): Decisions from P-035
+
+Type: approved decision
+Source: P-035, the reviews and the user's answers
+Issue: #75, #74
+
+1. The base is the notebook's cell 19, the sampled sRGB gamut browser. Cells 0–15 (spectral object-colour solid), 17–18 (bit depth, luminance, JND) and 20 (CAM16) are left out: they go beyond sRGB (P-031 item 6) or add analysers.
+2. Step 1 keeps cell 19's features: the in-gamut cloud, hue centre and width, chroma minimum and maximum, include neutrals, the counts, the hover readout, the 15,000 / 12,000 point caps, and refusing a chroma minimum above the maximum. The notebook's CIELAB default selection (hue 270, width 30, chroma 40–80) is kept; OKLab uses chroma 0.1–0.2.
+3. Step 2: the possible colours are a cubic lattice with one step on every axis, so they are evenly spread by perceived difference: OKLab 0.02 ΔE_OK (6,789 points) and CIELAB ΔE*ab 4 (13,000 points) [AUDIT: experiment E10]. Each image colour snaps to its nearest in-gamut lattice point, which is coloured in and sized by the summed pixel share.
+4. Rendering is Canvas 2D on the main thread: no WebGL, no Web Worker, no new packages [AUDIT: performance-analyst, library-auditor].
+5. The camera orbits around the gamut centre or flies freely (W A S D or arrows, Q and E, drag to look); keys work while the view has focus.
+6. The server sends the coverage as `colorAnalysis.gamut` (#74), computed on the OKLab lattice. The stub and the demo compute it the same way and mark it simulated.
+7. [UNDERSTANDING] About 5 % of colours lie at the sRGB edge, where the nearest grid point is outside the gamut; they snap to the nearest point inside, at most 1.3 steps (OKLab) or 2.1 steps (CIELAB) away [AUDIT: experiment E10].
+8. [UNDERSTANDING] The view keeps true proportions (one unit is the same length on every axis), unlike the notebook's cube aspect, so OKLab looks tall and CIELAB wide.
+9. [UNDERSTANDING] CIELAB D50 conversions are hand-written from cell 19's constants (Bradford adaptation, rational sRGB matrices), extending P-031 item 11.
+
+## P-037 (2026-11-18): Background colour of the 3D view and the pixel viewer
+
+Type: requirement
+Source: user prompt
+Issue: #75
+
+> allow to change the background color of the 3d pointcloud and the picture viewer thingy, explain what the backend sends to the frontend for the pointcloud and what determines the size of the gray circles in the color harmony wheel that say ideal on hover
+
+Decisions:
+1. The 3D view and the exact pixel viewer each get a background control: presets, any colour, or the default (the page background, and the reference viewer's stage colour). The chosen hex is converted with `oklch(from <hex> l c h)` (P-018 item 4) and applies only to that view, not to `--color-page`.
+2. [UNDERSTANDING] On a background with OKLCH lightness below 0.6 the 3D view's text, rings and faint lattice switch to light colours.
+3. [UNDERSTANDING] The choice resets on reload; it is not part of the saved theme.
+4. [UNDERSTANDING] Chosen values of the ΔE circles (explained to the user): radius = base + 300 px × ΔE, at most base + 21 px (reached at ΔE 0.07), where base is the largest colour dot with its lightness ring on that wheel plus 3 px.
