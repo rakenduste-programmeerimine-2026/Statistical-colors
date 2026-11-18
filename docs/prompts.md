@@ -479,3 +479,37 @@ Answer: "Stack plugins on app (Recommended)".
 
 1. The app-port branch (`feat/42-pixel-preview-demo`) is merged once into `feat/44-capture-extension`, which resolves the shared docs and tooling there. The pull requests form one line, #26 → #41 → #43 → #51 → #52, and merge in that order. This replaces P-023 item 5's independence from the app-port branches.
 2. P-024 no longer applies: P-017 to P-021 are now in this branch's copy of this file.
+
+## P-030 (2026-11-18): OKLCH readouts, colour structures, findings and a colour ontology
+
+Type: requirement
+Issue: #54
+
+> add oklch into the ui as information for the user in places where now hex and rgb values have been displayed as text. begin adding features from the slides that could be represented in the frontend visually eg the color harmonies remember to use oklch exlusively there and assume the server sends the results. from here on out use planning mode in this prompt: Build out a detailed ontology of what else could be in the picture that cant be represented using the harmonies, and different cases where the color harmonies could be present eg teal and orange lighting in a photograph, a hsl based attempt at some color harmony etc be increadably thorough and wide in bredth use different fields agressively the end result should be stubs for backend and issues for backend and other such documentation and a frontend that can support it. The information should atleast cover all figma color features and tokens but aditional meta info about recovered colors is great as well. if you are unsure that something could be built try it in a folder that won't be commited even if it includes backend calculations.
+
+Feedback on the first plan:
+
+> No hdr or wider color spaces stick to srgb, when detecting color harmonies inn other colorspaces eg hsv, hsl add an option of showing them on the color wheel in their original colorwheel, but default view is oklch and on hover they can choose other colomodels to see how it would be placed there. Display the delta E from the ideal oklch harmony visually by increasing the size of the empty circle on the wheel backend sends delta E for each harmony point seperately along side its code and meta info about what harmony it is. Allow for multible per image. Remember to support more than just hormonies eg that this is a gradiant of colors with a same lightness where every color is some delta E apart from other colors map the possibility space thoroughly and mathamatically, also detect stuff like this is a ui with dark mode but keep it to stuff that can be detected reasonably and reliably without machine learning for now based on the pictures or with the extra information from screenshot tools.
+
+On the experiments:
+
+> Share the results of your experiments as a summary with others and for successful ones share the code clearly marked and asking for verification and tests on their side before it gets integrated to backend code
+
+## P-031 (2026-11-18): Decisions from P-030
+
+Type: approved decision
+Source: P-030 and the user's answers
+Issue: #54
+
+1. The server computes the colour analysis: blend snap (#29), share filter (#30), clustering and tokens (#31), harmony and other structures (#33), and WCAG contrast (#34) are backend work. The frontend only displays results through the `AnalysisService` port. Only the sRGB → OKLCH conversion for live readouts (#28) is frontend code. This replaces the roadmap's unconfirmed reading that these steps run in the browser.
+2. OKLCH text is added next to the existing hex and rgb text, which stays. Table swatches stay `rgb()` (P-011); the new panels use OKLCH only.
+3. The UI this round: OKLCH readouts, a colour-structure wheel and list, and a generic findings panel that renders any kind the server sends.
+4. The structure wheel defaults to OKLCH. On hover or focus the user can switch to the HSL, HSV, HWB or RYB wheel; a structure detected in another model is marked on its original wheel. The server sends several structures per image, each with a code, meta information and, per point, the ΔE to the ideal OKLCH structure, drawn as an empty circle that grows with ΔE.
+5. Beyond harmonies, the ontology maps the space of colour structures mathematically (axis and path laws in OKLCH and OKLab), and covers UI structure such as dark mode, but only what can be detected reliably without machine learning, from the pixels or the screenshot tools' extra data.
+6. Everything stays in 8-bit sRGB: no HDR, Display P3 or other wide spaces. An input tagged Display P3 (an image profile or a Figma document) is read as sRGB, and a finding says the source was tagged P3.
+7. The ontology lives in `docs/ontology/` and as a typed schema in `src/core/analysis/`; the backend contract is `docs/api/color-analysis.md`.
+8. "Stubs for backend" means the frontend stub adapter, `PLACEHOLDER(#issue)` markers, the API contract and backend issues. No Route Handlers or other server code in this repository.
+9. P-017's limit ("do not add features not allready in the original code") applied to the port (#37) and no longer limits new work.
+10. Experiments run in `claude-setup/experiments/` (not committed). Their results are shared as a summary, and the code of the successful ones is shared in a committed folder clearly marked as an unverified prototype, asking the backend team to verify and test it before it is integrated into backend code. The demo keeps the study data, and its colour analysis is simulated and labelled as such.
+11. Library audit: the conversions are written by hand (CSS Color 4 matrices, about 100 lines); no library covers the required format or the RYB wheel. [AUDIT: experiment E1] Text `oklch(L% C h)` with 2, 5 and 2 decimals round-trips all 16,777,216 8-bit sRGB colours exactly; greys print the hue as `none`.
+12. [UNDERSTANDING] No `performance-analyst` run: the frontend converts at most a few thousand colours per page plus one per pointer move, which is microseconds of arithmetic.
