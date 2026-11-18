@@ -17,3 +17,6 @@ alter table public.images
 
 comment on column public.images.top_n is
   'Top N chosen on upload (1–5000): default number of colours shown. Up to 5000 colours are stored in image_colors regardless.';
+
+comment on table public.image_colors is
+  'Up to 5000 most frequent colours of an image (rank 1 = most common), independent of images.top_n. The full list is the summary CSV in Storage.';
