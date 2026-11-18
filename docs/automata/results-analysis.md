@@ -35,9 +35,9 @@ stateDiagram-v2
 |---|---|---|
 | Absent | The server sent no `colorAnalysis`; the section is not rendered | [UNDERSTANDING] `colorAnalysis` is optional in the port |
 | NoStructures | The section shows the status note, pipeline and findings only | [UNDERSTANDING] |
-| Harmony / OKLCH | The wheel in OKLCH, the default | [PROMPT P-031] "default view is oklch" |
-| Harmony / OtherModel | The wheel re-placed on HSL, HSV, HWB or RYB hue; the structure's own model is labelled "algne ratas" | [PROMPT P-031] "on hover they can choose other colomodels to see how it would be placed there" |
-| Strip | Ramps and others shown as a strip with step ΔE | [PROMPT P-031] "a gradiant of colors with a same lightness where every color is some delta E apart" |
+| Harmony / OKLCH | The wheel in OKLCH, the default | [PROMPT P-030] "default view is oklch" |
+| Harmony / OtherModel | The wheel re-placed on HSL, HSV, HWB or RYB hue; the structure's own model is labelled "algne ratas" | [PROMPT P-030] "on hover they can choose other colomodels to see how it would be placed there" |
+| Strip | Ramps and others shown as a strip with step ΔE | [PROMPT P-030] "a gradiant of colors with a same lightness where every color is some delta E apart" |
 
 ## Transitions
 
@@ -50,12 +50,11 @@ stateDiagram-v2
 | Harmony / any | select structure | harmony | Harmony / OKLCH | [UNDERSTANDING] keyed remount |
 | Harmony / any | select structure | not a harmony | Strip | [UNDERSTANDING] |
 | Strip | select structure | harmony | Harmony / OKLCH | [UNDERSTANDING] |
-| Harmony / OKLCH | press a model button | – | Harmony / OtherModel | [PROMPT P-031] |
+| Harmony / OKLCH | press a model button | – | Harmony / OtherModel | [PROMPT P-031 item 4] |
 | Harmony / OtherModel | press OKLCH | – | Harmony / OKLCH | [UNDERSTANDING] |
 
-The model buttons are always in the DOM and keyboard-reachable. Their opacity is 0 until the wheel is hovered or anything inside it has focus; the active one is always visible.
+The model buttons are always in the DOM and keyboard-reachable. The inactive ones are dimmed (40 % opacity) until the wheel is hovered or anything inside it has focus, so they can still be found and tapped on touch devices; the active one is always fully visible.
 
 ## Unknowns
 
 - A new analysis for the same page (re-fetch) whose structure ids no longer contain `selectedId`: `selected` becomes undefined and the right column is empty until the user selects again. [UNDERSTANDING] The results page does not re-fetch today, so this cannot happen yet.
-- Touch devices have no hover; the buttons appear only after a tap focuses one. [UNDERSTANDING] Acceptable, because the active model is always shown.

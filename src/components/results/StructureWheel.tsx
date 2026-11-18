@@ -69,7 +69,7 @@ export function StructureWheel({ structure, palette }: Props) {
             aria-pressed={model === m}
             onClick={() => setModel(m)}
             className={`rounded-md border px-2 py-1 text-sm transition-opacity ${
-              model === m ? "border-ink opacity-100" : "border-line opacity-0 group-focus-within:opacity-100 group-hover:opacity-100"
+              model === m ? "border-ink opacity-100" : "border-line opacity-40 group-focus-within:opacity-100 group-hover:opacity-100"
             }`}
           >
             {MODEL_LABELS[m]}
