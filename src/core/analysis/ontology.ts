@@ -111,6 +111,7 @@ export const FINDING_LABELS: Record<string, string> = {
   "structure.ambiguous-nesting": "Mitu malli sobivad",
   "palette.dominant": "Domineeriv värv",
   "palette.full-wheel": "Värvid kogu toonirattal",
+  "accessibility.contrast": "Teksti ja tausta kontrast",
   "accessibility.wcag-fail": "Kontrast alla WCAG piiri",
   "accessibility.cvd-confusable": "Värvipimedale segiaetavad värvid",
   "tokens.tonal-ladder": "Toonide astmestik (tokenid)",

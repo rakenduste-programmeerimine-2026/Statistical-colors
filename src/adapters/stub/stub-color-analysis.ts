@@ -162,7 +162,7 @@ export function generateColorAnalysis(random: () => number): ColorAnalysis {
     },
     {
       id: "f2",
-      kind: "accessibility.wcag-fail",
+      kind: "accessibility.contrast",
       area: "accessibility",
       severity: "info",
       title: "Kontrast",
