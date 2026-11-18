@@ -1,5 +1,6 @@
 import { AnalysisFailedError, InvalidImageError, type AnalysisService } from "@/core/analysis/analysis-service";
 import type { AnalysisOptions, ColorCount, CsvFile, CsvKind, ImageAnalysis } from "@/core/analysis/types";
+import { generateColorAnalysis } from "./stub-color-analysis";
 import { pixelsCsv, summaryCsv } from "./stub-csv";
 
 // PLACEHOLDER(#11, #12, #13, #39, #40): decoding, counting, saving and reading
@@ -12,7 +13,7 @@ const MAX_SIDE = 96;
 const MAX_UNIQUE = 300;
 
 /** Small seeded PRNG (mulberry32), so the same file always gives the same fake result. */
-function prng(seed: number) {
+export function prng(seed: number) {
   let a = seed >>> 0;
   return () => {
     a = (a + 0x6d2b79f5) >>> 0;
@@ -24,7 +25,7 @@ function prng(seed: number) {
 }
 
 /** FNV-1a hash of a string. */
-function hash(text: string): number {
+export function hash(text: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0x01000193);
   return h >>> 0;
@@ -38,7 +39,8 @@ function makeId(fileName: string, random: () => number): string {
 }
 
 export function generateAnalysis(id: string, file: Pick<File, "name" | "size">, options: AnalysisOptions): ImageAnalysis {
-  const random = prng(hash(`${file.name}:${file.size}:${options.includeAlpha}`));
+  const seed = `${file.name}:${file.size}:${options.includeAlpha}`;
+  const random = prng(hash(seed));
   const width = 16 + Math.floor(random() * (MAX_SIDE - 15));
   const height = 16 + Math.floor(random() * (MAX_SIDE - 15));
   const totalPixels = width * height;
@@ -85,6 +87,8 @@ export function generateAnalysis(id: string, file: Pick<File, "name" | "size">, 
     topN: options.topN,
     colors,
     simulated: true,
+    // A separate seed, so the colours above stay exactly as they were.
+    colorAnalysis: generateColorAnalysis(prng(hash(`${seed}:color`))),
   };
 }
 
