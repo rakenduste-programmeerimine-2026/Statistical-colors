@@ -17,7 +17,7 @@ export interface Rgb8 {
   a?: number;
 }
 
-type Vec3 = [number, number, number];
+export type Vec3 = [number, number, number];
 const mul = (m: readonly Vec3[], v: Vec3): Vec3 => [
   m[0][0] * v[0] + m[0][1] * v[1] + m[0][2] * v[2],
   m[1][0] * v[0] + m[1][1] * v[1] + m[1][2] * v[2],
@@ -51,6 +51,23 @@ const fromLinear = (v: number) => (v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 
 
 /** Chroma that prints as 0 at 5 decimals: the hue is meaningless and shown as `none`. */
 const ACHROMATIC = 0.000005;
+
+/** 8-bit sRGB channel (0–255) to linear light, 0–1. */
+export const srgb8ToLinear = (v: number) => toLinear(v / 255);
+/** Linear light (0–1, clamped) to an 8-bit sRGB channel. */
+export const linearToSrgb8 = (v: number) => Math.round(Math.min(1, Math.max(0, fromLinear(Math.min(1, Math.max(0, v))))) * 255);
+
+/**
+ * OKLab straight to linear sRGB, without the OKLCH detour: the fast gamut test
+ * for building the 3D lattice (about 57 times faster than `oklchToSrgb`,
+ * performance-analyst, P-035).
+ */
+export function oklabToLinearSrgb(l: number, a: number, b: number): Vec3 {
+  const L = (l + LAB_TO_LMS[0][1] * a + LAB_TO_LMS[0][2] * b) ** 3;
+  const M = (l + LAB_TO_LMS[1][1] * a + LAB_TO_LMS[1][2] * b) ** 3;
+  const S = (l + LAB_TO_LMS[2][1] * a + LAB_TO_LMS[2][2] * b) ** 3;
+  return mul(LMS_TO_RGB, [L, M, S]);
+}
 
 export function srgbToOklab({ r, g, b }: Rgb8): Vec3 {
   const lms = mul(RGB_TO_LMS, [toLinear(r / 255), toLinear(g / 255), toLinear(b / 255)]);
