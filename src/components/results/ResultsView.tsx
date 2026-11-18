@@ -7,9 +7,9 @@ import { useServices } from "@/adapters/services";
 import { clampTopN } from "@/core/analysis/upload-rules";
 import type { CsvKind, ImageAnalysis } from "@/core/analysis/types";
 import { PixelViewer } from "../preview/PixelViewer";
-import { button, card, hint } from "../ui";
+import { button, card } from "../ui";
 import { ColorAnalysisSection } from "./ColorAnalysisSection";
-import { ColorTable } from "./ColorTable";
+import { ColorTableSection } from "./ColorTableSection";
 import { saveFile } from "./download";
 
 type Loaded = { status: "loading" } | { status: "missing" } | { status: "ready"; analysis: ImageAnalysis };
@@ -47,7 +47,6 @@ export function ResultsView() {
   const { analysis } = loaded;
   // The ?top_n= query overrides the value chosen on upload, as in the original.
   const topN = clampTopN(searchParams.get("top_n") ?? analysis.topN);
-  const rows = analysis.colors.slice(0, topN);
 
   async function download(kind: CsvKind) {
     setDownloadError(null);
@@ -110,13 +109,7 @@ export function ResultsView() {
 
       {analysis.colorAnalysis && <ColorAnalysisSection analysis={analysis.colorAnalysis} />}
 
-      <section className={card} aria-labelledby="top-heading">
-        <h2 id="top-heading" className="text-xl font-bold">
-          {topN} sagedasemat värvi
-        </h2>
-        <p className={hint}>Kokkuvõtte CSV sisaldab kõiki värve; tabelis on {topN} kõige sagedasemat.</p>
-        <ColorTable colors={rows} includeAlpha={analysis.includeAlpha} />
-      </section>
+      <ColorTableSection key={analysis.id} analysis={analysis} topN={topN} />
     </>
   );
 }

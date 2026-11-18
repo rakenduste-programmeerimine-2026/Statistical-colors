@@ -29,13 +29,16 @@ describe("withDemo", () => {
     // Real study colours, with a simulated colour analysis until the server sends one.
     expect(demo?.colorAnalysis?.status).toBe("simulated");
     expect(demo?.colors).toHaveLength(295);
-    expect(demo?.colors[0]).toEqual({
+    // The study's counts stay exactly as they were; artefact chances and clusters are simulated (P-033 item 1).
+    expect(demo?.colors[0]).toMatchObject({
       r: 255,
       g: 255,
       b: 255,
       count: 1664,
       percent: 8.125,
     });
+    expect(demo?.rowDataStatus).toBe("simulated");
+    expect(demo?.colors.every((c) => c.artefacts?.length && c.clusterId)).toBe(true);
     expect(demo?.colors.reduce((sum, c) => sum + c.count, 0)).toBe(20480);
   });
 

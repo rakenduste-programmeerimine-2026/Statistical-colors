@@ -59,6 +59,20 @@ For a structure found in HSL etc., the `ideal` points are still the **OKLCH** id
 
 `kind` (registry code), `area` (palette, structure, ui, lighting, artefact, accessibility, tokens, figma, input, other), `severity` (info, notice, warning, problem), `title`, `detail?`, `metrics?` (`{key, label, value, unit?, min?, max?}`; with min and max the UI draws a meter), `swatches?`, `gradient?`, `clusterIds?`, `structureIds?`, `meta`.
 
+## Per-colour fields (#69, P-033)
+
+These go on each row of `ImageAnalysis.colors`, the colour list behind the "sagedasemat värvi" table, not inside `colorAnalysis`.
+
+| Field | Type | Meaning |
+|---|---|---|
+| `artefacts?` | `{ kind, chance }[]` | The likelihood (0–1) that this colour is a blend pixel (segupiksel, `artefact.antialias-blend`) or another artefact (`docs/ontology/07-digital-artefacts.md`). [UNDERSTANDING] For blends, the share of the colour's pixels that blend snap (#29) assigned to two neighbours. |
+| `clusterId?` | string | The `colorAnalysis.palette` cluster the colour belongs to (#31). |
+| `ImageAnalysis.rowDataStatus?` | `"computed"` | `"simulated"` | The stub and the demo send `"simulated"`; the table then says so. |
+
+- **Row count:** the table filters by share band, cluster and artefact over **every colour in `colors`**, and shows the N most frequent matches (P-033 item 3). #69 asks the server to send every colour, or to add a filter query to the port.
+- **Check:** `checkColorRows()` checks these fields (chance 0–1, non-empty kind, known cluster ids).
+- **Share bands** are computed in the browser from `percent` alone (`src/core/analysis/share-bands.ts`), so the server sends nothing for them.
+
 ## Server steps and default parameters
 
 [UNDERSTANDING] Suggested order and defaults; the backend team decides the final values.

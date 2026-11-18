@@ -18,7 +18,7 @@ describe("StructureWheel", () => {
     const a = analysis();
     render(<StructureWheel structure={a.structures[0]} palette={a.palette} />);
     const wheel = screen.getByRole("img", { name: /Kolmikharmoonia/ });
-    expect(wheel).toHaveAccessibleName(/3 punkti, leitud OKLCH mudelis, pööre \d+°\. Keskmine ΔE ideaalist [\d.]+, suurim [\d.]+\. Ratas: OKLCH\./);
+    expect(wheel).toHaveAccessibleName(/3 punkti, leitud OKLCH mudelis, pööre \d+°\. Keskmine ΔE ideaalist [\d.]+, suurim [\d.]+\. Ratas: OKLCH, OKLCH mediaanheledusel L [\d.]+\. Heledusvahe tumedaimast kuni [\d.]+\./);
   });
 
   it("draws one empty ideal circle per point, sized by its ΔE, and one filled dot", () => {
@@ -34,6 +34,15 @@ describe("StructureWheel", () => {
     const [lo, hi] = [order.indexOf(Math.min(...order)), order.indexOf(Math.max(...order))];
     if (order[lo] !== order[hi]) expect(radii[hi]).toBeGreaterThan(radii[lo]);
     ideals.forEach((c) => expect(c).toHaveAttribute("fill", "none"));
+    // Halfway between the page and the lightness ring's colour (P-034).
+    ideals.forEach((c) => expect(c).toHaveClass("stroke-delta"));
+    // Larger than any dot with its lightness ring, so a ΔE circle never hides inside a ring.
+    const outer = screen.getAllByTestId("lightness").map((c) => Number(c.getAttribute("r")) + Number(c.getAttribute("stroke-width")) / 2);
+    for (const r of radii) expect(r).toBeGreaterThan(Math.max(...outer));
+    // Drawn after every dot and lightness ring, so nothing covers them.
+    const marks = [...document.querySelectorAll("[data-testid]")].map((el) => el.getAttribute("data-testid"));
+    expect(marks.indexOf("ideal")).toBeGreaterThan(Math.max(marks.lastIndexOf("actual"), marks.lastIndexOf("lightness")));
+    screen.getAllByTestId("lightness").forEach((c) => expect(c).toHaveAttribute("stroke", "var(--color-ink)"));
   });
 
   it("uses only OKLCH and theme colours, never hex or rgb()", () => {
@@ -53,7 +62,7 @@ describe("StructureWheel", () => {
     await userEvent.setup().click(original);
 
     expect(original).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("img")).toHaveAccessibleName(/Ratas: HSL\./);
+    expect(screen.getByRole("img")).toHaveAccessibleName(/Ratas: HSL, OKLCH mediaanheledusel/);
     // The points move to the HSL wheel.
     expect(screen.getAllByTestId("actual").map((c) => c.getAttribute("cx"))).not.toEqual(before);
   });
@@ -63,7 +72,33 @@ describe("StructureWheel", () => {
     render(<StructureWheel structure={a.structures[0]} palette={a.palette} />);
     const rows = within(screen.getByRole("table")).getAllByRole("row");
     expect(rows).toHaveLength(1 + a.structures[0].points.length);
-    expect(rows[1]).toHaveTextContent(/^oklch\(.*\)oklch\(.*\)\d\.\d{3}$/);
+    expect(rows[1]).toHaveTextContent(/^oklch\(.*\)oklch\(.*\)\d\.\d{3}\d\.\d{3}\d\.\d{3}$/);
+  });
+
+  it("thickens the ring around each colour with its OKLCH lightness above the darkest, on every model's wheel", async () => {
+    const a = analysis();
+    const s = a.structures[0];
+    render(<StructureWheel structure={s} palette={a.palette} />);
+    const widths = () => screen.getAllByTestId("lightness").map((c) => Number(c.getAttribute("stroke-width")));
+    const ls = s.points.map((p) => p.actual.l);
+    const before = widths();
+    // The darkest colour gets the 1 px hairline; lighter colours get thicker rings.
+    expect(before[ls.indexOf(Math.min(...ls))]).toBe(1);
+    expect(before[ls.indexOf(Math.max(...ls))]).toBeGreaterThan(1);
+    await userEvent.setup().click(screen.getByRole("button", { name: "HSL" }));
+    expect(widths()).toEqual(before);
+  });
+
+  it("draws every model's ring at the median OKLCH lightness of the colours", async () => {
+    const a = analysis();
+    const s = a.structures[0];
+    const { container } = render(<StructureWheel structure={s} palette={a.palette} />);
+    const ls = s.points.map((p) => p.actual.l).sort((x, y) => x - y);
+    const median = (ls[1] * 100).toFixed(2);
+    const ringLs = () => new Set([...container.querySelectorAll("svg > path")].map((el) => el.getAttribute("fill")!.match(/^oklch\(([\d.]+)%/)![1]));
+    expect(ringLs()).toEqual(new Set([median]));
+    await userEvent.setup().click(screen.getByRole("button", { name: "RYB (kunstniku ratas)" }));
+    expect(ringLs()).toEqual(new Set([median]));
   });
 });
 

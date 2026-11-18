@@ -18,6 +18,8 @@
   --color-line-soft: oklch(0.9491 0 0);
   /* Original muted grey #666666, mixed with the theme so it stays readable on dark themes. */
   --color-muted: color-mix(in oklch, var(--theme-text) 60%, var(--theme-bg));
+  /* The ΔE circle on the structure wheel: halfway between the page and the lightness ring (P-034). */
+  --color-delta: color-mix(in oklch, var(--theme-text) 50%, var(--theme-bg));
   --color-error: oklch(0.577 0.215 27.3);
   /* Finding severities: notice (blue) and warning (amber), next to error. */
   --color-notice: oklch(0.62 0.13 250);

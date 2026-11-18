@@ -513,3 +513,40 @@ Issue: #54
 10. Experiments run in `claude-setup/experiments/` (not committed). Their results are shared as a summary, and the code of the successful ones is shared in a committed folder clearly marked as an unverified prototype, asking the backend team to verify and test it before it is integrated into backend code. The demo keeps the study data, and its colour analysis is simulated and labelled as such.
 11. Library audit: the conversions are written by hand (CSS Color 4 matrices, about 100 lines); no library covers the required format or the RYB wheel. [AUDIT: experiment E1] Text `oklch(L% C h)` with 2, 5 and 2 decimals round-trips all 16,777,216 8-bit sRGB colours exactly; greys print the hue as `none`.
 12. [UNDERSTANDING] No `performance-analyst` run: the frontend converts at most a few thousand colours per page plus one per pointer move, which is microseconds of arithmetic.
+
+## P-032 (2026-11-18): Harmony lightness, artefact chance and equivalence-class filters
+
+Type: requirement
+Source: user prompt
+Issue: #70 (frontend), #69 (backend)
+
+> use oklch to determine the lightness level of the colors in the color harmonies and change the wheel to be the median lightness of the colors use the outer thickness of the ring around the color point to indicate the difference visually the thicker the lighter it is perceptually compared to the lowest perceptual brightness color use oklch even on the other color wheels for the median calculation and the brightness delta. show the chance of segupikslid, artefacts in the 5000 colors thinghy, add filtering by equivalance class eg if there are are rough percentage clusters allow to filter by them not just the 5000 most common
+
+## P-033 (2026-11-18): Decisions from P-032
+
+Type: approved decision
+Source: P-032, the conflict review and the user's answers
+Issue: #70, #69
+
+1. The per-colour blend (segupiksel) and artefact chance is sent by the server (P-031 item 1 stays): `ColorCount.artefacts` with a registry kind and a chance 0–1 (#69, #29, #63). The stub and the demo simulate it and label it simulated; the demo's study counts stay unchanged.
+2. The table filters by both share bands (rough percentage clusters: gaps in the log share) and the server's colour clusters (`ColorCount.clusterId`, simulated until #69), plus a blend/artefact filter. Filters combine.
+3. Filters run over every colour the analysis holds, not only the top N, and show up to N matches. #69 asks the server to return all colours or to answer filter queries.
+4. Every model's wheel (OKLCH, HSL, HSV, HWB, RYB) is drawn at the median OKLCH lightness of the harmony's actual colours; each model keeps its own hue order. A new ring around each filled colour dot thickens with that colour's OKLCH lightness above the darkest colour of the harmony. The ΔE circles are unchanged.
+5. [UNDERSTANDING] The ring chroma at the median lightness is the largest constant chroma inside sRGB for every hue at that lightness (0.127 at L 0.75, experiment E2); other models' ring colours keep their OKLCH hue and are clipped into sRGB.
+6. [UNDERSTANDING] Share bands split the sorted log10 shares at gaps of at least 0.5 decades, into at most 6 bands; with no such gap they fall back to decade bands. This is presentation arithmetic on numbers the server sent, not clustering.
+7. [UNDERSTANDING] No library audit (project-specific display logic) and no `performance-analyst` run (sorting and filtering at most a few thousand rows in memory; rendering stays capped at N rows). The gamut clamp `clampChroma` (12 lines, a binary search on chroma using the existing hand-written conversion) extends P-031 item 11: a library would duplicate the conversion it already replaces.
+8. [UNDERSTANDING] Chosen thresholds, open to change: lightness ring 1 px plus 30 px per unit ΔL, at most 16 px; a colour counts as a likely artefact at a chance of 0.5 or more; a row with an empty `artefacts` list counts as having no value.
+
+## P-034 (2026-11-18): Colour of the ΔE circle
+
+Type: requirement
+Source: user prompt
+Issue: #70
+
+> use a color between the lightnesses of the background and the lightness circle for the circle representing how far the delta is from the ideal harmony
+
+Decisions:
+1. This replaces the clause "The ΔE circles are unchanged." in P-033 item 4, for the stroke colour only; the circle stays empty and its radius still grows with ΔE (P-031 item 4).
+2. [UNDERSTANDING] "Background" is the page background (`--color-page`) and the "lightness circle" is the lightness ring around each colour dot (`--color-ink`). The new token `--color-delta` is `color-mix(in oklch, var(--color-ink) 50%, var(--color-page))`, so it follows the user's theme. Like `--color-muted`, it is an OKLCH mix of OKLCH theme colours, which fits P-001. The 50 % point is a chosen value, open to change.
+3. [UNDERSTANDING] The line from the ideal point to the actual colour is unchanged.
+4. [UNDERSTANDING] With the default themes the circle keeps about 3.4–4:1 contrast against the page and the core; a user theme whose text and background are close in lightness can push it below the WCAG 1.4.11 non-text 3:1. The ΔE values remain in the points table and the description.

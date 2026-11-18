@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { InvalidImageError, type AnalysisService } from "./analysis-service";
-import { checkColorAnalysis } from "./color-analysis-check";
+import { checkColorAnalysis, checkColorRows } from "./color-analysis-check";
 
 /**
  * Behaviour every AnalysisService adapter must have. The stub runs it now;
@@ -30,6 +30,12 @@ export function describeAnalysisServiceContract(
       const service = make();
       const analysis = await service.getAnalysis(await service.analyze(sampleImage(), { includeAlpha: false, topN: 10 }));
       if (analysis?.colorAnalysis) expect(checkColorAnalysis(analysis.colorAnalysis)).toEqual([]);
+    });
+
+    it("sends per-colour artefact chances and cluster ids that pass the check, when it sends them", async () => {
+      const service = make();
+      const analysis = await service.getAnalysis(await service.analyze(sampleImage(), { includeAlpha: false, topN: 10 }));
+      expect(checkColorRows(analysis?.colors ?? [], analysis?.colorAnalysis)).toEqual([]);
     });
 
     it("returns consistent totals, sorted colours and percentages", async () => {
