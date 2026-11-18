@@ -5,18 +5,18 @@ import type { AnalysisService } from "@/core/analysis/analysis-service";
 import type { ThemeStore } from "@/core/theme/theme-store";
 import { LocalThemeStore } from "./browser/local-theme-store";
 import { withDemo } from "./demo/with-demo";
-import { StubAnalysisService } from "./stub/stub-analysis-service";
+import { createClient } from "@/lib/supabase/client";
+import { SupabaseAnalysisService } from "./supabase/supabase-analysis-service";
 
 export interface Services {
   analysis: AnalysisService;
   themes: ThemeStore;
 }
 
-/** Wiring for the running app. Swap the stub for the real adapter in #40. */
+/** Wiring for the running app: the real Supabase adapter (#40), with the demo in front. */
 function defaultServices(): Services {
-  const session = typeof window === "undefined" ? undefined : window.sessionStorage;
   return {
-    analysis: withDemo(new StubAnalysisService(session)),
+    analysis: withDemo(new SupabaseAnalysisService(createClient)),
     themes: new LocalThemeStore(),
   };
 }
