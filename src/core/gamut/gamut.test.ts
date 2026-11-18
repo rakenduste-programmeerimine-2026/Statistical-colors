@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { labToLinearSrgb, labToSrgb, srgbToLab } from "../color/lab";
 import { oklabToLinearSrgb, oklchToOklab, oklchToSrgb, srgbToOklab, srgb8ToLinear } from "../color/oklch";
-import { basis, defaultCamera, GAMUT_CENTER, look, move, orbitCamera, orbitOf, project } from "./camera";
+import { applyKeys, basis, defaultCamera, GAMUT_CENTER, look, move, MOVE_CODES, orbitCamera, orbitOf, project } from "./camera";
 import { buildLattice, latticeFor } from "./lattice";
 import { angularDistance, inHueWindow, sampleIndices, selectLattice } from "./select";
 import { nearestPoint, snapColors } from "./snap";
@@ -197,6 +197,39 @@ describe("camera", () => {
       expect(p.sy).toBeGreaterThan(0);
       expect(p.sy).toBeLessThan(300);
     }
+  });
+});
+
+describe("keyboard movement", () => {
+  const cam = orbitCamera(GAMUT_CENTER, 1.5, 0, 0);
+
+  it("flies forward, sideways and up by 0.7 units per second", () => {
+    const fly = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, fov: 1 };
+    expect(applyKeys(fly, "fly", new Set(["KeyW"]), 1).x).toBeCloseTo(0.7, 9);
+    expect(applyKeys(fly, "fly", new Set(["ArrowRight"]), 1).y).toBeCloseTo(-0.7, 9);
+    expect(applyKeys(fly, "fly", new Set(["KeyE"]), 1).z).toBeCloseTo(0.7, 9);
+    // Opposite keys cancel.
+    expect(applyKeys(fly, "fly", new Set(["KeyW", "KeyS"]), 1)).toEqual(fly);
+  });
+
+  it("zooms the orbit by the physical key, whatever Shift does to its name", () => {
+    const zoomIn = applyKeys(cam, "orbit", new Set(["Equal"]), 0.1);
+    expect(orbitOf(zoomIn, GAMUT_CENTER).distance).toBeLessThan(1.5);
+    expect(orbitOf(applyKeys(cam, "orbit", new Set(["Minus"]), 0.1), GAMUT_CENTER).distance).toBeGreaterThan(1.5);
+  });
+
+  it("keeps the orbit distance within 0.3–6", () => {
+    let c = cam;
+    for (let i = 0; i < 200; i++) c = applyKeys(c, "orbit", new Set(["KeyW"]), 0.05);
+    expect(orbitOf(c, GAMUT_CENTER).distance).toBeCloseTo(0.3, 6);
+    for (let i = 0; i < 400; i++) c = applyKeys(c, "orbit", new Set(["KeyS"]), 0.05);
+    expect(orbitOf(c, GAMUT_CENTER).distance).toBeCloseTo(6, 6);
+  });
+
+  it("only knows the movement keys", () => {
+    expect(MOVE_CODES.has("KeyW")).toBe(true);
+    expect(MOVE_CODES.has("KeyX")).toBe(false);
+    expect(applyKeys(cam, "orbit", new Set(["KeyX"]), 1)).toEqual(applyKeys(cam, "orbit", new Set(), 1));
   });
 });
 

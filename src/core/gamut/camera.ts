@@ -95,3 +95,30 @@ export function orbitOf(cam: Camera, target: [number, number, number]) {
   const distance = Math.hypot(dx, dy, dz);
   return { distance, yaw: Math.atan2(dy, dx), pitch: Math.asin(dz / (distance || 1)) };
 }
+
+/** Physical keys (KeyboardEvent.code) that move the camera; codes do not change with Shift, unlike `key`. */
+export const MOVE_CODES = new Set([
+  "KeyW", "KeyA", "KeyS", "KeyD", "KeyQ", "KeyE",
+  "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight",
+  "Equal", "Minus", "NumpadAdd", "NumpadSubtract",
+]);
+
+/**
+ * One frame of keyboard movement (P-036 item 5). Fly: W/S or up/down forward and
+ * back, A/D or left/right sideways, Q/E down and up. Orbit: A/D or left/right
+ * turn, up/down tilt, W/+ zoom in and S/− zoom out, distance kept within 0.3–6.
+ */
+export function applyKeys(cam: Camera, mode: "orbit" | "fly", held: ReadonlySet<string>, dt: number): Camera {
+  const has = (...codes: string[]) => codes.some((c) => held.has(c));
+  const axis = (plus: string[], minus: string[]) => (has(...plus) ? 1 : 0) - (has(...minus) ? 1 : 0);
+  if (mode === "fly") {
+    const speed = 0.7 * dt;
+    return move(cam, axis(["KeyW", "ArrowUp"], ["KeyS", "ArrowDown"]) * speed, axis(["KeyD", "ArrowRight"], ["KeyA", "ArrowLeft"]) * speed, axis(["KeyE"], ["KeyQ"]) * speed);
+  }
+  const o = orbitOf(cam, GAMUT_CENTER);
+  const turn = axis(["KeyA", "ArrowLeft"], ["KeyD", "ArrowRight"]);
+  const tilt = axis(["ArrowUp"], ["ArrowDown"]);
+  const zoom = axis(["KeyS", "Minus", "NumpadSubtract"], ["KeyW", "Equal", "NumpadAdd"]);
+  const distance = Math.min(6, Math.max(0.3, o.distance * Math.exp(zoom * dt * 1.5)));
+  return orbitCamera(GAMUT_CENTER, distance, o.yaw + turn * dt * 1.5, o.pitch + tilt * dt * 1.5, cam.fov);
+}
