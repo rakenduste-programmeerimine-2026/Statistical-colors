@@ -10,15 +10,13 @@ import { deltaEOk, srgbToOklch } from "@/core/color/oklch";
 const OTHER_KINDS = ["artefact.chroma-subsampling", "artefact.jpeg-blocking", "artefact.banding"];
 
 export function simulateColorRows(colors: ColorCount[], analysis: ColorAnalysis | undefined, random: () => number): ColorCount[] {
-  if (colors.length === 0) return colors;
-  const maxLog = Math.log10(colors[0].percent || 1e-9);
-  const minLog = Math.log10(colors[colors.length - 1].percent || 1e-9);
-  const span = maxLog - minLog || 1;
   return colors.map((c) => {
-    // Rarer colours are more often blend pixels at edges.
-    const rarity = (maxLog - Math.log10(c.percent || 1e-9)) / span;
+    // Colours with very few pixels are the likely edge blends: 1 pixel ≈ 0.95,
+    // 30 pixels ≈ 0.5, 1000 or more ≈ 0. Ranking against the largest share
+    // instead would call a palette of equal flat swatches all blends.
+    const fewness = 1 - Math.log10(Math.max(1, c.count)) / 3;
     const artefacts: ColorArtefact[] = [
-      { kind: "artefact.antialias-blend", chance: round(Math.min(1, Math.max(0, rarity * 0.9 + (random() - 0.5) * 0.3))) },
+      { kind: "artefact.antialias-blend", chance: round(Math.min(1, Math.max(0, fewness * 0.95 + (random() - 0.5) * 0.2))) },
     ];
     if (random() < 0.08) artefacts.push({ kind: OTHER_KINDS[Math.floor(random() * OTHER_KINDS.length)], chance: round(random() * 0.6) });
     artefacts.sort((a, b) => b.chance - a.chance);

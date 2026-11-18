@@ -21,10 +21,17 @@ describe("simulateColorRows", () => {
     expect(checkColorRows(out, analysis)).toEqual([]);
   });
 
-  it("gives the rarest colours the highest blend chance on average", () => {
+  it("gives colours with the fewest pixels the highest blend chance", () => {
     const out = simulateColorRows(rows(), undefined, prng(3));
     const blend = (c: ColorCount) => c.artefacts!.find((a) => a.kind === "artefact.antialias-blend")!.chance;
     expect(blend(out[3])).toBeGreaterThan(blend(out[0]));
+  });
+
+  it("does not call a palette of equal flat swatches all blends (the demo: 294 swatches of 64 px)", () => {
+    const swatches = Array.from({ length: 50 }, (_, i): ColorCount => ({ r: i, g: 0, b: 0, count: 64, percent: 0.31 }));
+    const chances = simulateColorRows(swatches, undefined, prng(7)).map((c) => c.artefacts![0].chance);
+    expect(Math.max(...chances)).toBeLessThan(0.6);
+    expect(Math.min(...chances)).toBeGreaterThan(0.2);
   });
 
   it("assigns each colour to its nearest palette cluster by ΔE", () => {

@@ -39,7 +39,7 @@ export function ringChroma(l: number): number {
  * The darkest gets a 1 px hairline; 30 px per unit ΔL; at most 16 px.
  */
 export function lightnessRingWidth(deltaL: number): number {
-  return Math.min(16, 1 + Math.max(0, deltaL) * 30);
+  return Math.round(Math.min(16, 1 + Math.max(0, deltaL) * 30) * 100) / 100;
 }
 
 export interface Point {
