@@ -7,6 +7,7 @@ import { CONTRAST_MAX_CLUSTERS, CONTRAST_MIN_SHARE, contrastFinding, contrastPai
 import { computeGamutCoverage } from "./gamut-coverage";
 import { fitHarmonies, HARMONY_C0, HARMONY_MAX_ERR, HARMONY_MIN_COVERAGE, HARMONY_MIN_SCORE } from "./harmonies";
 import { CONTENT_MIN_DELTA_L, CONTENT_MIN_SHARE, DARK_MAX_L, DARK_MAX_SPREAD, DARK_MIN_SHARE, darkModeFinding } from "./ui-mode";
+import { ACCENT_MAX_HUE_SPREAD, NEUTRAL_MIN_SHARE, paletteTypes } from "./palette-types";
 import { CLUSTER_TAU, clusterColors, filterShares, MAX_CLUSTERED, SHARE_FLOOR, SHARE_Z_MIN } from "./palette-clusters";
 import type { ColorCount } from "./types";
 
@@ -35,7 +36,7 @@ export function computeColorAnalysis(colors: readonly ColorCount[], uniqueColors
       kept.length
         ? { step: "cluster", status: "done", params: { tau: CLUSTER_TAU, linkage: "complete", maxColors: MAX_CLUSTERED } }
         : { step: "cluster", status: "skipped" },
-      { step: "structures", status: "done", params: { c0: HARMONY_C0, maxErr: HARMONY_MAX_ERR, minCoverage: HARMONY_MIN_COVERAGE, minScore: HARMONY_MIN_SCORE } },
+      { step: "structures", status: "done", params: { c0: HARMONY_C0, maxErr: HARMONY_MAX_ERR, minCoverage: HARMONY_MIN_COVERAGE, minScore: HARMONY_MIN_SCORE, accentMaxHueSpread: ACCENT_MAX_HUE_SPREAD, neutralMinShare: NEUTRAL_MIN_SHARE } },
       contrast.length
         ? { step: "contrast", status: "done", params: { maxClusters: CONTRAST_MAX_CLUSTERS, minSharePercent: CONTRAST_MIN_SHARE } }
         : { step: "contrast", status: "skipped" },
@@ -47,7 +48,7 @@ export function computeColorAnalysis(colors: readonly ColorCount[], uniqueColors
       },
     ],
     palette,
-    structures: fitHarmonies(palette),
+    structures: [...fitHarmonies(palette), ...paletteTypes(palette)],
     contrast,
     findings,
     gamut: computeGamutCoverage(colors, uniqueColors),

@@ -102,7 +102,7 @@ These go on each row of `ImageAnalysis.colors`, the colour list behind the "sage
 | `share-filter` | done | Drops colours under 0.05 % share or with z < −2 on the log10 share; `removedShare` is their sum | `palette-clusters.ts` |
 | `convert` | done | sRGB → OKLab/OKLCH, CSS Color 4 matrices | `src/core/color/oklch.ts` |
 | `cluster` | done (skipped when no colour is left) | Complete linkage in OKLab, τ 0.02, on the 300 most frequent kept colours (distance matrix, Lance–Williams max update) | `palette-clusters.ts` |
-| `structures` | done | Harmony templates only, see below. Ramps, palette types and other models are not implemented (#56, #58, #59) | `harmonies.ts` |
+| `structures` | done | Harmony templates and two palette types, see below. Ramps, the other palette types and other models are not implemented (#56, #58, #59) | `harmonies.ts`, `palette-types.ts` |
 | `contrast` | done (skipped with fewer than 2 large clusters) | WCAG 2 contrast, see below | `contrast.ts` |
 | `roles` | not-implemented | Needs scene data or Figma variables (#60, #66) | – |
 | `findings` | done | `accessibility.contrast` and `ui.dark-mode`; the dark-mode thresholds are its parameters | `contrast.ts`, `ui-mode.ts` |
@@ -130,6 +130,15 @@ Also: `inputKind` comes from the stored image format (png, gif, bmp → `png-los
 | 20 | 89–100 % | 0 % |
 
 300 palettes per row; the range is over the five templates. Each spoke catches ±15°, so four spokes cover a third of the wheel by chance; 0.3 lets most random palettes through. In the unit test (100 fixed-seed 12-hue palettes), coverage 0.8 alone let 5 through, with scores 0.18–0.65: all chance clusters of hues, two of them with one spoke held by a single 7–9 % cluster. With the 0.3 score floor, 2 of 100 pass (scores 0.31 and 0.38). Palettes of 3–5 colours can still look like a harmony by chance; every structure carries `consistent-not-proven`.
+
+### Palette types (#59)
+
+Structures with `family: "palette"`, after the harmonies. Chromatic means C ≥ 0.04, as for harmonies.
+
+- **`palette.achromatic`:** every cluster has C < 0.04 (`docs/ontology/README.md`: "all C < 0.04").
+- **`palette.neutral-plus-accent`:** every chromatic cluster lies within 15° of the largest chromatic cluster's hue (shades of one accent, such as a button and its hover colour, count as one), and the neutral clusters cover at least 50 %. The ontology says only "one chromatic cluster plus neutrals"; 15° and 50 % are chosen values.
+- **Points:** every cluster. A neutral's ideal is the pure grey of its lightness, so `deltaE` is its chroma; an accent's ideal is itself. `coverage` and `score` are 1, `provenance: "measured"`, caveat `consistent-not-proven`.
+- `palette.monochrome`, `two-level-lightness`, `equal-spacing` and `full-wheel` are not implemented.
 
 ### Contrast
 

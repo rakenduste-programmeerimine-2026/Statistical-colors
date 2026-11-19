@@ -15,7 +15,7 @@ describe("computeColorAnalysis", () => {
     expect(x.status).toBe("computed");
     expect(x.gamut?.occupiedCells).toBe(2);
     expect(JSON.stringify(x)).not.toMatch(/simulated/);
-    expect(x.structures).toEqual([]);
+    expect(x.structures.map((s) => s.code)).toEqual(["palette.achromatic"]);
     expect(x.palette.map((p) => [p.share, p.representativeRgb])).toEqual([
       [75, { r: 0, g: 0, b: 0 }],
       [25, { r: 255, g: 255, b: 255 }],
