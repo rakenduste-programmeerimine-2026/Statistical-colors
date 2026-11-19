@@ -1,6 +1,6 @@
 # Colour analysis contract (`colorAnalysis`, schema v1)
 
-The server attaches `colorAnalysis` to each stored analysis returned by `getAnalysis` (#55). The frontend only displays it (#54). Until the server sends it, the frontend stub synthesises one with `status: "simulated"` (`src/adapters/stub/stub-color-analysis.ts`).
+The server attaches `colorAnalysis` to each stored analysis returned by `getAnalysis` (#55). The frontend only displays it (#54). The real adapter computes it with `status: "computed"` (see [What is computed](#what-is-computed)); the stub and the demo synthesise one with `status: "simulated"` (`src/adapters/simulated/color-analysis.ts`).
 
 - Types: `src/core/analysis/color-analysis.ts`. That file is the contract; this page explains it.
 - Check: `checkColorAnalysis()` in `src/core/analysis/color-analysis-check.ts`. The real adapter (#40) should run it, and the contract test `analysis-service.contract.ts` does.
@@ -66,8 +66,8 @@ These go on each row of `ImageAnalysis.colors`, the colour list behind the "sage
 | Field | Type | Meaning |
 |---|---|---|
 | `artefacts?` | `{ kind, chance }[]` | The likelihood (0–1) that this colour is a blend pixel (segupiksel, `artefact.antialias-blend`) or another artefact (`docs/ontology/07-digital-artefacts.md`). [UNDERSTANDING] For blends, the share of the colour's pixels that blend snap (#29) assigned to two neighbours. |
-| `clusterId?` | string | The `colorAnalysis.palette` cluster the colour belongs to (#31). |
-| `ImageAnalysis.rowDataStatus?` | `"computed"` | `"simulated"` | The stub and the demo send `"simulated"`; the table then says so. |
+| `clusterId?` | string | The `colorAnalysis.palette` cluster the colour belongs to (#31). Computed: the nearest cluster centre within τ 0.02, otherwise absent. |
+| `ImageAnalysis.rowDataStatus?` | `"computed"` | `"simulated"` | The real adapter sends `"computed"` (clusters only; `artefacts` is not sent yet, #29, #63). The stub and the demo send `"simulated"`; the table then says so. |
 
 - **Row count:** the table filters by share band, cluster and artefact over **every colour in `colors`**, and shows the N most frequent matches (P-033 item 3). #69 asks the server to send every colour, or to add a filter query to the port.
 - **Check:** `checkColorRows()` checks these fields (chance 0–1, non-empty kind, known cluster ids).
@@ -87,14 +87,59 @@ These go on each row of `ImageAnalysis.colors`, the colour list behind the "sage
 | `meta` | As everywhere |
 
 - **Reference code:** the frontend uses the same lattice and snapping for drawing (`src/core/gamut/lattice.ts`, `snap.ts`), and the stub uses it to simulate the figure. An unverified prototype is `prototypes/colour-analysis/E10-gamut-lattice.mts`.
-- **Colours counted:** every colour of the image counts (all of them, not the top N; #69).
+- **Colours counted:** every colour of the image counts (all of them, not the top N; #69). The computed figure uses the stored colours (up to 5000); when the image has more, `meta.method` says the figure is a lower bound.
 - **Check:** `checkColorAnalysis` verifies that `coverage` equals `occupiedCells / totalCells`.
 - **Simulated values:** the stub's and the demo's figure carries `provenance: "measured"` (it is measured from their colours), and simulation is flagged by `colorAnalysis.status === "simulated"`, which the page shows as "Näidisandmed".
 - **The 3D view gets nothing else from the server.** It builds the lattice and snaps `analysis.colors` itself.
 
+## What is computed
+
+`computeColorAnalysis()` (`src/core/analysis/compute-color-analysis.ts`) builds the analysis from the stored colour list (up to 5000 colours, most frequent first). `SupabaseAnalysisService.getAnalysis` (#40) runs it on every read, because the analysis itself is not stored yet (#73), so a reload gives the same result. Nothing needs pixel positions.
+
+| Step | Status | What it does | Code |
+|---|---|---|---|
+| `blend-snap` | not-implemented | Needs pixel neighbours and storage (#29, #73) | – |
+| `share-filter` | done | Drops colours under 0.05 % share or with z < −2 on the log10 share; `removedShare` is their sum | `palette-clusters.ts` |
+| `convert` | done | sRGB → OKLab/OKLCH, CSS Color 4 matrices | `src/core/color/oklch.ts` |
+| `cluster` | done (skipped when no colour is left) | Complete linkage in OKLab, τ 0.02, on the 300 most frequent kept colours (distance matrix, Lance–Williams max update) | `palette-clusters.ts` |
+| `structures` | done | Harmony templates only, see below. Ramps, palette types and other models are not implemented (#56, #58, #59) | `harmonies.ts` |
+| `contrast` | done (skipped with fewer than 2 large clusters) | WCAG 2 contrast, see below | `contrast.ts` |
+| `roles` | not-implemented | Needs scene data or Figma variables (#60, #66) | – |
+| `findings` | done (skipped without a contrast finding) | Only `accessibility.contrast` so far | `contrast.ts` |
+
+Also: `inputKind` comes from the stored image format (png, gif, bmp → `png-lossless`; jpeg → `jpeg-lossy`; webp or unknown → `unknown`). `sourceProfile` is `"srgb"`, because every image is decoded as 8-bit sRGB (P-031 item 6).
+
+### Harmonies
+
+- **Templates:** complementary (0, 180), analogous (−30, 0, 30), triadic (0, 120, 240), split-complementary (0, 150, 210), square (0, 90, 180, 270). Rectangle, Matsuda sectors and HSL/HSV/RYB fitting (#57) are not implemented.
+- **Input:** clusters with C ≥ 0.04; greys never count toward coverage or fill a spoke.
+- **Rotations:** whole degrees, plus every rotation that puts a spoke exactly on a cluster (the dominant-hue anchor of #33), so an exact template gives ΔE 0.
+- **A template fits** when every spoke has a cluster within 15° and those clusters hold at least **0.8** of the chromatic share (`coverage`). Clusters further away are simply not part of the structure. Per template the rotation with the lowest Σ w·err² / Σ w wins.
+- **Score** = coverage × (1 − rms hue error / 15°). Fits with a score under **0.3** are not reported. `residual` is the share-weighted mean hue error in degrees; `meta.confidence` equals the score.
+- **Points:** only the clusters on spokes. The ideal keeps the cluster's L and C and moves h to the spoke, so `deltaE` is the hue error at that chroma.
+- **Nesting:** a complementary whose clusters all belong to a fitting square gets `nestedIn: [square]`. A pure square is reported only as a square (the complementary covers 0.5).
+- **Not added:** a minimum share per spoke (for example 10 %). It would reject 60–30–10 accent designs.
+
+**Why 0.8 and 0.3** [AUDIT: measurement 2026-11-19, a script outside the repository; equal-chroma random hues, random shares, spokes within 15°]:
+
+| Random hues | Palettes passing any one template at coverage ≥ 0.3 (docs/ontology/02) | at ≥ 0.8 |
+|---|---|---|
+| 5 | 3–78 % | 2–20 % |
+| 8 | 31–95 % | 1–8 % |
+| 12 | 71–99 % | 0–2 % |
+| 20 | 89–100 % | 0 % |
+
+300 palettes per row; the range is over the five templates. Each spoke catches ±15°, so four spokes cover a third of the wheel by chance; 0.3 lets most random palettes through. In the unit test (100 fixed-seed 12-hue palettes), coverage 0.8 alone let 5 through, with scores 0.18–0.65: all chance clusters of hues, two of them with one spoke held by a single 7–9 % cluster. With the 0.3 score floor, 2 of 100 pass (scores 0.31 and 0.38). Palettes of 3–5 colours can still look like a harmony by chance; every structure carries `consistent-not-proven`.
+
+### Contrast
+
+- **Pairs:** every pair of the up to 6 largest clusters with at least 1 % share, using each cluster's `representativeRgb` (its most frequent colour). The lighter colour is `fgClusterId`. `worstCaseRatio` is not sent.
+- **Passes:** AA text ≥ 4.5, AA large text and non-text ≥ 3, AAA text ≥ 7.
+- **Finding `accessibility.contrast`:** one per image, rating the palette as a whole, because two similar tones are normal design: **info** when any pair reaches 4.5, **notice** when the best reaches 3, **warning** otherwise. Metrics: highest and lowest ratio, pairs ≥ 4.5 and pairs ≥ 3. Swatches: the highest-contrast pair (the best text and background candidate). Whether the colours are next to each other is not known from colours alone; the detail says so.
+
 ## Server steps and default parameters
 
-[UNDERSTANDING] Suggested order and defaults; the backend team decides the final values.
+[UNDERSTANDING] Suggested order and defaults; the backend team decides the final values. What is implemented, with its final values, is in [What is computed](#what-is-computed).
 
 | Step | Default | Source |
 |---|---|---|
