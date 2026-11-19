@@ -15,13 +15,27 @@ describe("computeColorAnalysis", () => {
     expect(x.status).toBe("computed");
     expect(x.gamut?.occupiedCells).toBe(2);
     expect(JSON.stringify(x)).not.toMatch(/simulated/);
-    expect(x.pipeline.find((p) => p.step === "structures")?.status).toBe("not-implemented");
+    expect(x.structures).toEqual([]);
     expect(x.palette.map((p) => [p.share, p.representativeRgb])).toEqual([
       [75, { r: 0, g: 0, b: 0 }],
       [25, { r: 255, g: 255, b: 255 }],
     ]);
     expect(x.contrast?.map((p) => p.ratio)).toEqual([21]);
     expect(x.findings.map((f) => [f.kind, f.severity])).toEqual([["accessibility.contrast", "info"]]);
+  });
+
+  it("finds the triad of pure red, green and blue and passes the contract check", () => {
+    // In OKLCH #FF0000, #00FF00 and #0000FF sit at about 29°, 142° and 264°,
+    // not exactly 120° apart, so this checks real colours within the 15° tolerance.
+    const rgb = [
+      { r: 255, g: 0, b: 0, count: 34, percent: 34 },
+      { r: 0, g: 255, b: 0, count: 33, percent: 33 },
+      { r: 0, g: 0, b: 255, count: 33, percent: 33 },
+    ];
+    const x = computeColorAnalysis(rgb, 3);
+    expect(x.structures.map((s) => s.code)).toContain("harmony.triadic");
+    expect(x.pipeline.find((p) => p.step === "structures")?.status).toBe("done");
+    expect(checkColorAnalysis(x)).toEqual([]);
   });
 
   it("skips clustering when every colour is too rare", () => {

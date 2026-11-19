@@ -32,6 +32,27 @@ describe("fitHarmonies", () => {
     expect(fitHarmonies([cluster(50, 34), cluster(130, 33), cluster(270, 33)]).map((s) => s.code)).not.toContain("harmony.triadic");
   });
 
+  it("finds no harmony in at least 95 of 100 random 12-hue palettes", () => {
+    // Fixed seeds, so the result never changes. The 0.3 coverage threshold of
+    // docs/ontology/02 would let most of these through; requiring 0.8 is the #33 fix.
+    let found = 0;
+    for (let seed = 1; seed <= 100; seed++) {
+      let s = seed;
+      const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+      if (fitHarmonies(Array.from({ length: 12 }, () => cluster(rnd() * 360, 0.2 + rnd()))).length) found++;
+    }
+    expect(found).toBeLessThanOrEqual(5);
+  });
+
+  it("keeps templates apart: each pure palette is reported only as its own template", () => {
+    const codes = (offsets: readonly number[]) => fitHarmonies(pure(offsets)).map((s) => s.code);
+    expect(codes([0, 90, 180, 270])).toEqual(["harmony.square"]);
+    expect(codes([0, 150, 210])).toEqual(["harmony.split-complementary"]);
+    expect(codes([0, 120, 240])).toEqual(["harmony.triadic"]);
+    expect(codes([0, 180])).toEqual(["harmony.complementary"]);
+    expect(codes([-30, 0, 30])).toEqual(["harmony.analogous"]);
+  });
+
   it("ignores greys: a large grey does not lower a complementary pair's coverage, and greys alone fit nothing", () => {
     const greyBackground = cluster(200, 80, 0.01);
     const s = fitHarmonies([greyBackground, cluster(40, 10), cluster(220, 10)]).find((x) => x.code === "harmony.complementary");
