@@ -32,6 +32,10 @@ describe("fitHarmonies", () => {
     expect(fitHarmonies([cluster(50, 34), cluster(130, 33), cluster(270, 33)]).map((s) => s.code)).not.toContain("harmony.triadic");
   });
 
+  it("does not report a fit scoring under 0.3: a triad 13° off on two spokes scores about 0.296", () => {
+    expect(fitHarmonies([cluster(30, 34), cluster(163, 33), cluster(257, 33)]).map((s) => s.code)).not.toContain("harmony.triadic");
+  });
+
   it("finds no harmony in at least 95 of 100 random 12-hue palettes", () => {
     // Fixed seeds, so the result never changes. The 0.3 coverage threshold of
     // docs/ontology/02 would let most of these through; requiring 0.8 is the #33 fix.
@@ -39,6 +43,7 @@ describe("fitHarmonies", () => {
     for (let seed = 1; seed <= 100; seed++) {
       let s = seed;
       const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+      rnd(); // The first value of a small seed is always small; skip it so every hue is uniform.
       if (fitHarmonies(Array.from({ length: 12 }, () => cluster(rnd() * 360, 0.2 + rnd()))).length) found++;
     }
     expect(found).toBeLessThanOrEqual(5);

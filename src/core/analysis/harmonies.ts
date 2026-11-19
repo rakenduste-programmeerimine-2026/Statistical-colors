@@ -12,6 +12,8 @@ export const HARMONY_C0 = 0.04;
 export const HARMONY_MAX_ERR = 15;
 /** Share of the chromatic pixels a template must explain. */
 export const HARMONY_MIN_COVERAGE = 0.8;
+/** Fits scoring below this are too loose to report (docs/api/color-analysis.md). */
+export const HARMONY_MIN_SCORE = 0.3;
 
 export const HARMONY_TEMPLATES = [
   { code: "harmony.complementary", title: "Vastandvärvid", offsets: [0, 180] },
@@ -74,6 +76,7 @@ export function fitHarmonies(palette: readonly PaletteCluster[]): ColorStructure
     const fit = fitTemplate(chroma, t.offsets);
     if (!fit) return [];
     const score = fit.coverage * (1 - Math.sqrt(fit.cost) / HARMONY_MAX_ERR);
+    if (score < HARMONY_MIN_SCORE) return [];
     const points: StructurePoint[] = fit.points.map(({ cluster, spoke }) => {
       const ideal = { l: cluster.color.l, c: cluster.color.c, h: wrap(fit.rotation + t.offsets[spoke]) };
       return { clusterId: cluster.id, ideal, actual: cluster.color, deltaE: deltaEOk(ideal, cluster.color), spoke };
@@ -97,7 +100,7 @@ export function fitHarmonies(palette: readonly PaletteCluster[]): ColorStructure
     meta: {
       provenance: "fitted",
       confidence: score,
-      method: `template fit on the OKLCH hue, C ≥ ${HARMONY_C0}, spokes within ${HARMONY_MAX_ERR}°, coverage ≥ ${HARMONY_MIN_COVERAGE}`,
+      method: `template fit on the OKLCH hue, C ≥ ${HARMONY_C0}, spokes within ${HARMONY_MAX_ERR}°, coverage ≥ ${HARMONY_MIN_COVERAGE}, score ≥ ${HARMONY_MIN_SCORE}`,
       requires: "pixels",
       caveats: ["consistent-not-proven"],
     },
