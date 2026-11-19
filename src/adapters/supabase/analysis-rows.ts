@@ -1,6 +1,6 @@
 import type { ColorCount, ImageAnalysis } from "@/core/analysis/types";
 import { TOP_N_MAX } from "@/core/analysis/upload-rules";
-import type { ImageFormat } from "@/core/image-format";
+import { IMAGE_FORMATS, type ImageFormat } from "@/core/image-format";
 import type { ImageColorInsert, ImageInsert, Tables } from "@/lib/supabase/types";
 
 /**
@@ -96,6 +96,7 @@ export function toImageAnalysis(
     totalPixels: Number(image.total_pixels ?? image.width * image.height),
     uniqueColors: image.unique_colors,
     includeAlpha: image.include_alpha,
+    ...((IMAGE_FORMATS as readonly string[]).includes(image.format) ? { format: image.format as ImageFormat } : {}),
     topN: image.top_n,
     colors: [...colors]
       .sort((x, y) => x.rank - y.rank)

@@ -1,6 +1,19 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { AnalysisFailedError, InvalidImageError } from "@/core/analysis/analysis-service";
 import { describeAnalysisServiceContract } from "@/core/analysis/analysis-service.contract";
+import { checkColorRows } from "@/core/analysis/color-analysis-check";
+
+/** Lets a test make the contract checks fail; they run for real otherwise. */
+const failCheck = vi.hoisted(() => ({ analysis: false, rows: false }));
+vi.mock("@/core/analysis/color-analysis-check", async (importOriginal) => {
+  const real = await importOriginal<typeof import("@/core/analysis/color-analysis-check")>();
+  return {
+    ...real,
+    checkColorAnalysis: (...a: Parameters<typeof real.checkColorAnalysis>) => (failCheck.analysis ? ["forced"] : real.checkColorAnalysis(...a)),
+    checkColorRows: (...a: Parameters<typeof real.checkColorRows>) => (failCheck.rows ? ["forced"] : real.checkColorRows(...a)),
+  };
+});
+afterEach(() => Object.assign(failCheck, { analysis: false, rows: false }));
 import { ExactDecodingUnsupportedError, type PixelDecoder } from "@/core/decode-image";
 import { memorySupabase, type FailingCall } from "@/test/memory-supabase";
 import { SupabaseAnalysisService } from "./supabase-analysis-service";
@@ -41,14 +54,41 @@ describe("SupabaseAnalysisService", () => {
     expect(db.files.size).toBe(1);
   });
 
-  it("labels the colour analysis and row data simulated, the same after a reload", async () => {
+  it("computes the colour analysis from the stored colours, the same after a reload", async () => {
     const { service: s, db } = service();
     const id = await s.analyze(png(), options);
     const first = (await s.getAnalysis(id))!;
-    expect(first.rowDataStatus).toBe("simulated");
-    expect(first.colorAnalysis?.status).toBe("simulated");
+    expect(first.rowDataStatus).toBe("computed");
+    // Every colour here is frequent, so none is a blend.
+    expect(first.colors.every((c) => c.artefacts?.[0].chance === 0 && c.clusterId !== undefined)).toBe(true);
+    expect(checkColorRows(first.colors, first.colorAnalysis)).toEqual([]);
+    expect(first.colorAnalysis).toMatchObject({ status: "computed", inputKind: "png-lossless" });
+    expect(first.colorAnalysis?.gamut?.occupiedCells).toBeGreaterThan(0);
     const reloaded = new SupabaseAnalysisService(() => db.client, fakeDecoder());
     expect(await reloaded.getAnalysis(id)).toEqual(first);
+  });
+
+  it("leaves out a colour analysis that fails the contract check, with a warning, instead of failing", async () => {
+    const { service: s } = service();
+    const id = await s.analyze(png(), options);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    failCheck.analysis = true;
+    const a = (await s.getAnalysis(id))!;
+    expect(a.colorAnalysis).toBeUndefined();
+    expect(a.colors.every((c) => c.clusterId === undefined && c.artefacts !== undefined)).toBe(true);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("colorAnalysis"), ["forced"]);
+  });
+
+  it("leaves out row data that fails the contract check, keeping the counts", async () => {
+    const { service: s } = service();
+    const id = await s.analyze(png(), options);
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    failCheck.rows = true;
+    const a = (await s.getAnalysis(id))!;
+    expect(a.rowDataStatus).toBeUndefined();
+    expect(a.colors.map((c) => [c.count, c.artefacts, c.clusterId])).toEqual([3, 1, 1, 1].map((n) => [n, undefined, undefined]));
+    expect(a.colorAnalysis?.status).toBe("computed");
+    expect(warn).toHaveBeenCalledTimes(1);
   });
 
   it("builds the pixel CSV from the latest analysis", async () => {
