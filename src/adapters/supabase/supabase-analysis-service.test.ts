@@ -47,7 +47,8 @@ describe("SupabaseAnalysisService", () => {
     const id = await s.analyze(png(), options);
     const first = (await s.getAnalysis(id))!;
     expect(first.rowDataStatus).toBe("computed");
-    expect(first.colors.every((c) => c.artefacts === undefined && c.clusterId !== undefined)).toBe(true);
+    // Every colour here is frequent, so none is a blend.
+    expect(first.colors.every((c) => c.artefacts?.[0].chance === 0 && c.clusterId !== undefined)).toBe(true);
     expect(checkColorRows(first.colors, first.colorAnalysis)).toEqual([]);
     expect(first.colorAnalysis).toMatchObject({ status: "computed", inputKind: "png-lossless" });
     expect(first.colorAnalysis?.gamut?.occupiedCells).toBeGreaterThan(0);

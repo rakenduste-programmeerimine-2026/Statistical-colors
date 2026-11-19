@@ -3,6 +3,17 @@
 // empty, which the contract allows (docs/api/color-analysis.md).
 import type { ImageFormat } from "../image-format";
 import type { ColorAnalysis, InputKind } from "./color-analysis";
+import {
+  BLEND_ENDPOINT_MIN_SHARE,
+  BLEND_MAX_DISTANCE,
+  BLEND_MAX_ENDPOINTS,
+  BLEND_MAX_SHARE,
+  BLEND_T_MAX,
+  BLEND_T_MIN,
+  blendFinding,
+  isBlend,
+  withBlendChances,
+} from "./blends";
 import { CONTRAST_MAX_CLUSTERS, CONTRAST_MIN_SHARE, contrastFinding, contrastPairs } from "./contrast";
 import { computeGamutCoverage } from "./gamut-coverage";
 import { fitHarmonies, HARMONY_C0, HARMONY_MAX_ERR, HARMONY_MIN_COVERAGE, HARMONY_MIN_SCORE } from "./harmonies";
@@ -19,10 +30,13 @@ export function inputKindFor(format: ImageFormat | undefined): InputKind {
 }
 
 export function computeColorAnalysis(colors: readonly ColorCount[], uniqueColors: number, format?: ImageFormat): ColorAnalysis {
-  const { kept, removedShare } = filterShares(colors);
+  // Blend colours are set aside before clustering, so they cannot add fake hues (docs/ontology/07).
+  const rows = withBlendChances(colors);
+  const blendShare = rows.filter(isBlend).reduce((s, c) => s + c.percent, 0);
+  const { kept, removedShare } = filterShares(rows.filter((c) => !isBlend(c)));
   const palette = clusterColors(kept);
   const contrast = contrastPairs(palette);
-  const findings = [contrastFinding(contrast, palette), darkModeFinding(palette)].filter((f) => f !== undefined);
+  const findings = [contrastFinding(contrast, palette), darkModeFinding(palette), blendFinding(rows)].filter((f) => f !== undefined);
   return {
     schemaVersion: 1,
     status: "computed",
@@ -30,7 +44,19 @@ export function computeColorAnalysis(colors: readonly ColorCount[], uniqueColors
     // Every image is decoded as 8-bit sRGB (P-031 item 6).
     sourceProfile: "srgb",
     pipeline: [
-      { step: "blend-snap", status: "not-implemented" },
+      {
+        step: "blend-snap",
+        status: "done",
+        params: {
+          maxDistance: BLEND_MAX_DISTANCE,
+          maxSharePercent: BLEND_MAX_SHARE,
+          endpointMinSharePercent: BLEND_ENDPOINT_MIN_SHARE,
+          maxEndpoints: BLEND_MAX_ENDPOINTS,
+          tMin: BLEND_T_MIN,
+          tMax: BLEND_T_MAX,
+        },
+        removedShare: blendShare,
+      },
       { step: "share-filter", status: "done", params: { floorPercent: SHARE_FLOOR, z: SHARE_Z_MIN }, removedShare },
       { step: "convert", status: "done" },
       kept.length

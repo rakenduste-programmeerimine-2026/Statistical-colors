@@ -67,7 +67,7 @@ These go on each row of `ImageAnalysis.colors`, the colour list behind the "sage
 |---|---|---|
 | `artefacts?` | `{ kind, chance }[]` | The likelihood (0–1) that this colour is a blend pixel (segupiksel, `artefact.antialias-blend`) or another artefact (`docs/ontology/07-digital-artefacts.md`). [UNDERSTANDING] For blends, the share of the colour's pixels that blend snap (#29) assigned to two neighbours. |
 | `clusterId?` | string | The `colorAnalysis.palette` cluster the colour belongs to (#31). Computed: the nearest cluster centre within τ 0.02, otherwise absent. |
-| `ImageAnalysis.rowDataStatus?` | `"computed"` | `"simulated"` | The real adapter sends `"computed"` (clusters only; `artefacts` is not sent yet, #29, #63). The stub and the demo send `"simulated"`; the table then says so. |
+| `ImageAnalysis.rowDataStatus?` | `"computed"` | `"simulated"` | The real adapter sends `"computed"`: clusters, and `artefacts` with the blend chance only (see [Blend colours](#blend-colours-29)); other artefact kinds are not sent yet (#63). The stub and the demo send `"simulated"`; the table then says so. |
 
 - **Row count:** the table filters by share band, cluster and artefact over **every colour in `colors`**, and shows the N most frequent matches (P-033 item 3). #69 asks the server to send every colour, or to add a filter query to the port.
 - **Check:** `checkColorRows()` checks these fields (chance 0–1, non-empty kind, known cluster ids).
@@ -98,7 +98,7 @@ These go on each row of `ImageAnalysis.colors`, the colour list behind the "sage
 
 | Step | Status | What it does | Code |
 |---|---|---|---|
-| `blend-snap` | not-implemented | Needs pixel neighbours and storage (#29, #73) | – |
+| `blend-snap` | done | Blend colours from the colour list, see below; they are set aside before the share filter and clustering, and `removedShare` is their sum | `blends.ts` |
 | `share-filter` | done | Drops colours under 0.05 % share or with z < −2 on the log10 share; `removedShare` is their sum | `palette-clusters.ts` |
 | `convert` | done | sRGB → OKLab/OKLCH, CSS Color 4 matrices | `src/core/color/oklch.ts` |
 | `cluster` | done (skipped when no colour is left) | Complete linkage in OKLab, τ 0.02, on the 300 most frequent kept colours (distance matrix, Lance–Williams max update) | `palette-clusters.ts` |
@@ -130,6 +130,16 @@ Also: `inputKind` comes from the stored image format (png, gif, bmp → `png-los
 | 20 | 89–100 % | 0 % |
 
 300 palettes per row; the range is over the five templates. Each spoke catches ±15°, so four spokes cover a third of the wheel by chance; 0.3 lets most random palettes through. In the unit test (100 fixed-seed 12-hue palettes), coverage 0.8 alone let 5 through, with scores 0.18–0.65: all chance clusters of hues, two of them with one spoke held by a single 7–9 % cluster. With the 0.3 score floor, 2 of 100 pass (scores 0.31 and 0.38). Palettes of 3–5 colours can still look like a harmony by chance; every structure carries `consistent-not-proven`.
+
+### Blend colours (#29)
+
+From the colour list only (#29: a blend lies "kahe päris värvi A ja B vahel"); pixel neighbours are not used.
+
+- **Real colours (segment ends):** the up to 20 most frequent colours with at least 1 % share.
+- **A blend candidate:** a colour under 1 % whose projection on a segment AB lies at t ∈ [0.1, 0.9] (between the ends, not next to one) and within 6 values of the segment. Distances are Euclidean in encoded 8-bit sRGB (0–255 per channel), where edges are blended; alpha is ignored.
+- **`chance`** on every row (`kind: "artefact.antialias-blend"`): 1 − d / 12 for the nearest such segment (1 on it, 0.5 at d = 6), otherwise 0. So every candidate counts as likely (≥ 0.5) and the table's "puhas" filter finds the rest. **This differs from the field's definition above** ("the share of that colour's pixels snapped"): every pixel of one colour has the same value, so from the colour list the chance is a geometric closeness, not a pixel share.
+- **Effect:** colours with chance ≥ 0.5 are left out of the share filter and clustering, so they cannot add fake hues (`docs/ontology/07`). They are not added to the end colours' share.
+- **Finding `artefact.antialias-blend`:** blend share and number of blend colours, confidence 0.5, caveats `consistent-not-proven` and `antialias-blend`. A flat swatch that happens to lie between two frequent colours also scores as a blend; telling them apart needs pixel neighbours.
 
 ### Palette types (#59)
 

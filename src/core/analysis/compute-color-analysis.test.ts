@@ -42,6 +42,14 @@ describe("computeColorAnalysis", () => {
     expect(checkColorAnalysis(x)).toEqual([]);
   });
 
+  it("sets a blend colour aside before clustering and reports it", () => {
+    const x = computeColorAnalysis([...colors.map((c) => ({ ...c, percent: c.percent - 0.25 })), { r: 128, g: 128, b: 128, count: 1, percent: 0.5 }], 3);
+    expect(x.palette).toHaveLength(2);
+    expect(x.pipeline.find((p) => p.step === "blend-snap")).toMatchObject({ status: "done", removedShare: 0.5 });
+    expect(x.findings.map((f) => f.kind)).toContain("artefact.antialias-blend");
+    expect(checkColorAnalysis(x)).toEqual([]);
+  });
+
   it("skips clustering when every colour is too rare", () => {
     const x = computeColorAnalysis([{ r: 1, g: 2, b: 3, count: 1, percent: 0.01 }], 1);
     expect(x.palette).toEqual([]);

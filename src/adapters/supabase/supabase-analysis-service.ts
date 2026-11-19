@@ -6,6 +6,7 @@ import { decodeImage, ExactDecodingUnsupportedError, type DecodedImage, type Pix
 import { buildPixelsCsv } from "@/core/pixels-csv";
 import { buildSummaryCsv } from "@/core/summary-csv";
 import { computeColorAnalysis } from "@/core/analysis/compute-color-analysis";
+import { withBlendChances } from "@/core/analysis/blends";
 import { assignClusterIds } from "@/core/analysis/palette-clusters";
 import { getAnalysis, getSummaryCsv, saveAnalysis, type AnalysisClient } from "./analysis-repository";
 import { REPORT_MAX_BYTES } from "./analysis-rows";
@@ -74,8 +75,8 @@ export class SupabaseAnalysisService implements AnalysisService {
     const analysis = await getAnalysis(this.supabase(), id);
     if (!analysis) return null;
     const colorAnalysis = computeColorAnalysis(analysis.colors, analysis.uniqueColors, analysis.format);
-    const colors = assignClusterIds(analysis.colors, colorAnalysis.palette);
-    // Clusters are computed; artefact chances are not sent yet (#29, #63).
+    // Blend chances from the colour list (#29) and clusters (#31); other artefacts are not sent yet (#63).
+    const colors = assignClusterIds(withBlendChances(analysis.colors), colorAnalysis.palette);
     return { ...analysis, colors, rowDataStatus: "computed", colorAnalysis };
   }
 
