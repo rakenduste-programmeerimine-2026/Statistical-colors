@@ -41,12 +41,14 @@ describe("SupabaseAnalysisService", () => {
     expect(db.files.size).toBe(1);
   });
 
-  it("labels the colour analysis and row data simulated, the same after a reload", async () => {
+  it("computes the colour analysis from the stored colours, the same after a reload", async () => {
     const { service: s, db } = service();
     const id = await s.analyze(png(), options);
     const first = (await s.getAnalysis(id))!;
-    expect(first.rowDataStatus).toBe("simulated");
-    expect(first.colorAnalysis?.status).toBe("simulated");
+    expect(first.rowDataStatus).toBeUndefined();
+    expect(first.colors.every((c) => c.artefacts === undefined && c.clusterId === undefined)).toBe(true);
+    expect(first.colorAnalysis).toMatchObject({ status: "computed", inputKind: "png-lossless" });
+    expect(first.colorAnalysis?.gamut?.occupiedCells).toBeGreaterThan(0);
     const reloaded = new SupabaseAnalysisService(() => db.client, fakeDecoder());
     expect(await reloaded.getAnalysis(id)).toEqual(first);
   });

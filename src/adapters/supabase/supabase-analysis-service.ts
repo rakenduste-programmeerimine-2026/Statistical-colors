@@ -5,10 +5,7 @@ import { countColors } from "@/core/count-colors";
 import { decodeImage, ExactDecodingUnsupportedError, type DecodedImage, type PixelDecoder } from "@/core/decode-image";
 import { buildPixelsCsv } from "@/core/pixels-csv";
 import { buildSummaryCsv } from "@/core/summary-csv";
-import { generateColorAnalysis } from "../simulated/color-analysis";
-import { simulateColorRows } from "../simulated/color-rows";
-import { simulateGamut } from "../simulated/gamut";
-import { hash, prng } from "../simulated/random";
+import { computeColorAnalysis } from "@/core/analysis/compute-color-analysis";
 import { getAnalysis, getSummaryCsv, saveAnalysis, type AnalysisClient } from "./analysis-repository";
 import { REPORT_MAX_BYTES } from "./analysis-rows";
 
@@ -74,7 +71,7 @@ export class SupabaseAnalysisService implements AnalysisService {
 
   async getAnalysis(id: string): Promise<ImageAnalysis | null> {
     const analysis = await getAnalysis(this.supabase(), id);
-    return analysis && withSimulatedColorAnalysis(analysis);
+    return analysis && { ...analysis, colorAnalysis: computeColorAnalysis(analysis.colors, analysis.uniqueColors, analysis.format) };
   }
 
   async getCsv(id: string, kind: CsvKind): Promise<CsvFile | null> {
@@ -87,16 +84,4 @@ export class SupabaseAnalysisService implements AnalysisService {
     const content = await buildPixelsCsv(image.pixels, image.width, image.height, includeAlpha, this.pause);
     return { fileName: `${id}_pixels.csv`, content };
   }
-}
-
-/**
- * PLACEHOLDER(#55, #69, #74): the server does not compute the colour analysis,
- * per-colour artefact chances and clusters, or gamut coverage yet. They are
- * simulated the way the demo does it, seeded by the id so a reload shows the
- * same result, and labelled simulated. The colours and counts stay real.
- */
-function withSimulatedColorAnalysis(analysis: ImageAnalysis): ImageAnalysis {
-  const colorAnalysis = { ...generateColorAnalysis(prng(hash(`${analysis.id}:color`))), gamut: simulateGamut(analysis.colors) };
-  const colors = simulateColorRows(analysis.colors, colorAnalysis, prng(hash(`${analysis.id}:rows`)));
-  return { ...analysis, colors, rowDataStatus: "simulated", colorAnalysis };
 }

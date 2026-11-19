@@ -139,9 +139,14 @@ describe("toImageAnalysis", () => {
       totalPixels: 12,
       uniqueColors: 2,
       includeAlpha: false,
+      format: "bmp",
       topN: 10,
       colors: [],
     });
+  });
+
+  it("leaves out a stored format the app cannot decode", () => {
+    expect(toImageAnalysis(image({ format: "tiff" }), [])).not.toHaveProperty("format");
   });
 
   it("orders the colours by rank", () => {
