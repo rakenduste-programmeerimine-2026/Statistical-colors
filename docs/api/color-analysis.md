@@ -3,7 +3,7 @@
 `colorAnalysis` comes with each stored analysis returned by `getAnalysis` (#55), and the results page only displays it (#54). **Interim solution for #55:** the real adapter computes it in `SupabaseAnalysisService.getAnalysis`, which runs in the browser, with `status: "computed"` (see [What is computed](#what-is-computed)). P-031 item 1 asks the server to compute it, but P-018 item 3 and P-031 item 8 rule out Route Handlers and Server Actions in this repository, so the computation is pure code in `src/core/analysis/` that a server can later call unchanged. Recording this as a decision in `docs/prompts.md` is left to the frontend owner. The stub and the demo synthesise one with `status: "simulated"` (`src/adapters/simulated/color-analysis.ts`).
 
 - Types: `src/core/analysis/color-analysis.ts`. That file is the contract; this page explains it.
-- Check: `checkColorAnalysis()` in `src/core/analysis/color-analysis-check.ts`. The real adapter (#40) should run it, and the contract test `analysis-service.contract.ts` does.
+- Check: `checkColorAnalysis()` in `src/core/analysis/color-analysis-check.ts`. The real adapter (#40) runs it and `checkColorRows()` on every read, and the contract test `analysis-service.contract.ts` does too. On a failure nothing is thrown: a failing `colorAnalysis` is left out (and the rows lose their `clusterId`), failing row data is left out (`artefacts`, `clusterId`, `rowDataStatus`; the counts stay), and the errors go to `console.warn`.
 - Codes and kinds: `docs/ontology/README.md`.
 
 Sources: [PROMPT P-030], [PROMPT P-031]. Thresholds marked [AUDIT: experiment …] come from `prototypes/colour-analysis/` (unverified prototypes; the backend team decides the final values).

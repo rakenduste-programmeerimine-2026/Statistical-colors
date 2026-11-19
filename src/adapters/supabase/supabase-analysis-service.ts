@@ -5,6 +5,7 @@ import { countColors } from "@/core/count-colors";
 import { decodeImage, ExactDecodingUnsupportedError, type DecodedImage, type PixelDecoder } from "@/core/decode-image";
 import { buildPixelsCsv } from "@/core/pixels-csv";
 import { buildSummaryCsv } from "@/core/summary-csv";
+import { checkColorAnalysis, checkColorRows } from "@/core/analysis/color-analysis-check";
 import { analyseColors } from "@/core/analysis/compute-color-analysis";
 import { getAnalysis, getSummaryCsv, saveAnalysis, type AnalysisClient } from "./analysis-repository";
 import { REPORT_MAX_BYTES } from "./analysis-rows";
@@ -73,8 +74,20 @@ export class SupabaseAnalysisService implements AnalysisService {
     const analysis = await getAnalysis(this.supabase(), id);
     if (!analysis) return null;
     // Rows get their blend chance (#29) and, when clustered, their cluster (#31); other artefacts are not sent yet (#63).
-    const { colorAnalysis, colors } = analyseColors(analysis.colors, analysis.uniqueColors, analysis.format);
-    return { ...analysis, colors, rowDataStatus: "computed", colorAnalysis };
+    const computed = analyseColors(analysis.colors, analysis.uniqueColors, analysis.format);
+    // The contract check (#55): a failing part is left out with a warning, never thrown, so the page still works.
+    const analysisErrors = checkColorAnalysis(computed.colorAnalysis);
+    if (analysisErrors.length) console.warn("colorAnalysis failed the contract check and is left out", analysisErrors);
+    const colorAnalysis = analysisErrors.length ? undefined : computed.colorAnalysis;
+    // Without the palette a cluster id would point nowhere.
+    const colors = colorAnalysis ? computed.colors : computed.colors.map((c) => ({ ...c, clusterId: undefined }));
+    const rowErrors = checkColorRows(colors, colorAnalysis);
+    if (rowErrors.length) console.warn("Colour row data failed the contract check and is left out", rowErrors);
+    return {
+      ...analysis,
+      ...(rowErrors.length ? {} : { colors, rowDataStatus: "computed" as const }),
+      ...(colorAnalysis ? { colorAnalysis } : {}),
+    };
   }
 
   async getCsv(id: string, kind: CsvKind): Promise<CsvFile | null> {
