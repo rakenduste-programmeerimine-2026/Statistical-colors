@@ -16,6 +16,17 @@ describe("computeColorAnalysis", () => {
     expect(x.gamut?.occupiedCells).toBe(2);
     expect(JSON.stringify(x)).not.toMatch(/simulated/);
     expect(x.pipeline.find((p) => p.step === "structures")?.status).toBe("not-implemented");
+    expect(x.palette.map((p) => [p.share, p.representativeRgb])).toEqual([
+      [75, { r: 0, g: 0, b: 0 }],
+      [25, { r: 255, g: 255, b: 255 }],
+    ]);
+  });
+
+  it("skips clustering when every colour is too rare", () => {
+    const x = computeColorAnalysis([{ r: 1, g: 2, b: 3, count: 1, percent: 0.01 }], 1);
+    expect(x.palette).toEqual([]);
+    expect(x.pipeline.find((p) => p.step === "cluster")?.status).toBe("skipped");
+    expect(checkColorAnalysis(x)).toEqual([]);
   });
 
   it("maps the stored format to the input kind", () => {

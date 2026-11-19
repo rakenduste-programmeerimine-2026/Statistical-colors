@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { AnalysisFailedError, InvalidImageError } from "@/core/analysis/analysis-service";
 import { describeAnalysisServiceContract } from "@/core/analysis/analysis-service.contract";
+import { checkColorRows } from "@/core/analysis/color-analysis-check";
 import { ExactDecodingUnsupportedError, type PixelDecoder } from "@/core/decode-image";
 import { memorySupabase, type FailingCall } from "@/test/memory-supabase";
 import { SupabaseAnalysisService } from "./supabase-analysis-service";
@@ -45,8 +46,9 @@ describe("SupabaseAnalysisService", () => {
     const { service: s, db } = service();
     const id = await s.analyze(png(), options);
     const first = (await s.getAnalysis(id))!;
-    expect(first.rowDataStatus).toBeUndefined();
-    expect(first.colors.every((c) => c.artefacts === undefined && c.clusterId === undefined)).toBe(true);
+    expect(first.rowDataStatus).toBe("computed");
+    expect(first.colors.every((c) => c.artefacts === undefined && c.clusterId !== undefined)).toBe(true);
+    expect(checkColorRows(first.colors, first.colorAnalysis)).toEqual([]);
     expect(first.colorAnalysis).toMatchObject({ status: "computed", inputKind: "png-lossless" });
     expect(first.colorAnalysis?.gamut?.occupiedCells).toBeGreaterThan(0);
     const reloaded = new SupabaseAnalysisService(() => db.client, fakeDecoder());

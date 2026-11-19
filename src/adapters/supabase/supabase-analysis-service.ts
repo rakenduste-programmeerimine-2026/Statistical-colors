@@ -6,6 +6,7 @@ import { decodeImage, ExactDecodingUnsupportedError, type DecodedImage, type Pix
 import { buildPixelsCsv } from "@/core/pixels-csv";
 import { buildSummaryCsv } from "@/core/summary-csv";
 import { computeColorAnalysis } from "@/core/analysis/compute-color-analysis";
+import { assignClusterIds } from "@/core/analysis/palette-clusters";
 import { getAnalysis, getSummaryCsv, saveAnalysis, type AnalysisClient } from "./analysis-repository";
 import { REPORT_MAX_BYTES } from "./analysis-rows";
 
@@ -71,7 +72,11 @@ export class SupabaseAnalysisService implements AnalysisService {
 
   async getAnalysis(id: string): Promise<ImageAnalysis | null> {
     const analysis = await getAnalysis(this.supabase(), id);
-    return analysis && { ...analysis, colorAnalysis: computeColorAnalysis(analysis.colors, analysis.uniqueColors, analysis.format) };
+    if (!analysis) return null;
+    const colorAnalysis = computeColorAnalysis(analysis.colors, analysis.uniqueColors, analysis.format);
+    const colors = assignClusterIds(analysis.colors, colorAnalysis.palette);
+    // Clusters are computed; artefact chances are not sent yet (#29, #63).
+    return { ...analysis, colors, rowDataStatus: "computed", colorAnalysis };
   }
 
   async getCsv(id: string, kind: CsvKind): Promise<CsvFile | null> {
