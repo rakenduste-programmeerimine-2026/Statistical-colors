@@ -21,7 +21,11 @@ describe("computeColorAnalysis", () => {
       [25, { r: 255, g: 255, b: 255 }],
     ]);
     expect(x.contrast?.map((p) => p.ratio)).toEqual([21]);
-    expect(x.findings.map((f) => [f.kind, f.severity])).toEqual([["accessibility.contrast", "info"]]);
+    // Black 75 % with white 25 % is also a flat dark background with light content.
+    expect(x.findings.map((f) => [f.kind, f.severity])).toEqual([
+      ["accessibility.contrast", "info"],
+      ["ui.dark-mode", "info"],
+    ]);
   });
 
   it("finds the triad of pure red, green and blue and passes the contract check", () => {

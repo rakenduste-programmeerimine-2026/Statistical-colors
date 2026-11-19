@@ -105,7 +105,7 @@ These go on each row of `ImageAnalysis.colors`, the colour list behind the "sage
 | `structures` | done | Harmony templates only, see below. Ramps, palette types and other models are not implemented (#56, #58, #59) | `harmonies.ts` |
 | `contrast` | done (skipped with fewer than 2 large clusters) | WCAG 2 contrast, see below | `contrast.ts` |
 | `roles` | not-implemented | Needs scene data or Figma variables (#60, #66) | – |
-| `findings` | done (skipped without a contrast finding) | Only `accessibility.contrast` so far | `contrast.ts` |
+| `findings` | done | `accessibility.contrast` and `ui.dark-mode`; the dark-mode thresholds are its parameters | `contrast.ts`, `ui-mode.ts` |
 
 Also: `inputKind` comes from the stored image format (png, gif, bmp → `png-lossless`; jpeg → `jpeg-lossy`; webp or unknown → `unknown`). `sourceProfile` is `"srgb"`, because every image is decoded as 8-bit sRGB (P-031 item 6).
 
@@ -136,6 +136,15 @@ Also: `inputKind` comes from the stored image format (png, gif, bmp → `png-los
 - **Pairs:** every pair of the up to 6 largest clusters with at least 1 % share, using each cluster's `representativeRgb` (its most frequent colour). The lighter colour is `fgClusterId`. `worstCaseRatio` is not sent.
 - **Passes:** AA text ≥ 4.5, AA large text and non-text ≥ 3, AAA text ≥ 7.
 - **Finding `accessibility.contrast`:** one per image, rating the palette as a whole, because two similar tones are normal design: **info** when any pair reaches 4.5, **notice** when the best reaches 3, **warning** otherwise. Metrics: highest and lowest ratio, pairs ≥ 4.5 and pairs ≥ 3. Swatches: the highest-contrast pair (the best text and background candidate). Whether the colours are next to each other is not known from colours alone; the detail says so.
+
+### Dark mode (#60)
+
+The E9 rule from `docs/ontology/05-ui-structure.md` on the clusters, plus a flatness test, so it needs no layout:
+
+- **Background:** the largest cluster covers ≥ 35 %, has L ≤ 0.3 and `spreadDeltaE` ≤ 0.01 (a flat colour, not a noisy dark photo).
+- **Content:** the other clusters with |ΔL| ≥ 0.4 from it cover ≥ 1 % in total.
+- **Finding `ui.dark-mode`:** severity info, `provenance: "inferred"`, confidence 0.6, caveat `needs-scene-data`, `requires: "pixels"`. Metrics: background L, background share, content share. Swatches: the background and the largest content cluster.
+- **No finding:** a dark background without light content, a noisy dark background, a light image, or a mid-tone one. `ui.light-mode` is not reported. The extension's colour-scheme data (#61) would confirm it.
 
 ## Server steps and default parameters
 
