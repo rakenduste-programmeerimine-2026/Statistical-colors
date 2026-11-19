@@ -19,7 +19,7 @@ import { computeGamutCoverage } from "./gamut-coverage";
 import { fitHarmonies, HARMONY_C0, HARMONY_MAX_ERR, HARMONY_MIN_COVERAGE, HARMONY_MIN_SCORE } from "./harmonies";
 import { CONTENT_MIN_DELTA_L, CONTENT_MIN_SHARE, DARK_MAX_L, DARK_MAX_SPREAD, DARK_MIN_SHARE, darkModeFinding } from "./ui-mode";
 import { ACCENT_MAX_HUE_SPREAD, NEUTRAL_MIN_SHARE, paletteTypes } from "./palette-types";
-import { CLUSTER_TAU, clusterColors, filterShares, MAX_CLUSTERED, SHARE_FLOOR, SHARE_Z_MIN } from "./palette-clusters";
+import { CLUSTER_TAU, clusterWithMembers, filterShares, MAX_CLUSTERED, SHARE_FLOOR, SHARE_Z_MIN } from "./palette-clusters";
 import type { ColorCount } from "./types";
 
 /** PNG, GIF and BMP decode exactly; JPEG is lossy; WebP can be either. */
@@ -29,15 +29,23 @@ export function inputKindFor(format: ImageFormat | undefined): InputKind {
   return "unknown";
 }
 
-export function computeColorAnalysis(colors: readonly ColorCount[], uniqueColors: number, format?: ImageFormat): ColorAnalysis {
+/**
+ * The colour analysis and the colour rows with their blend chance and, for
+ * clustered colours, their cluster id. Blends are computed once here.
+ */
+export function analyseColors(
+  colors: readonly ColorCount[],
+  uniqueColors: number,
+  format?: ImageFormat,
+): { colorAnalysis: ColorAnalysis; colors: ColorCount[] } {
   // Blend colours are set aside before clustering, so they cannot add fake hues (docs/ontology/07).
   const rows = withBlendChances(colors);
   const blendShare = rows.filter(isBlend).reduce((s, c) => s + c.percent, 0);
   const { kept, removedShare } = filterShares(rows.filter((c) => !isBlend(c)));
-  const palette = clusterColors(kept);
+  const { palette, memberOf } = clusterWithMembers(kept);
   const contrast = contrastPairs(palette);
   const findings = [contrastFinding(contrast, palette), darkModeFinding(palette), blendFinding(rows)].filter((f) => f !== undefined);
-  return {
+  const colorAnalysis: ColorAnalysis = {
     schemaVersion: 1,
     status: "computed",
     inputKind: inputKindFor(format),
@@ -79,4 +87,14 @@ export function computeColorAnalysis(colors: readonly ColorCount[], uniqueColors
     findings,
     gamut: computeGamutCoverage(colors, uniqueColors),
   };
+  // Only the clustered colours get a cluster id, so each cluster's share is the sum of its rows (#69).
+  const rowsOut = rows.map((c) => {
+    const id = memberOf.get(c);
+    return id ? { ...c, clusterId: id } : c;
+  });
+  return { colorAnalysis, colors: rowsOut };
+}
+
+export function computeColorAnalysis(colors: readonly ColorCount[], uniqueColors: number, format?: ImageFormat): ColorAnalysis {
+  return analyseColors(colors, uniqueColors, format).colorAnalysis;
 }

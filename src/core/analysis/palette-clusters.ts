@@ -40,6 +40,14 @@ function toOklch([l, a, b]: Vec3): Oklch {
  * `MAX_CLUSTERED` most frequent colours; the palette is sorted by share.
  */
 export function clusterColors(colors: readonly ColorCount[], tau = CLUSTER_TAU): PaletteCluster[] {
+  return clusterWithMembers(colors, tau).palette;
+}
+
+/**
+ * The palette and each clustered colour's cluster id (the same colours that
+ * make up `share`, `pixelCount` and `memberCount`), keyed by the input object.
+ */
+export function clusterWithMembers(colors: readonly ColorCount[], tau = CLUSTER_TAU): { palette: PaletteCluster[]; memberOf: Map<ColorCount, string> } {
   const pts = [...colors].sort((x, y) => y.count - x.count).slice(0, MAX_CLUSTERED);
   const labs = pts.map((c) => srgbToOklab(c));
   const n = pts.length;
@@ -67,6 +75,7 @@ export function clusterColors(colors: readonly ColorCount[], tau = CLUSTER_TAU):
     for (const i of g) for (const j of g) spread = Math.max(spread, dist(labs[i], labs[j]));
     const rep = pts[Math.min(...g)];
     return {
+      members: g,
       color: toOklch(centre),
       share,
       pixelCount: g.reduce((s, i) => s + pts[i].count, 0),
@@ -75,29 +84,16 @@ export function clusterColors(colors: readonly ColorCount[], tau = CLUSTER_TAU):
       representativeRgb: { r: rep.r, g: rep.g, b: rep.b, ...(rep.a === undefined ? {} : { a: rep.a }) },
     };
   });
-  return clusters
+  const memberOf = new Map<ColorCount, string>();
+  const palette = clusters
     .sort((x, y) => y.share - x.share)
-    .map((c, i) => ({
-      id: `c${i}`,
-      ...c,
-      meta: { provenance: "measured", confidence: 1, method: `complete linkage in OKLab, τ ${tau}`, requires: "pixels" },
-    }));
-}
-
-/** Each colour's nearest cluster when its centre is within `tau`; otherwise none (#69). */
-export function assignClusterIds(colors: readonly ColorCount[], palette: readonly PaletteCluster[], tau = CLUSTER_TAU): ColorCount[] {
-  const centres = palette.map((p) => {
-    const hr = ((p.color.h ?? 0) * Math.PI) / 180;
-    return [p.color.l, p.color.c * Math.cos(hr), p.color.c * Math.sin(hr)] as Vec3;
-  });
-  return colors.map((c) => {
-    const lab = srgbToOklab(c);
-    let best = -1;
-    let bestD = Infinity;
-    centres.forEach((q, i) => {
-      const x = dist(lab, q);
-      if (x < bestD) [bestD, best] = [x, i];
+    .map(({ members: g, ...c }, i): PaletteCluster => {
+      for (const m of g) memberOf.set(pts[m], `c${i}`);
+      return {
+        id: `c${i}`,
+        ...c,
+        meta: { provenance: "measured", confidence: 1, method: `complete linkage in OKLab, τ ${tau}`, requires: "pixels" },
+      };
     });
-    return best >= 0 && bestD <= tau ? { ...c, clusterId: palette[best].id } : c;
-  });
+  return { palette, memberOf };
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { checkColorAnalysis } from "./color-analysis-check";
-import { computeColorAnalysis, inputKindFor } from "./compute-color-analysis";
+import { analyseColors, computeColorAnalysis, inputKindFor } from "./compute-color-analysis";
 import type { ColorCount } from "./types";
 
 const colors: ColorCount[] = [
@@ -48,6 +48,24 @@ describe("computeColorAnalysis", () => {
     expect(x.pipeline.find((p) => p.step === "blend-snap")).toMatchObject({ status: "done", removedShare: 0.5 });
     expect(x.findings.map((f) => f.kind)).toContain("artefact.antialias-blend");
     expect(checkColorAnalysis(x)).toEqual([]);
+  });
+
+  it("gives cluster ids only to clustered rows: each cluster's share is the sum of its rows", () => {
+    const rows: ColorCount[] = [
+      { r: 200, g: 0, b: 0, count: 40, percent: 40 },
+      { r: 201, g: 0, b: 0, count: 20, percent: 20 },
+      { r: 255, g: 255, b: 255, count: 35, percent: 35 },
+      { r: 228, g: 128, b: 128, count: 1, percent: 0.5 }, // blend of the reds and white
+      { r: 0, g: 0, b: 255, count: 1, percent: 0.01 }, // under the share floor
+    ];
+    const { colorAnalysis, colors: out } = analyseColors(rows, 5);
+    for (const p of colorAnalysis.palette) {
+      const sum = out.filter((r) => r.clusterId === p.id).reduce((s, r) => s + r.percent, 0);
+      expect(sum).toBeCloseTo(p.share, 9);
+    }
+    expect(out[3].clusterId).toBeUndefined();
+    expect(out[4].clusterId).toBeUndefined();
+    expect(out[3].artefacts?.[0].chance).toBeGreaterThanOrEqual(0.5);
   });
 
   it("skips clustering when every colour is too rare", () => {

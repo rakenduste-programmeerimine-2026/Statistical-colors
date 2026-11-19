@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { srgbToOklab, type Vec3 } from "../color/oklch";
-import { assignClusterIds, clusterColors, filterShares } from "./palette-clusters";
+import { clusterColors, clusterWithMembers, filterShares } from "./palette-clusters";
 import type { ColorCount } from "./types";
 
 const c = (r: number, g: number, b: number, count = 10, percent = 10): ColorCount => ({ r, g, b, count, percent });
@@ -40,11 +40,13 @@ describe("clusterColors", () => {
   });
 });
 
-describe("assignClusterIds", () => {
-  it("gives a colour its cluster within τ and none beyond it", () => {
-    const palette = clusterColors([c(200, 0, 0)]);
-    const [near, far] = assignClusterIds([c(201, 0, 0), c(0, 200, 0)], palette);
-    expect(near.clusterId).toBe("c0");
-    expect(far).not.toHaveProperty("clusterId");
+describe("clusterWithMembers", () => {
+  it("maps every clustered colour to its cluster and nothing else", () => {
+    const [a, b, far] = [c(200, 0, 0), c(201, 0, 0), c(0, 200, 0)];
+    const { palette, memberOf } = clusterWithMembers([a, b, far]);
+    expect(memberOf.get(a)).toBe(memberOf.get(b));
+    expect(memberOf.get(far)).not.toBe(memberOf.get(a));
+    expect(memberOf.size).toBe(3);
+    expect(palette).toHaveLength(2);
   });
 });
