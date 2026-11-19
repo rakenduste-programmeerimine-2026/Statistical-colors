@@ -1,6 +1,6 @@
 # Colour analysis contract (`colorAnalysis`, schema v1)
 
-The server attaches `colorAnalysis` to each stored analysis returned by `getAnalysis` (#55). The frontend only displays it (#54). The real adapter computes it with `status: "computed"` (see [What is computed](#what-is-computed)); the stub and the demo synthesise one with `status: "simulated"` (`src/adapters/simulated/color-analysis.ts`).
+`colorAnalysis` comes with each stored analysis returned by `getAnalysis` (#55), and the results page only displays it (#54). **Interim solution for #55:** the real adapter computes it in `SupabaseAnalysisService.getAnalysis`, which runs in the browser, with `status: "computed"` (see [What is computed](#what-is-computed)). P-031 item 1 asks the server to compute it, but P-018 item 3 and P-031 item 8 rule out Route Handlers and Server Actions in this repository, so the computation is pure code in `src/core/analysis/` that a server can later call unchanged. Recording this as a decision in `docs/prompts.md` is left to the frontend owner. The stub and the demo synthesise one with `status: "simulated"` (`src/adapters/simulated/color-analysis.ts`).
 
 - Types: `src/core/analysis/color-analysis.ts`. That file is the contract; this page explains it.
 - Check: `checkColorAnalysis()` in `src/core/analysis/color-analysis-check.ts`. The real adapter (#40) should run it, and the contract test `analysis-service.contract.ts` does.
@@ -65,8 +65,8 @@ These go on each row of `ImageAnalysis.colors`, the colour list behind the "sage
 
 | Field | Type | Meaning |
 |---|---|---|
-| `artefacts?` | `{ kind, chance }[]` | The likelihood (0–1) that this colour is a blend pixel (segupiksel, `artefact.antialias-blend`) or another artefact (`docs/ontology/07-digital-artefacts.md`). [UNDERSTANDING] For blends, the share of the colour's pixels that blend snap (#29) assigned to two neighbours. |
-| `clusterId?` | string | The `colorAnalysis.palette` cluster the colour belongs to (#31). Computed: the nearest cluster centre within τ 0.02, otherwise absent. |
+| `artefacts?` | `{ kind, chance }[]` | The likelihood (0–1) that this colour is a blend pixel (segupiksel, `artefact.antialias-blend`) or another artefact (`docs/ontology/07-digital-artefacts.md`). Computed from the colour list (#29): every row gets `artefact.antialias-blend` with chance 1 − d / 12 when it is a rare colour between two frequent ones, otherwise 0; it is a geometric closeness, not a pixel share (see [Blend colours](#blend-colours-29)). The earlier reading, "the share of the colour's pixels that blend snap assigned to two neighbours", needs pixel neighbours and is superseded for the computed rows. |
+| `clusterId?` | string | The `colorAnalysis.palette` cluster the colour belongs to (#31). Computed: only the colours the cluster was built from, so a cluster's `share` is the sum of its rows' `percent`. Blend colours, colours under the share floor and colours beyond the 300 clustered have no `clusterId`. |
 | `ImageAnalysis.rowDataStatus?` | `"computed"` | `"simulated"` | The real adapter sends `"computed"`: clusters, and `artefacts` with the blend chance only (see [Blend colours](#blend-colours-29)); other artefact kinds are not sent yet (#63). The stub and the demo send `"simulated"`; the table then says so. |
 
 - **Row count:** the table filters by share band, cluster and artefact over **every colour in `colors`**, and shows the N most frequent matches (P-033 item 3). #69 asks the server to send every colour, or to add a filter query to the port.
@@ -105,7 +105,7 @@ These go on each row of `ImageAnalysis.colors`, the colour list behind the "sage
 | `structures` | done | Harmony templates and two palette types, see below. Ramps, the other palette types and other models are not implemented (#56, #58, #59) | `harmonies.ts`, `palette-types.ts` |
 | `contrast` | done (skipped with fewer than 2 large clusters) | WCAG 2 contrast, see below | `contrast.ts` |
 | `roles` | not-implemented | Needs scene data or Figma variables (#60, #66) | – |
-| `findings` | done | `accessibility.contrast` and `ui.dark-mode`; the dark-mode thresholds are its parameters | `contrast.ts`, `ui-mode.ts` |
+| `findings` | done | `accessibility.contrast`, `ui.dark-mode` and `artefact.antialias-blend`; the dark-mode thresholds are its parameters | `contrast.ts`, `ui-mode.ts`, `blends.ts` |
 
 Also: `inputKind` comes from the stored image format (png, gif, bmp → `png-lossless`; jpeg → `jpeg-lossy`; webp or unknown → `unknown`). `sourceProfile` is `"srgb"`, because every image is decoded as 8-bit sRGB (P-031 item 6).
 
