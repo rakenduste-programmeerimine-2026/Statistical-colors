@@ -3,6 +3,7 @@
 // empty, which the contract allows (docs/api/color-analysis.md).
 import type { ImageFormat } from "../image-format";
 import type { ColorAnalysis, InputKind } from "./color-analysis";
+import { CONTRAST_MAX_CLUSTERS, CONTRAST_MIN_SHARE, contrastFinding, contrastPairs } from "./contrast";
 import { computeGamutCoverage } from "./gamut-coverage";
 import { CLUSTER_TAU, clusterColors, filterShares, MAX_CLUSTERED, SHARE_FLOOR, SHARE_Z_MIN } from "./palette-clusters";
 import type { ColorCount } from "./types";
@@ -17,6 +18,8 @@ export function inputKindFor(format: ImageFormat | undefined): InputKind {
 export function computeColorAnalysis(colors: readonly ColorCount[], uniqueColors: number, format?: ImageFormat): ColorAnalysis {
   const { kept, removedShare } = filterShares(colors);
   const palette = clusterColors(kept);
+  const contrast = contrastPairs(palette);
+  const contrastResult = contrastFinding(contrast, palette);
   return {
     schemaVersion: 1,
     status: "computed",
@@ -31,13 +34,16 @@ export function computeColorAnalysis(colors: readonly ColorCount[], uniqueColors
         ? { step: "cluster", status: "done", params: { tau: CLUSTER_TAU, linkage: "complete", maxColors: MAX_CLUSTERED } }
         : { step: "cluster", status: "skipped" },
       { step: "structures", status: "not-implemented" },
-      { step: "contrast", status: "not-implemented" },
+      contrast.length
+        ? { step: "contrast", status: "done", params: { maxClusters: CONTRAST_MAX_CLUSTERS, minSharePercent: CONTRAST_MIN_SHARE } }
+        : { step: "contrast", status: "skipped" },
       { step: "roles", status: "not-implemented" },
-      { step: "findings", status: "not-implemented" },
+      { step: "findings", status: contrastResult ? "done" : "skipped" },
     ],
     palette,
     structures: [],
-    findings: [],
+    contrast,
+    findings: contrastResult ? [contrastResult] : [],
     gamut: computeGamutCoverage(colors, uniqueColors),
   };
 }
