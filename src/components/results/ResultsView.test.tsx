@@ -86,9 +86,10 @@ describe("ResultsView", () => {
     const rgba = { ...analysis, includeAlpha: true, colors: [{ r: 1, g: 2, b: 3, a: 4, count: 4, percent: 100 }] };
     renderWithServices(<ResultsView />, servicesWith(rgba));
     const table = await screen.findByRole("table");
-    expect(within(table).getByRole("columnheader", { name: "Hex + alfa" })).toBeInTheDocument();
+    expect(within(table).getByRole("columnheader", { name: "RGBA" })).toBeInTheDocument();
     expect(within(table).getByRole("columnheader", { name: "OKLCH" })).toBeInTheDocument();
-    expect(table).toHaveTextContent("(1, 2, 3, 4)#010203 004oklch(8.23% 0.00804 240.75 / 0.016)4100.000000%");
+    // Alpha reads as opacity, not "004" (#90).
+    expect(table).toHaveTextContent("(1, 2, 3, 4)#010203läbipaistmatus 2 %oklch(8.23% 0.00804 240.75 / 0.016)4100.000000%");
   });
 
   it("warns when the data is simulated", async () => {

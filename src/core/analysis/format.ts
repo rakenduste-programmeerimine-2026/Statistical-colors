@@ -27,3 +27,11 @@ export function cssColor(color: Pick<ColorCount, "r" | "g" | "b" | "a">): string
 export function formatPercent(percent: number): string {
   return `${percent.toFixed(6)}%`;
 }
+
+/** `#RRGGBB` without alpha, for display; the CSV keeps `formatHex`. */
+export const hexOf = (c: Pick<ColorCount, "r" | "g" | "b">) => formatHex({ r: c.r, g: c.g, b: c.b });
+
+/** Alpha 0–255 as a readable opacity, e.g. "läbipaistmatus 50 %" (#90: "000" said nothing). */
+export function formatOpacity(a: number): string {
+  return `läbipaistmatus ${Math.round((a / 255) * 100)} %`;
+}

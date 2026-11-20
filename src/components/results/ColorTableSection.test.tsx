@@ -36,11 +36,11 @@ const analysis = (over: Partial<ImageAnalysis> = {}): ImageAnalysis => ({
 const bodyRows = () => within(screen.getByRole("table")).getAllByRole("row").slice(1);
 
 describe("ColorTableSection", () => {
-  it("shows each colour's most likely artefact with its chance, and says the values are simulated", () => {
+  it("shows each colour's blend similarity as a fixed-width bar and number, and says the values are simulated", () => {
     render(<ColorTableSection analysis={analysis()} topN={2} />);
-    expect(screen.getByRole("columnheader", { name: "Segupiksel / artefakt" })).toBeInTheDocument();
-    expect(bodyRows()[0]).toHaveTextContent("10 %Servade silumise vahevärvid");
-    expect(screen.getByRole("meter", { name: "Servade silumise vahevärvid: 60 %" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Segupiksli sarnasus" })).toBeInTheDocument();
+    expect(bodyRows()[0]).toHaveTextContent(/10 %$/);
+    expect(screen.getByRole("img", { name: "Segupiksli sarnasus 60 %" })).toHaveClass("w-36", "shrink-0");
     expect(screen.getByRole("note")).toHaveTextContent("Näidisandmed");
   });
 
@@ -76,7 +76,7 @@ describe("ColorTableSection", () => {
     await user.click(clusters[1]);
     expect(bodyRows()).toHaveLength(3);
 
-    await user.click(screen.getByRole("button", { name: "tõenäoline (≥ 50 %)" }));
+    await user.click(screen.getByRole("button", { name: "sarnane segupikslile (≥ 50 %)" }));
     // c0 rows with chance ≥ 0.5: 0.9 and exactly 0.5.
     expect(bodyRows()).toHaveLength(2);
 

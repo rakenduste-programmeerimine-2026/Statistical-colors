@@ -57,8 +57,8 @@ export function ColorFilters({ value, onChange, bands, clusters, hasArtefacts }:
           {(
             [
               ["all", "kõik"],
-              ["likely", "tõenäoline (≥ 50 %)"],
-              ["clean", "puhas (< 50 %)"],
+              ["likely", "sarnane segupikslile (≥ 50 %)"],
+              ["clean", "ei sarnane (< 50 %)"],
             ] as const
           ).map(([v, text]) => (
             <button key={v} type="button" aria-pressed={value.artefact === v} className={chip(value.artefact === v)} onClick={() => onChange({ ...value, artefact: v })}>
