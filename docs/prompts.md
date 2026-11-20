@@ -594,3 +594,41 @@ Decisions:
 2. [UNDERSTANDING] On a background with OKLCH lightness below 0.6 the 3D view's text, rings and faint lattice switch to light colours.
 3. [UNDERSTANDING] The choice resets on reload; it is not part of the saved theme.
 4. [UNDERSTANDING] Chosen values of the ΔE circles (explained to the user): radius = base + 300 px × ΔE, at most base + 21 px (reached at ΔE 0.07), where base is the largest colour dot with its lightness ring on that wheel plus 3 px.
+
+## P-038 (2026-11-21): User-test feedback, colour names, theme widget, and Lean verification
+
+Type: requirement
+Source: user prompt
+Issue: #90, #91, #92 (frontend and docs), #93–#96 (backend)
+
+> Värvide arvu muutmisel näitab rakendus ikka 5000 värvi. Zoomimine sülearvutitel on liiga järsk. Filtreerimine teeb brauseri aeglaseks, sest töötlus käib front-endis determine which would be faster.
+> The chance of being a artefact percentage bar element jääb teiste elementide peale tabeli vaates. Salvestatud teemadele ei saa nime panna currently allow user set names and in general every place where a color code is add a label use npm color-name-list. Praegu on näha ainult värvikoodid, mistõttu on mitme teema seast õiget raske leida. Teema valiku asi ei liigu minimeeritud kujul kaasa paremal servas widgetina, seega peab üles ja alla kerima. Pildi üleslaadimise kast/nupp jääb raskesti märgatavaks. Pilditöötluse info on „debuggeri tasemel“, võtab palju ruumi ja on raskesti loetav. Seda ei saa kokku voltida, visuaalne hierarhia on nõrk ja näiteks väärtus „000“ ei ütle kasutajale midagi. Terminitele on vaja tööriistavihjeid (tooltip'e), sest kasutaja ei tunne värviteadust. Digitaalsete artefaktide tuvastus jäi segaseks: polnud selge, mida see mõõdab ja mille põhjal protsendid arvutatakse. Tulemus „100% kindel“ tekitab põhjendamatut usaldust. 3D-vaade: jäi selgusetuks, mida tähendavad suured ja väikesed mummud ilma seletusteta. Vaikesätted peaks näitama kogu mummukeste pilve ja alamenüü taga peidetult peaks saama vaid filtreerida ja seal hulgas ka heleduse järgi and the slider labels should be more easily readable. Värvide väärtused tabelis on jagatud mitmele reale, ühel real oleks need loetavamad. Add the gray used in scientific tests where just noticable difference is tested as one of the default background options saved everywhere. verify backend algorithms using lean build, model them properly in documentation and find possible improvement places,locally using lean build a plan for a better algorithm and test it repeat if nessassary build and give a seperate local test build to test out.
+
+Answers:
+- Lean: install via winget. (A complete Lean 4.36.0 toolchain from P-010 was found and used, because the winget toolchain download failed for lack of disk space.)
+- Improved algorithms: "Local test build only".
+- Colour names: the full `color-name-list`, loaded lazily.
+- Base: a sync PR from main to develop-frontend first (#89).
+- 3D view default: "All dots in full colour".
+- Artefacts: "Show as explained score".
+- Upload and grey: "Drag-and-drop upload box", "Remember chosen backgrounds", "JND grey preset in every picker", "for 2 use the actual standardized gray used in lab tests when comparing colors according to international standards replace one of the other grays allready there".
+- Colour count: "Upload form; no paging".
+
+## P-039 (2026-11-21): Decisions from P-038
+
+Type: approved decision
+Source: P-038, the conflict review and the user's answers
+Issue: #90, #91, #92
+
+1. **3D view defaults.** They show every lattice dot in full colour: hue width 360, full chroma and lightness, neutrals included. This supersedes P-036 item 2's default selection. Cell 19's selection and the new lightness range move into a collapsed "Filtreeri" panel. The point cap is raised, so all 13,000 CIELAB dots draw. Slider labels become larger, with the value and units in a badge.
+2. **Artefacts.** The per-colour artefact value is shown as an explained similarity score, "Segupiksli sarnasus", with a tooltip saying what is measured and how. This supersedes the "chance" wording of P-032 and P-033 for display. The data field stays `chance`, and #95 asks the team to rename or redefine it.
+3. **Confidence.** Findings show confidence in words (madal, keskmine, kõrge) with the reason, never as "100 %".
+4. **Background grey.** The background grey is the CIE reference background for colour-difference evaluation: a uniform neutral grey of CIE L* = 50 (CIE 116-1995, the reference conditions of CIEDE2000), which is sRGB #777777 (L* 50.04). It replaces the "hall" preset in the pixel viewer and the 3D view.
+5. **Remembered backgrounds.** Each viewer remembers its chosen background in localStorage, through a port. This supersedes P-037 item 3.
+6. **Drag and drop.** Upload gets a drag-and-drop box. Dropped files pass the same checks as picked ones. Multiple files stay in #15. This pulls single-image drag and drop forward from P-018 item 1 and P-020 item 1.
+7. **Colour count.** The count chosen on the upload form is shown everywhere: heading, hint, filter counts, the 3D view and the demo. The table still renders all N rows at once, with no paging. Speed comes from memoising the per-row work.
+8. **Colour names.** Every colour code in the app's own pages gets a name from `color-name-list`: the nearest name by ΔE_OK, marked as approximate (≈). This excludes the extension popup and the Figma plugin. The names are English proper names; the UI stays Estonian.
+9. **Algorithms delivered locally only.** The improved algorithms stay in a local test build that is never pushed. This supersedes P-031 item 10's prototype sharing for this work. The findings reach the team as `docs/algorithms/` (#92) and the backend issues #93–#96, and the Lean sources stay local.
+10. **Ownership in `src/core/analysis/`.** The teammates own `blends.ts`, `palette-clusters.ts`, `harmonies.ts`, `contrast.ts`, `gamut-coverage.ts`, `ui-mode.ts`, `palette-types.ts`, `compute-color-analysis.ts`, `src/core/count-colors.ts` and the Supabase adapters. The frontend files (`color-filter.ts`, `share-bands.ts`, `format.ts`, `ontology.ts`, `color-analysis.ts` types, `color-analysis-check.ts`) may change.
+11. [UNDERSTANDING] **Zoom.** The pixel viewer accumulates small wheel and trackpad deltas, moving one zoom level per about 100 px. The 3D view's wheel zoom is gentler, with the step per event capped. Plain scrolling keeps its P-021 and P-036 meaning.
+12. [UNDERSTANDING] **Analysis cache.** Caching the analysis result is a frontend decorator around the `AnalysisService` port, not an edit inside the Supabase adapter. Any server-side speed-up goes to the team as an issue.
