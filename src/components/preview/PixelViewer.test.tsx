@@ -80,6 +80,9 @@ describe("PixelViewer", () => {
   it("zooms with Ctrl + scroll and leaves plain scrolling to the page", async () => {
     render(<PixelViewer source={file} name="palette.bmp" />);
     await screen.findByText("512 × 40 px");
+    // The native wheel listener reads a ref that an effect fills in after the image
+    // appears; flush pending effects so the event does not hit the stale handler.
+    await act(async () => {});
     const canvas = screen.getByRole("img");
 
     const plain = new WheelEvent("wheel", { deltaY: -100, cancelable: true });
