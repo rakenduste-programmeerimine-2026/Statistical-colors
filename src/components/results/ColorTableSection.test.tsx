@@ -44,6 +44,18 @@ describe("ColorTableSection", () => {
     expect(screen.getByRole("note")).toHaveTextContent("Näidisandmed");
   });
 
+  it("names the rows it lists, not the requested count, when there are fewer colours (regression #90)", () => {
+    render(<ColorTableSection analysis={analysis({ uniqueColors: 5 })} topN={5000} />);
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("5 sagedasemat värvi");
+    expect(screen.getByText(/tabelis on kõik 5 värvi/)).toBeInTheDocument();
+  });
+
+  it("names the requested count when it is smaller than the number of colours", () => {
+    render(<ColorTableSection analysis={analysis({ uniqueColors: 5 })} topN={2} />);
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("2 sagedasemat värvi");
+    expect(screen.getByText(/tabelis on 2 sagedasemat 5-st/)).toBeInTheDocument();
+  });
+
   it("offers share bands with counts and filters over every colour, beyond the top N", async () => {
     render(<ColorTableSection analysis={analysis()} topN={2} />);
     const bands = within(screen.getByRole("group", { name: "Osakaalu klass" })).getAllByRole("button");

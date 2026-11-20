@@ -30,6 +30,12 @@ const MESSAGES: Record<UploadError | "invalid-image", string> = {
 const ACCEPT = ALLOWED_EXTENSIONS.map((ext) => `.${ext}`).join(",");
 
 /** Upload form from the original upload.html: one image, alpha option and top N. */
+/** The demo opens with the colour count chosen on the form, like an upload (#90). */
+function demoHref(topN: string): string {
+  const n = clampTopN(topN);
+  return n === TOP_N_DEFAULT ? `/results/${DEMO_ID}` : `/results/${DEMO_ID}?top_n=${n}`;
+}
+
 export function UploadForm() {
   const { analysis } = useServices();
   const router = useRouter();
@@ -125,7 +131,7 @@ export function UploadForm() {
           <button type="submit" className={button} disabled={processing}>
             {processing ? "Töötlen…" : "Töötle pilti"}
           </button>
-          <Link className={button} href={`/results/${DEMO_ID}`}>
+          <Link className={button} href={demoHref(topN)}>
             Ava demo
           </Link>
         </div>

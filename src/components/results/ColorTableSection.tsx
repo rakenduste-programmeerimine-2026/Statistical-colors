@@ -13,6 +13,8 @@ import { ColorTable } from "./ColorTable";
  * colour the analysis holds, not only the top N, and the table shows the N most
  * frequent matches (P-033 item 3).
  */
+const nf = new Intl.NumberFormat("et-EE");
+
 export function ColorTableSection({ analysis, topN }: { analysis: ImageAnalysis; topN: number }) {
   const [filter, setFilter] = useState<ColorFilter>(NO_FILTER);
   const bands = useMemo(() => shareBands(analysis.colors.map((c) => c.percent)), [analysis.colors]);
@@ -24,13 +26,20 @@ export function ColorTableSection({ analysis, topN }: { analysis: ImageAnalysis;
   const hasArtefacts = analysis.colors.some((c) => c.artefacts?.length);
   const matches = useMemo(() => filterColors(analysis.colors, filter, bands), [analysis.colors, filter, bands]);
   const rows = matches.slice(0, topN);
+  // The heading names the rows listed: the chosen count, or every colour when there are fewer (#90).
+  const listed = Math.min(topN, analysis.uniqueColors);
 
   return (
     <section className={card} aria-labelledby="top-heading">
       <h2 id="top-heading" className="text-xl font-bold">
-        {topN} sagedasemat värvi
+        {nf.format(listed)} sagedasemat värvi
       </h2>
-      <p className={hint}>Kokkuvõtte CSV sisaldab kõiki värve; tabelis on {topN} kõige sagedasemat.</p>
+      <p className={hint}>
+        Kokkuvõtte CSV sisaldab kõiki värve;{" "}
+        {listed >= analysis.uniqueColors
+          ? `tabelis on kõik ${nf.format(listed)} värvi.`
+          : `tabelis on ${nf.format(listed)} sagedasemat ${nf.format(analysis.uniqueColors)}-st.`}
+      </p>
       {analysis.rowDataStatus === "simulated" && (
         <p role="note" className="mt-2 rounded-lg border border-warn p-2.5">
           Näidisandmed: segupikslite ja artefaktide tõenäosuse ning värviklastrid arvutab server, mis pole veel valmis.

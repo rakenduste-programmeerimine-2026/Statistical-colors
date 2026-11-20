@@ -155,4 +155,12 @@ describe("UploadForm preview and demo", () => {
     renderWithServices(<UploadForm />);
     expect(screen.getByRole("link", { name: "Ava demo" })).toHaveAttribute("href", "/results/demo");
   });
+
+  it("opens the demo with the colour count chosen on the form (regression #90)", async () => {
+    renderWithServices(<UploadForm />);
+    const count = screen.getByLabelText("Mitu sagedasemat värvi tulemuste lehel näidata");
+    await user().clear(count);
+    await user().type(count, "100");
+    expect(screen.getByRole("link", { name: "Ava demo" })).toHaveAttribute("href", "/results/demo?top_n=100");
+  });
 });
