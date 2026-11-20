@@ -21,6 +21,7 @@ Every fixed bug, newest first. Follow the `fix-bug` skill to add one.
 
 | Date | Type | Description | Fix | Issue | State machine |
 |---|---|---|---|---|---|
+| 2026-11-19 | implicit-state-machine | After "Töötle teine pilt" the upload form stayed in "Töötlen…" with the old error, because `cacheComponents` makes Next.js hide the page in `<Activity>` and show the same instance again, and `processing` was reset only on failure; found by hand while testing #40 | Reset `processing` and `error` in a `useLayoutEffect` cleanup, which runs when Activity hides the form; reproduced with an `<Activity>` hidden → visible test | #86 | `docs/automata/upload-form.md` |
 | 2026-11-17 | performance | Pixel preview kept the previous decoded image (hundreds of MB for large files) after a new file was picked; found by `performance-analyst` before commit | Drop the image, view and readout when the source changes; limit the preview to 4096 × 4096 pixels | #42 | `docs/automata/pixel-viewer.md` |
 | 2026-11-17 | ui | Scrolling the page over the pixel preview zoomed the image instead of scrolling; found in the browser check before commit | Zoom only on Ctrl/Cmd + scroll | #42 | `docs/automata/pixel-viewer.md` |
 | 2026-11-17 | implicit-state-machine | Pixel preview fitted once, to a canvas size reported before layout settled, so the first fit was too small; found in the browser check before commit | Derive the view from Fit until the user zooms or pans, so resizes refit | #42 | `docs/automata/pixel-viewer.md` |

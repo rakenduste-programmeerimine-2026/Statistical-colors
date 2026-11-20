@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useId, useState, type FormEvent } from "react";
+import { useId, useLayoutEffect, useState, type FormEvent } from "react";
 import { DEMO_ID } from "@/adapters/demo/with-demo";
 import { useServices } from "@/adapters/services";
 import { InvalidImageError } from "@/core/analysis/analysis-service";
@@ -39,6 +39,17 @@ export function UploadForm() {
   const [topN, setTopN] = useState(String(TOP_N_DEFAULT));
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+
+  // cacheComponents makes Next.js hide this page in <Activity> on navigation instead of unmounting it, and
+  // "Töötle teine pilt" shows the same instance again. Hiding runs layout effect cleanups, so go back to idle
+  // there; the picked file and options stay (#86).
+  useLayoutEffect(
+    () => () => {
+      setProcessing(false);
+      setError(null);
+    },
+    [],
+  );
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
