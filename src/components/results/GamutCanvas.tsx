@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { srgbToOklab, oklabToLinearSrgb, linearToSrgb8 } from "@/core/color/oklch";
+import { wheelPixels } from "@/core/preview/zoom";
 import { applyKeys, basis, defaultCamera, GAMUT_CENTER, look, move, MOVE_CODES, orbitCamera, orbitOf, project, type Camera } from "@/core/gamut/camera";
 import { frameLoop, type FrameLoop } from "@/core/gamut/frame-loop";
 import type { Lattice } from "@/core/gamut/lattice";
@@ -208,10 +209,12 @@ export function GamutCanvas({ lattice, selection, snapped, mode, resetKey, label
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       const cam = camRef.current;
+      // Normalised and capped per event, so a fast trackpad flick cannot jump (#90).
+      const d = Math.max(-60, Math.min(60, wheelPixels(e.deltaY, e.deltaMode)));
       if (mode === "orbit") {
         const o = orbitOf(cam, GAMUT_CENTER);
-        camRef.current = orbitCamera(GAMUT_CENTER, Math.min(6, Math.max(0.3, o.distance * Math.exp(e.deltaY * 0.001))), o.yaw, o.pitch);
-      } else camRef.current = move(cam, -e.deltaY * 0.001, 0, 0);
+        camRef.current = orbitCamera(GAMUT_CENTER, Math.min(6, Math.max(0.3, o.distance * Math.exp(d * 0.0015))), o.yaw, o.pitch);
+      } else camRef.current = move(cam, -d * 0.0015, 0, 0);
       setHover(null);
       schedule();
     };

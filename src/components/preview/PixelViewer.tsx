@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerE
 import { cssColor, formatHex } from "@/core/analysis/format";
 import { formatOklch, srgbToOklch } from "@/core/color/oklch";
 import {
+  accumulateWheel,
   fit,
   GRID_MIN_FACTOR,
   ONE_TO_ONE,
@@ -13,6 +14,7 @@ import {
   zoomAt,
   zoomFactor,
   zoomLabel,
+  wheelPixels,
   type Size,
   type View,
 } from "@/core/preview/zoom";
@@ -166,13 +168,17 @@ export function PixelViewer({ source, name }: { source: Blob | string; name: str
 
   // React's wheel listener is passive, so preventDefault needs a native one.
   const wheel = useRef<(e: WheelEvent) => void>(() => {});
+  // Wheel movement not yet turned into a zoom level (#90: trackpads send many small steps).
+  const wheelRest = useRef(0);
   useEffect(() => {
     wheel.current = (e) => {
       // Plain scrolling scrolls the page; Ctrl (or Cmd) + scroll zooms, as in embedded maps.
       if (!image || !(e.ctrlKey || e.metaKey)) return;
       e.preventDefault();
       const [x, y] = toDevice(canvasRef.current, e);
-      zoomBy(e.deltaY < 0 ? 1 : -1, x, y);
+      const { levels, rest } = accumulateWheel(wheelRest.current, wheelPixels(e.deltaY, e.deltaMode));
+      wheelRest.current = rest;
+      if (levels) zoomBy(levels, x, y);
     };
   });
   useEffect(() => {
