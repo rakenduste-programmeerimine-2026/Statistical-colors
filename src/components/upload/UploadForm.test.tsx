@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Activity } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -162,5 +162,37 @@ describe("UploadForm preview and demo", () => {
     await user().clear(count);
     await user().type(count, "100");
     expect(screen.getByRole("link", { name: "Ava demo" })).toHaveAttribute("href", "/results/demo?top_n=100");
+  });
+});
+
+describe("UploadForm drop zone (#91)", () => {
+  const drop = (files: File[]) => fireEvent.drop(screen.getByTestId("drop-zone"), { dataTransfer: { files } });
+
+  it("takes a dropped image like a picked one and previews it", () => {
+    renderWithServices(<UploadForm />);
+    drop([file("palette.bmp")]);
+    expect(screen.getByText("Valitud: palette.bmp")).toBeInTheDocument();
+    expect(screen.getByTestId("preview")).toHaveTextContent("palette.bmp");
+  });
+
+  it("takes the first of several dropped files and says so", () => {
+    renderWithServices(<UploadForm />);
+    drop([file("a.png"), file("b.png")]);
+    expect(screen.getByText("Valitud: a.png")).toBeInTheDocument();
+    expect(screen.getByText(/Võeti esimene fail/)).toBeInTheDocument();
+  });
+
+  it("checks a dropped file like a picked one: a wrong type is refused on submit", async () => {
+    renderWithServices(<UploadForm />);
+    drop([file("scan.tiff")]);
+    expect(screen.queryByTestId("preview")).not.toBeInTheDocument();
+    await user().click(screen.getByRole("button", { name: "Töötle pilti" }));
+    expect(screen.getByRole("alert")).toBeInTheDocument();
+  });
+
+  it("makes the main action stand out from the demo link", () => {
+    renderWithServices(<UploadForm />);
+    expect(screen.getByRole("button", { name: "Töötle pilti" })).toHaveClass("bg-ink");
+    expect(screen.getByRole("link", { name: "Ava demo" })).not.toHaveClass("bg-ink");
   });
 });
