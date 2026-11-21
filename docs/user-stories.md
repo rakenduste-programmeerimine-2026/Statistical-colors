@@ -455,3 +455,60 @@ Acceptance criteria:
 - Given a preset or any colour, then only that view's background changes; the page theme does not.
 - Given a dark background in the 3D view, then its text, rings and faint lattice turn light.
 - Given "vaikimisi" or "lehe taust", then the view returns to its default.
+
+## User-test fixes on the results page (#90)
+
+### US-218: See the colour count I chose
+
+Source: [PROMPT P-038] "Värvide arvu muutmisel näitab rakendus ikka 5000 värvi."
+
+As a user, I want the results to show the number of colours I asked for, so that the page matches my choice.
+
+Acceptance criteria:
+- Given I set 100 on the upload form, then "Ava demo" opens the demo with `?top_n=100`.
+- Given an image with fewer colours than I asked for, then the heading names the colours listed ("5 sagedasemat värvi") and the hint says "tabelis on kõik 5 värvi".
+
+### US-219: Zoom smoothly on a laptop
+
+Automaton: Pixel viewer, wheel zoom
+Source: [PROMPT P-038] "Zoomimine sülearvutitel on liiga järsk."
+
+Acceptance criteria:
+- Given Ctrl plus scroll, then 99 px of movement does not change the zoom and 100 px moves one level.
+- Given a fast flick in the 3D view, then one event moves the camera at most a capped step.
+
+### US-220: Understand the results without colour science
+
+Source: [PROMPT P-038] "Terminitele on vaja tööriistavihjeid", "Pilditöötluse info on „debuggeri tasemel“", "Tulemus „100% kindel“ tekitab põhjendamatut usaldust."
+
+Acceptance criteria:
+- Given a colour term (OKLCH, ΔE, kroom, gamut, segupiksel…), then hover, keyboard focus or a tap explains it in Estonian.
+- Given the results page, then the key figures are shown in large type with Estonian number formatting, and technical settings sit behind "Tehnilised üksikasjad" with readable names.
+- Given a finding, then its confidence reads madal, keskmine, kõrge or "mõõdetud väärtus", never a percentage; "Mida see mõõdab?" explains it.
+- Given the colour analysis section, then it can be folded away.
+
+### US-221: A readable colour table
+
+Source: [PROMPT P-038] "Värvide väärtused tabelis on jagatud mitmele reale", "The chance of being a artefact percentage bar element jääb teiste elementide peale"
+
+Acceptance criteria:
+- Given a narrow window, then values stay on one line and the table scrolls sideways.
+- Given a colour, then the blend similarity is a fixed-width bar and a number, or "—" for 0.
+- Given alpha, then it reads "läbipaistmatus N %", not "000".
+
+### US-222: The whole colour cloud by default
+
+Automaton: 3D colour-space view, selection
+Source: [PROMPT P-038] "Vaikesätted peaks näitama kogu mummukeste pilve"
+
+Acceptance criteria:
+- Given the 3D view, then every dot is in its own colour, and a drawn legend explains small dots (possible colours) and large ringed dots (the image's colours, size by share).
+- Given the Filtreeri panel, then I can narrow hue, chroma and lightness and include or exclude greys, and the sliders show their value, unit and range ends.
+
+### US-223: Compare colours on the CIE grey
+
+Source: [PROMPT P-038] "Add the gray used in scientific tests where just noticable difference is tested as one of the default background options saved everywhere."
+
+Acceptance criteria:
+- Given either viewer, then "CIE hall (L* 50)" (#777777, CIE 116 reference background) is a background option.
+- Given I choose a background and reload, then the viewer keeps it.

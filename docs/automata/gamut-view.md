@@ -99,3 +99,15 @@ stateDiagram-v2
 | pending | frame fires, keys still held | pending (next frame queued, dt from the clock, 0–0.05 s) | [AUDIT: frame-loop.test.ts] |
 | pending | frame fires, no keys held | idle | [AUDIT: frame-loop.test.ts] |
 | any | dispose (unmount) | idle, queued frame cancelled | [AUDIT: frame-loop.test.ts], regression test for the blank canvas |
+
+## Selection after the user test (#90, P-039 item 1)
+
+| From | Event | To | Source |
+|---|---|---|---|
+| (load) | the section mounts | the whole cloud is selected: hue width 360, full chroma and lightness, neutrals included | [PROMPT P-038] "Vaikesätted peaks näitama kogu mummukeste pilve" |
+| any | choose a space | the whole cloud of that space | [UNDERSTANDING] |
+| any | move a filter slider | that range narrows; the Filtreeri heading says how many dots are shown | [PROMPT P-038] "alamenüü taga peidetult peaks saama vaid filtreerida ja seal hulgas ka heleduse järgi" |
+| any | a minimum above its maximum (chroma or lightness) | Invalid selection | [UNDERSTANDING] |
+| any | "Näita kõiki täppe" | the whole cloud | [UNDERSTANDING] |
+
+The chosen background is remembered per viewer (`ViewerPrefsStore`, P-039 item 5). Wheel zoom is normalised and capped per event (#90).
