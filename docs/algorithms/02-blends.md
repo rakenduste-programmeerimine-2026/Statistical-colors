@@ -14,7 +14,8 @@
 
 ## Checks
 
-- [AUDIT: lean `blend_score_gap`] Scaled to integers (score·12 = 12 − d for d ≤ 6, else 0), the score is 0 or at least 6, that is, ≥ 50 %. **It never lies strictly between 0 and 50 %**: a yes/no flag with a bonus, not a graded probability.
+- [AUDIT: lean `blend_score_gap`, definitional: it restates the formula] Scaled to integers (score·12 = 12 − d for d ≤ 6, else 0), the score is 0 or at least 6, that is, ≥ 50 %. **It never lies strictly between 0 and 50 %**: a yes/no flag with a bonus, not a graded probability.
+- [UNDERSTANDING] The score looks only at the colour list, never at where the pixels are. So it flags a real flat swatch that lies between two common colours, and misses blends whose ends are under 1 %. The theorem says nothing about whether the score detects antialiasing; only labelled test images can.
 - [UNDERSTANDING] A colour exactly between two frequent colours scores 100 %. The user test read that as "100 % kindel". Since #90 the page says "Segupiksli sarnasus" and explains it (P-039 item 2).
 
 ## Improvement (#95)
@@ -24,6 +25,7 @@
   - [AUDIT: lean `graded_monotone`] it falls with distance.
   - [AUDIT: lean `graded_agrees_near`] it equals today's score when d ≤ 6.
 
-  So "likely" (≥ 0.5) and the colours set aside are unchanged.
+  These three restate the new formula. So "likely" (≥ 0.5) and the colours set aside are unchanged.
+- **Redesign proposed (#95):** use pixel neighbours. A pixel counts as a blend when it sits between pixels of its two end colours along an edge. This needs the pixel grid, so it belongs in the backend count step.
 - **Wording:** rename the field or document it as a similarity.
 - [AUDIT: property test] In the local build, d = 0, 6, 9, 12 and 13 give 1, 0.5, 0.25, 0 and 0.
