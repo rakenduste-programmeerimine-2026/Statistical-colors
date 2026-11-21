@@ -3,6 +3,7 @@ import { Term } from "../Term";
 import type { ColorFilter } from "@/core/analysis/color-filter";
 import type { ShareBand } from "@/core/analysis/share-bands";
 import { formatOklch, oklchCss } from "@/core/color/oklch";
+import { ColorName } from "../ColorName";
 
 interface Props {
   value: ColorFilter;
@@ -46,7 +47,7 @@ export function ColorFilters({ value, onChange, bands, clusters, hasArtefacts }:
               onClick={() => onChange({ ...value, cluster: cluster.id })}
             >
               <span aria-hidden className="inline-block size-3.5 rounded-sm border border-ink/25" style={{ background: oklchCss(cluster.color) }} />
-              <span className="font-mono text-xs">{formatOklch(cluster.color)}</span> · {count} värvi
+              <span className="font-mono text-xs">{formatOklch(cluster.color)}</span> <ColorName color={cluster.color} className="text-xs" /> · {count} värvi
             </button>
           ))}
         </div>

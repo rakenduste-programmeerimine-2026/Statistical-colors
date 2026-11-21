@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 import { formatOklch, hexToOklch } from "@/core/color/oklch";
 import { isHex6, normalizeHex } from "@/core/theme/theme";
 import { hint, input, label as labelClass } from "../ui";
+import { ColorName } from "../ColorName";
 
 interface Props {
   label: string;
@@ -61,7 +62,7 @@ export function ColorField({ label, value, onChange }: Props) {
       </div>
       {/* The committed colour, not half-typed text (P-030). */}
       <p id={oklchId} className={`${hint} mt-1`}>
-        OKLCH: <span className="font-mono">{formatOklch(hexToOklch(value))}</span>
+        OKLCH: <span className="font-mono">{formatOklch(hexToOklch(value))}</span> <ColorName color={hexToOklch(value)} />
       </p>
     </div>
   );

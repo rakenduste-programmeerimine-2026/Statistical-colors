@@ -10,6 +10,7 @@ import {
 import type { ColorCount } from "@/core/analysis/types";
 import { topArtefact } from "@/core/analysis/color-filter";
 import { formatOklch, srgbToOklch } from "@/core/color/oklch";
+import { ColorName } from "../ColorName";
 
 interface Props {
   colors: ColorCount[];
@@ -74,6 +75,7 @@ const Row = memo(function Row({ c }: { c: ColorCount }) {
       <td className={`${cell} font-mono`}>{formatTuple(c)}</td>
       <td className={`${cell} font-mono`}>
         {hexOf(c)}
+        <ColorName color={c} className="ml-2 text-sm" />
         {c.a !== undefined && (
           <span className="ml-2 font-sans text-sm text-muted">
             {formatOpacity(c.a)}

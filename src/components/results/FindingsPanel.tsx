@@ -2,6 +2,7 @@ import type { Finding, PaletteCluster } from "@/core/analysis/color-analysis";
 import { GLOSSARY } from "@/core/glossary";
 import { AREA_LABELS, AREA_ORDER, CAVEAT_LABELS, findingLabel, PROVENANCE_LABELS, REQUIRES_LABELS, SEVERITY_LABELS } from "@/core/analysis/ontology";
 import { formatOklch, oklchCss } from "@/core/color/oklch";
+import { ColorName } from "../ColorName";
 
 const SEVERITY_CLASS: Record<Finding["severity"], string> = {
   info: "border-line",
@@ -75,6 +76,7 @@ export function FindingsPanel({ findings, palette }: { findings: Finding[]; pale
                         <li key={i} className="flex items-center gap-1.5 text-sm">
                           <span aria-hidden className="inline-block size-5 rounded-md border border-ink/25" style={{ background: oklchCss(s.color) }} />
                           <span className="font-mono">{formatOklch(s.color)}</span>
+                          <ColorName color={s.color} />
                           {s.label && <span className="text-muted">{s.label}</span>}
                         </li>
                       ))}

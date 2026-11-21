@@ -72,7 +72,8 @@ describe("StructureWheel", () => {
     render(<StructureWheel structure={a.structures[0]} palette={a.palette} />);
     const rows = within(screen.getByRole("table")).getAllByRole("row");
     expect(rows).toHaveLength(1 + a.structures[0].points.length);
-    expect(rows[1]).toHaveTextContent(/^oklch\(.*\)oklch\(.*\)\d\.\d{3}\d\.\d{3}\d\.\d{3}$/);
+    // The actual colour's name follows its code once the name list has loaded.
+    expect(rows[1]).toHaveTextContent(/^oklch\(.*\)\s*oklch\(.*\)\d\.\d{3}\d\.\d{3}\d\.\d{3}$/);
   });
 
   it("thickens the ring around each colour with its OKLCH lightness above the darkest, on every model's wheel", async () => {

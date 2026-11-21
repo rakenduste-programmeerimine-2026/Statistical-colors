@@ -9,6 +9,7 @@ import type { Lattice } from "@/core/gamut/lattice";
 import type { SelectionResult } from "@/core/gamut/select";
 import type { SnappedColors } from "@/core/gamut/snap";
 import { clearFrame, makeFrame, pack, pickNearest, splatDiscs, splatSquares, type Frame, type PointSet } from "@/core/gamut/splat";
+import { colorNameText, useNameIndex } from "../ColorName";
 
 export type CameraMode = "orbit" | "fly";
 
@@ -70,6 +71,7 @@ export function GamutCanvas({ lattice, selection, snapped, mode, resetKey, label
   const keysRef = useRef(new Set<string>());
   const modeRef = useRef(mode);
   const [size, setSize] = useState(FALLBACK_SIZE);
+  const nameIndex = useNameIndex();
   // The hover readout belongs to one view; a new space or a reset makes it stale, so it is not shown.
   const view = `${lattice.space.id}:${resetKey}`;
   const [hover, setHover] = useState<{ x: number; y: number; text: string; view: string } | null>(null);
@@ -202,7 +204,7 @@ export function GamutCanvas({ lattice, selection, snapped, mode, resetKey, label
       const sets = [snapped?.occupied, selection?.foreground].filter((s): s is Int32Array => !!s && s.length > 0);
       let k = -1;
       for (const s of sets) if ((k = pickNearest(camRef.current, canvas.width, canvas.height, pts, s, mx, my, 6 * dpr)) >= 0) break;
-      setHover(k < 0 ? null : { x: e.clientX - rect.left, y: e.clientY - rect.top, text: describePoint(lattice, k, snapped), view });
+      setHover(k < 0 ? null : { x: e.clientX - rect.left, y: e.clientY - rect.top, text: describePoint(lattice, k, snapped, colorNameText(nameIndex, { r: lattice.rgb[3 * k], g: lattice.rgb[3 * k + 1], b: lattice.rgb[3 * k + 2] })), view });
     };
     const onUp = () => (drag = null);
     const onLeave = () => setHover(null);
@@ -251,7 +253,7 @@ export function GamutCanvas({ lattice, selection, snapped, mode, resetKey, label
       canvas.removeEventListener("blur", onBlur);
       keys.clear();
     };
-  }, [mode, lattice, pts, selection, snapped, view]);
+  }, [mode, lattice, pts, selection, snapped, view, nameIndex]);
 
   // Dispose returns the loop to idle, so a remount (React's development double mount) draws again.
   useEffect(
@@ -286,10 +288,10 @@ export function GamutCanvas({ lattice, selection, snapped, mode, resetKey, label
 }
 
 /** The hover text for a lattice point (the notebook's hover: L, a, b), plus the image's share when occupied. */
-export function describePoint(lattice: Lattice, k: number, snapped: SnappedColors | null): string {
+export function describePoint(lattice: Lattice, k: number, snapped: SnappedColors | null, name = ""): string {
   const { axes, digits } = lattice.space;
   const hex = "#" + [0, 1, 2].map((j) => lattice.rgb[3 * k + j].toString(16).padStart(2, "0")).join("").toUpperCase();
-  const lines = [`${axes[0]}=${lattice.l[k].toFixed(digits)}  ${axes[1]}=${lattice.a[k].toFixed(digits)}  ${axes[2]}=${lattice.b[k].toFixed(digits)}  ${hex}`];
+  const lines = [`${axes[0]}=${lattice.l[k].toFixed(digits)}  ${axes[1]}=${lattice.a[k].toFixed(digits)}  ${axes[2]}=${lattice.b[k].toFixed(digits)}  ${hex}` + (name ? `  ≈ ${name}` : "")];
   if (snapped && snapped.count[k] > 0) lines.push(`Pildi värve: ${snapped.count[k]}, osakaal ${snapped.share[k].toFixed(2)} %`);
   return lines.join("\n");
 }

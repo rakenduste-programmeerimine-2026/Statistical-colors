@@ -1,9 +1,14 @@
 import "@testing-library/jest-dom/vitest";
 import { cleanup } from "@testing-library/react";
 import { afterEach } from "vitest";
+import { setNameIndexForTests } from "@/components/ColorName";
+
+// Colour names load lazily in the app; tests show none unless a test provides an index.
+setNameIndexForTests(null);
 
 afterEach(() => {
   cleanup();
+  setNameIndexForTests(null);
 });
 
 // jsdom lacks these browser APIs; Radix Select calls the first three when it opens.

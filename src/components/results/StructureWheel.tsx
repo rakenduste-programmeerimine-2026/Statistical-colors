@@ -7,6 +7,7 @@ import { modelHue, wheelColor, type ColorModel } from "@/core/color/models";
 import { clampChroma, formatOklch, oklchCss, oklchToSrgb, srgbToOklch, type Oklch } from "@/core/color/oklch";
 import { arcPath, chromaRadius, deltaERadius, lightnessRingWidth, medianLightness, polar, ringChroma, ringSegments } from "@/core/color/wheel";
 import { hint } from "../ui";
+import { ColorName } from "../ColorName";
 
 const SIZE = 320;
 const C = SIZE / 2;
@@ -172,7 +173,9 @@ export function StructureWheel({ structure, palette }: Props) {
           <tbody>
             {structure.points.map((p, i) => (
               <tr key={`${p.clusterId}-${i}`}>
-                <td className="border-b border-line-soft p-1.5 font-mono">{formatOklch(p.actual)}</td>
+                <td className="border-b border-line-soft p-1.5 font-mono">
+                  {formatOklch(p.actual)} <ColorName color={p.actual} />
+                </td>
                 <td className="border-b border-line-soft p-1.5 font-mono">{formatOklch(p.ideal)}</td>
                 <td className="border-b border-line-soft p-1.5 font-mono">{p.deltaE.toFixed(3)}</td>
                 <td className="border-b border-line-soft p-1.5 font-mono">{p.actual.l.toFixed(3)}</td>

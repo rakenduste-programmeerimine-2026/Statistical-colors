@@ -23,6 +23,7 @@ import { useViewerBackground } from "../useViewerBackground";
 import { CIE_GREY } from "@/core/viewer/viewer-prefs";
 import { button, hint } from "../ui";
 import { decodeImage, MAX_PREVIEW_PIXELS, PreviewTooLargeError, type DecodedImage } from "./decode";
+import { ColorName } from "../ColorName";
 
 /** Used when the browser cannot report the canvas size (no ResizeObserver). */
 const FALLBACK_VIEWPORT: Size = { width: 640, height: 360 };
@@ -290,7 +291,8 @@ export function PixelViewer({ source, name }: { source: Blob | string; name: str
                 className="inline-block size-4 rounded-sm border border-line"
                 style={{ background: cssColor(shownHover) }}
               />
-              x {shownHover.x}, y {shownHover.y} · {formatHex({ r: shownHover.r, g: shownHover.g, b: shownHover.b })} ·
+              x {shownHover.x}, y {shownHover.y} · {formatHex({ r: shownHover.r, g: shownHover.g, b: shownHover.b })}{" "}
+              <ColorName color={{ r: shownHover.r, g: shownHover.g, b: shownHover.b }} /> ·
               rgb {shownHover.r}, {shownHover.g}, {shownHover.b}
               {shownHover.a < 255 && `, a ${shownHover.a}`} ·{" "}
               {formatOklch(srgbToOklch(shownHover.a < 255 ? shownHover : { r: shownHover.r, g: shownHover.g, b: shownHover.b }))}
