@@ -531,7 +531,7 @@ Acceptance criteria:
 Source: [PROMPT P-038] "every place where a color code is add a label use npm color-name-list"
 
 Acceptance criteria:
-- Given a colour code in the table, the pixel readout, the theme fields, findings, cluster chips, the ramp strip, the wheel table or the 3D tooltip, then "≈ name" (the nearest name by ΔE in OKLab) is shown next to it once the list has loaded.
+- Given a colour code in the table, the pixel readout, the theme fields and saved-theme list, findings (swatches and colour lists), cluster chips, the ramp strip, the wheel (table and hover titles) or the 3D tooltip, then "≈ name" (the nearest name by ΔE in OKLab) is shown next to it once the list has loaded.
 - Given the list has not loaded yet, then the codes are shown without names and nothing else waits.
 
 ### US-226: Change the theme from anywhere on the page

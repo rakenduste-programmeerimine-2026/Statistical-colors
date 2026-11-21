@@ -7,7 +7,7 @@ import { modelHue, wheelColor, type ColorModel } from "@/core/color/models";
 import { clampChroma, formatOklch, oklchCss, oklchToSrgb, srgbToOklch, type Oklch } from "@/core/color/oklch";
 import { arcPath, chromaRadius, deltaERadius, lightnessRingWidth, medianLightness, polar, ringChroma, ringSegments } from "@/core/color/wheel";
 import { hint } from "../ui";
-import { ColorName } from "../ColorName";
+import { ColorName, colorNameText, useNameIndex } from "../ColorName";
 
 const SIZE = 320;
 const C = SIZE / 2;
@@ -34,6 +34,11 @@ interface Props {
  * circles that grow with their ΔE; actual colours are filled dots.
  */
 export function StructureWheel({ structure, palette }: Props) {
+  const nameIndex = useNameIndex();
+  const named = (c: Oklch) => {
+    const n = colorNameText(nameIndex, c);
+    return n ? ` ≈ ${n}` : "";
+  };
   const [model, setModel] = useState<ColorModel>("oklch");
   const titleId = useId();
   const descId = useId();
@@ -132,7 +137,7 @@ export function StructureWheel({ structure, palette }: Props) {
                 strokeWidth={ringWidth}
               />
               <circle data-testid="actual" cx={actual.x} cy={actual.y} r={r} fill={oklchCss(p.actual)} stroke="var(--color-page)" strokeWidth={2}>
-                <title>{`Tegelik: ${formatOklch(p.actual)}, L ${p.actual.l.toFixed(3)}, ΔL tumedaimast ${deltaL.toFixed(3)}${cluster ? `, osakaal ${cluster.share.toFixed(2)}%` : ""}`}</title>
+                <title>{`Tegelik: ${formatOklch(p.actual)}${named(p.actual)}, L ${p.actual.l.toFixed(3)}, ΔL tumedaimast ${deltaL.toFixed(3)}${cluster ? `, osakaal ${cluster.share.toFixed(2)}%` : ""}`}</title>
               </circle>
             </g>
           );
@@ -146,7 +151,7 @@ export function StructureWheel({ structure, palette }: Props) {
             <g key={`ideal-${p.clusterId}-${i}`}>
               <circle cx={ideal.x} cy={ideal.y} r={r} fill="none" stroke="var(--color-page)" strokeWidth={4} />
               <circle data-testid="ideal" cx={ideal.x} cy={ideal.y} r={r} fill="none" className="stroke-delta" strokeWidth={1.5}>
-                <title>{`Ideaal: ${formatOklch(p.ideal)}, ΔE ${p.deltaE.toFixed(3)}`}</title>
+                <title>{`Ideaal: ${formatOklch(p.ideal)}${named(p.ideal)}, ΔE ${p.deltaE.toFixed(3)}`}</title>
               </circle>
             </g>
           );
@@ -176,7 +181,9 @@ export function StructureWheel({ structure, palette }: Props) {
                 <td className="border-b border-line-soft p-1.5 font-mono">
                   {formatOklch(p.actual)} <ColorName color={p.actual} />
                 </td>
-                <td className="border-b border-line-soft p-1.5 font-mono">{formatOklch(p.ideal)}</td>
+                <td className="border-b border-line-soft p-1.5 font-mono">
+                  {formatOklch(p.ideal)} <ColorName color={p.ideal} />
+                </td>
                 <td className="border-b border-line-soft p-1.5 font-mono">{p.deltaE.toFixed(3)}</td>
                 <td className="border-b border-line-soft p-1.5 font-mono">{p.actual.l.toFixed(3)}</td>
                 <td className="border-b border-line-soft p-1.5 font-mono">{(p.actual.l - darkest).toFixed(3)}</td>

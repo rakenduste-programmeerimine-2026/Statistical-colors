@@ -98,8 +98,12 @@ export function FindingsPanel({ findings, palette }: { findings: Finding[]; pale
                       {f.clusterIds
                         .map((id) => byId.get(id))
                         .filter((c): c is PaletteCluster => !!c)
-                        .map((c) => formatOklch(c.color))
-                        .join(", ")}
+                        .map((c, i) => (
+                          <span key={c.id}>
+                            {i > 0 && ", "}
+                            {formatOklch(c.color)} <ColorName color={c.color} />
+                          </span>
+                        ))}
                     </p>
                   ) : null}
                   {f.meta.caveats?.length ? (
