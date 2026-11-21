@@ -5,7 +5,8 @@ import type { Lattice } from "./lattice";
 
 /** The notebook's caps on drawn points (cell 19). */
 export const BACKGROUND_MAX_POINTS = 15000;
-export const SELECTED_MAX_POINTS = 12000;
+/** Raised from the notebook's 12,000 so all 13,000 CIELAB dots draw when everything is selected (P-039 item 1). */
+export const SELECTED_MAX_POINTS = 15000;
 
 export interface GamutSelection {
   hueCenter: number;
@@ -13,6 +14,9 @@ export interface GamutSelection {
   chromaMin: number;
   chromaMax: number;
   includeNeutrals: boolean;
+  /** Lightness range in the space's own units (P-039 item 1); absent means all. */
+  lightMin?: number;
+  lightMax?: number;
 }
 
 export const angularDistance = (x: number, y: number) => {
@@ -50,6 +54,9 @@ export function sampleIndices(mask: Uint8Array, want: 0 | 1, rank: Int32Array, m
 /** Null when the chroma range is invalid (minimum above maximum), as the notebook refuses it. */
 export function selectLattice(lattice: Lattice, s: GamutSelection): SelectionResult | null {
   if (s.chromaMin > s.chromaMax) return null;
+  if (s.lightMin !== undefined && s.lightMax !== undefined && s.lightMin > s.lightMax) return null;
+  const lMin = s.lightMin ?? -Infinity;
+  const lMax = s.lightMax ?? Infinity;
   const selected = new Uint8Array(lattice.n);
   let selectedCount = 0;
   let neutralCount = 0;
@@ -57,7 +64,8 @@ export function selectLattice(lattice: Lattice, s: GamutSelection): SelectionRes
     const h = lattice.hue[i];
     if (Number.isNaN(h)) neutralCount++;
     const c = lattice.chroma[i];
-    if (inHueWindow(h, s.hueCenter, s.hueWidth, s.includeNeutrals) && c >= s.chromaMin && c <= s.chromaMax) {
+    const l = lattice.l[i];
+    if (inHueWindow(h, s.hueCenter, s.hueWidth, s.includeNeutrals) && c >= s.chromaMin && c <= s.chromaMax && l >= lMin && l <= lMax) {
       selected[i] = 1;
       selectedCount++;
     }

@@ -1,14 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type { GamutCoverage } from "@/core/analysis/color-analysis";
 import type { ColorCount } from "@/core/analysis/types";
 import { latticeFor } from "@/core/gamut/lattice";
 import { selectLattice } from "@/core/gamut/select";
 import { snapColors } from "@/core/gamut/snap";
-import { SPACES, type GamutSpaceId } from "@/core/gamut/space";
+import { SPACES, type GamutSpace, type GamutSpaceId } from "@/core/gamut/space";
+import { CIE_GREY } from "@/core/viewer/viewer-prefs";
 import { BackgroundPicker, backgroundCss, contrastInk, type BackgroundPreset } from "../BackgroundPicker";
+import { Term } from "../Term";
 import { button, card, hint } from "../ui";
+import { useViewerBackground } from "../useViewerBackground";
 import { GamutCanvas, type CameraMode } from "./GamutCanvas";
 
 const nf = new Intl.NumberFormat("et-EE");
@@ -22,38 +25,53 @@ interface Props {
   simulated: boolean;
 }
 
+/** The whole cloud: every hue, chroma and lightness, neutrals included (P-039 item 1). */
+const wholeCloud = (space: GamutSpace) => ({
+  hueCenter: 0,
+  hueWidth: 360,
+  chroma: [0, space.chromaMax] as [number, number],
+  light: [0, space.lMax] as [number, number],
+  includeNeutrals: true,
+});
+
 /**
- * The 3D colour-space view (P-035). Step 1 is the notebook's sampled gamut
- * browser (cell 19): the in-gamut lattice with a hue and chroma selection.
- * Step 2 snaps the image's colours onto the lattice and colours them in, to
- * show how much of the sRGB gamut the image covers.
+ * The 3D colour-space view (P-035). Every possible sRGB colour is a small dot
+ * on an even perceptual lattice; the image's colours snap onto it and are drawn
+ * large, so you see how much of the whole the image covers. The notebook's
+ * selection (cell 19) plus a lightness range sit in a collapsed filter panel.
  */
 export function GamutSection({ colors: allColors, topN, coverage, simulated }: Props) {
   const colors = useMemo(() => (topN === undefined ? allColors : allColors.slice(0, topN)), [allColors, topN]);
   const [spaceId, setSpaceId] = useState<GamutSpaceId>("oklab");
   const space = SPACES[spaceId];
-  const [hueCenter, setHueCenter] = useState(270);
-  const [hueWidth, setHueWidth] = useState(30);
-  const [chroma, setChroma] = useState<[number, number]>(space.defaultChroma);
-  const [includeNeutrals, setIncludeNeutrals] = useState(false);
+  const [sel, setSel] = useState(() => wholeCloud(space));
   const [showImage, setShowImage] = useState(true);
   const [mode, setMode] = useState<CameraMode>("orbit");
   const [resetKey, setResetKey] = useState(0);
-  // Null follows the page theme (P-037).
-  const [background, setBackground] = useState<string | null>(null);
+  const [background, setBackground] = useViewerBackground("gamut");
 
   const lattice = useMemo(() => latticeFor(space), [space]);
   const selection = useMemo(
-    () => selectLattice(lattice, { hueCenter, hueWidth, chromaMin: chroma[0], chromaMax: chroma[1], includeNeutrals }),
-    [lattice, hueCenter, hueWidth, chroma, includeNeutrals],
+    () =>
+      selectLattice(lattice, {
+        hueCenter: sel.hueCenter,
+        hueWidth: sel.hueWidth,
+        chromaMin: sel.chroma[0],
+        chromaMax: sel.chroma[1],
+        lightMin: sel.light[0],
+        lightMax: sel.light[1],
+        includeNeutrals: sel.includeNeutrals,
+      }),
+    [lattice, sel],
   );
   const snapped = useMemo(() => snapColors(lattice, colors), [lattice, colors]);
 
   const switchSpace = (id: GamutSpaceId) => {
     setSpaceId(id);
-    setChroma(SPACES[id].defaultChroma);
+    setSel(wholeCloud(SPACES[id]));
   };
-  const fmtC = (v: number) => v.toFixed(space.digits);
+  const filtered = selection !== null && selection.selectedCount < lattice.n;
+  const fmt = (v: number) => v.toFixed(space.digits);
   const occupied = snapped.occupied.length;
   const summary =
     `Värviruum 3D: ${space.label}, ${nf.format(lattice.n)} võimalikku värvi. ` +
@@ -66,15 +84,15 @@ export function GamutSection({ colors: allColors, topN, coverage, simulated }: P
         Värviruum 3D
       </h2>
       <p className={hint}>
-        Kõik sRGB värvid ühtlase tajuvõrgena: iga punkt on järgmisest sama kaugel (ΔE {space.step} kõigil telgedel). Pildi värvid
-        tõmmatakse lähimasse punkti ja värvitakse sisse, nii et näed, kui suure osa tervikust pilt katab.
+        Iga väike täpp on üks võimalik <Term k="srgb">sRGB</Term> värv; täpid on ühtlaselt hajutatud nii, et naabrid erinevad
+        silmale ühepalju (<Term k="deltaE">ΔE</Term> {space.step}). Pildi värvid joonistatakse suurelt lähima täpi kohale.
       </p>
 
       <p className="mt-3 text-lg" role="status">
         {coverage ? (
           <>
-            Pilt katab <b>{(coverage.coverage * 100).toFixed(2)} %</b> sRGB gamutist ({nf.format(coverage.occupiedCells)} /{" "}
-            {nf.format(coverage.totalCells)} OKLab-rakku, ΔE {coverage.cellDeltaE}).
+            Pilt <Term k="coverage">katab</Term> <b>{(coverage.coverage * 100).toFixed(2)} %</b> <Term k="gamut">sRGB gamutist</Term> (
+            {nf.format(coverage.occupiedCells)} / {nf.format(coverage.totalCells)} OKLab-rakku).
             {simulated && <span className="text-muted"> Näidisandmed: arvutatud brauseris, kuni server seda saadab.</span>}
             {spaceId !== coverage.space && <span className="block text-sm text-muted">Katvus on määratud OKLab-is; CIELAB-i võrk on veidi teistsugune.</span>}
           </>
@@ -83,7 +101,24 @@ export function GamutSection({ colors: allColors, topN, coverage, simulated }: P
         )}
       </p>
 
-      <div className="mt-3 grid gap-x-6 gap-y-2 sm:grid-cols-2">
+      {/* What the dots mean, drawn like the dots themselves (#90). */}
+      <ul aria-label="Legend" className="mt-3 flex list-none flex-wrap gap-x-6 gap-y-2 p-0 text-sm">
+        <li className="flex items-center gap-2">
+          <span aria-hidden className="inline-block size-1.5 rounded-[1px] bg-[oklch(0.65_0.15_250)]" />
+          väike täpp: võimalik värv (ei ole pildis)
+        </li>
+        <li className="flex items-center gap-2">
+          <span aria-hidden className="inline-block size-4 rounded-full border-2 border-ink bg-[oklch(0.65_0.15_30)]" />
+          suur raamiga täpp: pildi värv
+        </li>
+        <li className="flex items-center gap-2">
+          <span aria-hidden className="inline-block size-2.5 rounded-full border-2 border-ink bg-[oklch(0.65_0.15_30)]" />
+          <span aria-hidden className="inline-block size-5 rounded-full border-2 border-ink bg-[oklch(0.65_0.15_30)]" />
+          mida suurem, seda suurem <Term k="share">osakaal</Term> pildist
+        </li>
+      </ul>
+
+      <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2">
         <fieldset className="flex flex-wrap items-center gap-2">
           <legend className="sr-only">Värviruum</legend>
           {(Object.keys(SPACES) as GamutSpaceId[]).map((id) => (
@@ -110,26 +145,38 @@ export function GamutSection({ colors: allColors, topN, coverage, simulated }: P
             Lähtesta vaade
           </button>
         </fieldset>
-
-        <Slider label="Tooni keskpunkt h°" value={hueCenter} min={0} max={360} step={1} onChange={setHueCenter} format={(v) => `${v.toFixed(1)}°`} />
-        <Slider label="Tooni vahemiku laius" value={hueWidth} min={1} max={360} step={1} onChange={setHueWidth} format={(v) => `${v.toFixed(1)}°`} />
-        <Slider label="Kroom min C" value={chroma[0]} min={0} max={space.chromaMax} step={space.chromaStep} onChange={(v) => setChroma([v, chroma[1]])} format={fmtC} />
-        <Slider label="Kroom max C" value={chroma[1]} min={0} max={space.chromaMax} step={space.chromaStep} onChange={(v) => setChroma([chroma[0], v])} format={fmtC} />
-        <label className="inline-flex items-center gap-2">
-          <input type="checkbox" checked={includeNeutrals} onChange={(e) => setIncludeNeutrals(e.target.checked)} />
-          Kaasa neutraalsed ja peaaegu neutraalsed (toon puudub)
-        </label>
         <label className="inline-flex items-center gap-2">
           <input type="checkbox" checked={showImage} onChange={(e) => setShowImage(e.target.checked)} />
           Näita pildi värve
         </label>
       </div>
 
-      {!selection && (
-        <p role="alert" className="mt-2">
-          Vigane valik: kroomi miinimum peab olema ≤ maksimum.
-        </p>
-      )}
+      <details className="mt-3 rounded-lg border border-line p-3">
+        <summary className="cursor-pointer font-bold">
+          Filtreeri {filtered && <span className="font-normal text-muted">(näidatakse {nf.format(selection.selectedCount)} täppi {nf.format(lattice.n)}-st)</span>}
+        </summary>
+        <p className={`${hint} mt-1`}>Valitud täpid on värvilised, ülejäänud hallid.</p>
+        <div className="mt-3 grid gap-x-8 gap-y-4 sm:grid-cols-2">
+          <Slider label="Toon" term="hue" hint="keskpunkt" unit="°" value={sel.hueCenter} min={0} max={360} step={1} format={(v) => v.toFixed(0)} onChange={(v) => setSel({ ...sel, hueCenter: v })} />
+          <Slider label="Tooni vahemik" term="hue" hint="360 = kõik toonid" unit="°" value={sel.hueWidth} min={1} max={360} step={1} format={(v) => v.toFixed(0)} onChange={(v) => setSel({ ...sel, hueWidth: v })} />
+          <Slider label="Kroom vähemalt" term="chroma" hint="0 = hall" value={sel.chroma[0]} min={0} max={space.chromaMax} step={space.chromaStep} format={fmt} onChange={(v) => setSel({ ...sel, chroma: [v, sel.chroma[1]] })} />
+          <Slider label="Kroom kuni" term="chroma" hint="suurem = erksam" value={sel.chroma[1]} min={0} max={space.chromaMax} step={space.chromaStep} format={fmt} onChange={(v) => setSel({ ...sel, chroma: [sel.chroma[0], v] })} />
+          <Slider label="Heledus vähemalt" term="lightness" hint="0 = must" value={sel.light[0]} min={0} max={space.lMax} step={space.lMax / 100} format={fmt} onChange={(v) => setSel({ ...sel, light: [v, sel.light[1]] })} />
+          <Slider label="Heledus kuni" term="lightness" hint={`${space.lMax} = valge`} value={sel.light[1]} min={0} max={space.lMax} step={space.lMax / 100} format={fmt} onChange={(v) => setSel({ ...sel, light: [sel.light[0], v] })} />
+          <label className="inline-flex items-center gap-2">
+            <input type="checkbox" checked={sel.includeNeutrals} onChange={(e) => setSel({ ...sel, includeNeutrals: e.target.checked })} />
+            Kaasa hallid (toon puudub)
+          </label>
+          <button type="button" className={`${button} justify-self-start px-2.5 py-1 text-sm`} onClick={() => setSel(wholeCloud(space))}>
+            Näita kõiki täppe
+          </button>
+        </div>
+        {!selection && (
+          <p role="alert" className="mt-2">
+            Vigane valik: vähim väärtus peab olema suurimast väiksem või sellega võrdne.
+          </p>
+        )}
+      </details>
 
       <div className="mt-3">
         <BackgroundPicker label="Taust" value={background} onChange={setBackground} presets={GAMUT_PRESETS} defaultHex="#ffffff" defaultSwatch="bg-page" />
@@ -138,7 +185,13 @@ export function GamutSection({ colors: allColors, topN, coverage, simulated }: P
       <GamutCanvas
         background={background ? backgroundCss(background) : undefined}
         ink={background ? contrastInk(background) : undefined}
-        lattice={lattice} selection={selection} snapped={showImage ? snapped : null} mode={mode} resetKey={resetKey} label={summary} />
+        lattice={lattice}
+        selection={selection}
+        snapped={showImage ? snapped : null}
+        mode={mode}
+        resetKey={resetKey}
+        label={summary}
+      />
 
       <p className={`${hint} mt-1`}>
         {mode === "orbit"
@@ -146,43 +199,30 @@ export function GamutSection({ colors: allColors, topN, coverage, simulated }: P
           : "Lenda: W A S D või nooled liigutavad, Q ja E alla ja üles, lohista ringi vaatamiseks, keri edasi-tagasi."}{" "}
         Klahvid töötavad, kui pilt on fookuses.
       </p>
-      <ul className="mt-2 flex list-none flex-wrap gap-x-5 gap-y-1 p-0 text-sm">
-        <li>· hall: võimalik sRGB värv</li>
-        <li>▪ väike värviline: valitud tooni- ja kroomivahemik</li>
-        <li>● suur värviline (raamiga): pildi värv, suurus osakaalu järgi</li>
-      </ul>
 
-      <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-sm">
-        <dt className="text-muted">Ruum</dt>
-        <dd className="m-0">
-          {space.label} ({space.axes[1]}, {space.axes[2]}, {space.axes[0]})
-        </dd>
-        <dt className="text-muted">Toon</dt>
-        <dd className="m-0">
-          keskpunkt {hueCenter.toFixed(1)}°, laius {hueWidth.toFixed(1)}°
-        </dd>
-        <dt className="text-muted">Kroom</dt>
-        <dd className="m-0">
-          {fmtC(chroma[0])} kuni {fmtC(chroma[1])}
-        </dd>
-        <dt className="text-muted">Neutraalsed kaasas</dt>
-        <dd className="m-0">{includeNeutrals ? "jah" : "ei"}</dd>
-        <dt className="text-muted">Võimalikke punkte</dt>
-        <dd className="m-0">{nf.format(lattice.n)}</dd>
-        <dt className="text-muted">Valitud punkte</dt>
-        <dd className="m-0">{selection ? nf.format(selection.selectedCount) : "—"}</dd>
-        <dt className="text-muted">Neutraalseid punkte</dt>
-        <dd className="m-0">{nf.format(selection?.neutralCount ?? 0)}</dd>
-        <dt className="text-muted">Pildi värve</dt>
-        <dd className="m-0">
-          {nf.format(colors.length)} → {nf.format(occupied)} punkti
-        </dd>
-        <dt className="text-muted">Võrk</dt>
-        <dd className="m-0">
-          Δ{space.axes[0]} = Δ{space.axes[1]} = Δ{space.axes[2]} = {space.step}
-        </dd>
-      </dl>
-      <p className={`${hint} mt-2`}>See on sRGB gamuti sirvija, mitte ekraani bitisügavuse, heleduse ega JND analüsaator.</p>
+      <details className="mt-3 text-sm">
+        <summary className="cursor-pointer">Tehnilised üksikasjad</summary>
+        <dl className="mt-2 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+          <dt className="text-muted">Ruum</dt>
+          <dd className="m-0">
+            {space.label} ({space.axes[1]}, {space.axes[2]}, {space.axes[0]})
+          </dd>
+          <dt className="text-muted">Võimalikke täppe</dt>
+          <dd className="m-0">{nf.format(lattice.n)}</dd>
+          <dt className="text-muted">Valitud täppe</dt>
+          <dd className="m-0">{selection ? nf.format(selection.selectedCount) : "—"}</dd>
+          <dt className="text-muted">Neutraalseid täppe</dt>
+          <dd className="m-0">{nf.format(selection?.neutralCount ?? 0)}</dd>
+          <dt className="text-muted">Pildi värve</dt>
+          <dd className="m-0">
+            {nf.format(colors.length)} → {nf.format(occupied)} täppi
+          </dd>
+          <dt className="text-muted">Võrgu samm</dt>
+          <dd className="m-0">
+            Δ{space.axes[0]} = Δ{space.axes[1]} = Δ{space.axes[2]} = {space.step}
+          </dd>
+        </dl>
+      </details>
     </section>
   );
 }
@@ -190,19 +230,57 @@ export function GamutSection({ colors: allColors, topN, coverage, simulated }: P
 const GAMUT_PRESETS: BackgroundPreset[] = [
   { label: "lehe taust", hex: null },
   { label: "valge", hex: "#ffffff" },
-  { label: "hall", hex: "#808080" },
+  { label: "CIE hall (L* 50)", hex: CIE_GREY },
   { label: "tumehall", hex: "#1e1e1e" },
   { label: "must", hex: "#000000" },
 ];
 
-function Slider(props: { label: string; value: number; min: number; max: number; step: number; onChange: (v: number) => void; format: (v: number) => string }) {
-  const { label, value, min, max, step, onChange, format } = props;
+/** A slider with a readable label (with its explanation), the value in a badge, and the range ends (#90). */
+function Slider(props: {
+  label: string;
+  term: Parameters<typeof Term>[0]["k"];
+  hint?: string;
+  unit?: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (v: number) => void;
+  format: (v: number) => string;
+}): ReactNode {
+  const { label, term, hint: help, unit = "", value, min, max, step, onChange, format } = props;
   return (
-    <label className="flex flex-col gap-0.5 text-sm">
-      <span>
-        {label}: <span className="font-mono">{format(value)}</span>
-      </span>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={(e) => onChange(Number(e.target.value))} />
-    </label>
+    <div className="flex flex-col gap-1">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-base font-bold">
+          <Term k={term}>{label}</Term>
+        </span>
+        <span className="rounded-md bg-line-soft px-2 py-0.5 font-mono text-base">
+          {format(value)}
+          {unit}
+        </span>
+      </div>
+      <input
+        type="range"
+        aria-label={label}
+        aria-valuetext={`${format(value)}${unit}`}
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+      />
+      <div className="flex justify-between text-xs text-muted">
+        <span>
+          {format(min)}
+          {unit}
+        </span>
+        {help && <span>{help}</span>}
+        <span>
+          {format(max)}
+          {unit}
+        </span>
+      </div>
+    </div>
   );
 }

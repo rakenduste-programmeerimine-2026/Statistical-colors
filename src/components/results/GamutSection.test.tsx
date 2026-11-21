@@ -19,7 +19,9 @@ const status = (term: string) => screen.getByText(term, { selector: "dt" }).next
 describe("GamutSection", () => {
   it("shows the server's coverage, labelled when simulated", () => {
     render(<GamutSection colors={colors} coverage={simulateGamut(colors)} simulated />);
-    expect(screen.getByRole("status")).toHaveTextContent("Pilt katab 0.03 % sRGB gamutist (2 / 6789 OKLab-rakku, ΔE 0.02).");
+    // The terms carry their explanations for screen readers, so check the figures, not one sentence.
+    expect(screen.getByRole("status")).toHaveTextContent("0.03 %");
+    expect(screen.getByRole("status")).toHaveTextContent("(2 / 6789 OKLab-rakku)");
     expect(screen.getByRole("status")).toHaveTextContent("Näidisandmed");
   });
 
@@ -28,42 +30,65 @@ describe("GamutSection", () => {
     expect(screen.getByRole("status")).toHaveTextContent("Katvust pole server veel saatnud.");
   });
 
-  it("starts with the notebook's selection and counts (cell 19), in OKLab", () => {
+  it("starts with the whole cloud selected, in OKLab (P-039 item 1)", () => {
     render(<GamutSection colors={colors} simulated={false} />);
     expect(status("Ruum")).toBe("OKLab (a, b, L)");
-    expect(status("Toon")).toBe("keskpunkt 270.0°, laius 30.0°");
-    expect(status("Kroom")).toBe("0.100 kuni 0.200");
-    expect(status("Neutraalsed kaasas")).toBe("ei");
-    expect(status("Võimalikke punkte")).toBe("6789");
-    expect(status("Neutraalseid punkte")).toBe("51");
-    expect(status("Pildi värve")).toBe("3 → 2 punkti");
+    expect(status("Võimalikke täppe")).toBe("6789");
+    expect(status("Valitud täppe")).toBe("6789");
+    expect(status("Neutraalseid täppe")).toBe("51");
+    expect(status("Pildi värve")).toBe("3 → 2 täppi");
+    expect(screen.getByText(/^Filtreeri/)).not.toHaveTextContent("näidatakse");
   });
 
-  it("switches to CIELAB with its own grid and chroma range", async () => {
+  it("explains the big and small dots in a legend", () => {
+    render(<GamutSection colors={colors} simulated={false} />);
+    const legend = screen.getByRole("list", { name: "Legend" });
+    expect(legend).toHaveTextContent("väike täpp: võimalik värv");
+    expect(legend).toHaveTextContent("suur raamiga täpp: pildi värv");
+    expect(legend).toHaveTextContent(/mida suurem, seda suurem osakaal/);
+  });
+
+  it("switches to CIELAB with the whole cloud, every one of its 13 000 dots selected", async () => {
     render(<GamutSection colors={colors} simulated={false} />);
     await userEvent.setup().click(screen.getByRole("radio", { name: "CIELAB (D50)" }));
     expect(status("Ruum")).toBe("CIELAB (D50) (a*, b*, L*)");
-    expect(status("Kroom")).toBe("40.0 kuni 80.0");
     // Estonian number format groups with a no-break space.
-    expect(status("Võimalikke punkte")).toBe("13 000");
-    expect(status("Võrk")).toBe("ΔL* = Δa* = Δb* = 4");
+    expect(status("Võimalikke täppe")).toBe("13 000");
+    expect(status("Valitud täppe")).toBe("13 000");
+    expect(status("Võrgu samm")).toBe("ΔL* = Δa* = Δb* = 4");
   });
 
-  it("refuses a chroma minimum above the maximum, like the notebook", () => {
+  it("filters by lightness and says how many dots it shows", () => {
     render(<GamutSection colors={colors} simulated={false} />);
-    fireEvent.change(screen.getByRole("slider", { name: /Kroom min C/ }), { target: { value: "0.3" } });
-    expect(screen.getByRole("alert")).toHaveTextContent("kroomi miinimum peab olema ≤ maksimum");
-    expect(status("Valitud punkte")).toBe("—");
+    fireEvent.change(screen.getByRole("slider", { name: "Heledus kuni" }), { target: { value: "0.5" } });
+    const shown = Number(status("Valitud täppe")?.replace(/D/g, ""));
+    expect(shown).toBeGreaterThan(0);
+    expect(shown).toBeLessThan(6789);
+    expect(screen.getByText(/^Filtreeri/)).toHaveTextContent(`näidatakse ${shown} täppi 6789-st`);
+    fireEvent.click(screen.getByRole("button", { name: "Näita kõiki täppe" }));
+    expect(status("Valitud täppe")).toBe("6789");
   });
 
-  it("selects every coloured point at a hue width of 360°, and the neutrals when asked", () => {
+  it("refuses a minimum above the maximum", () => {
     render(<GamutSection colors={colors} simulated={false} />);
-    fireEvent.change(screen.getByRole("slider", { name: /Tooni vahemiku laius/ }), { target: { value: "360" } });
-    fireEvent.change(screen.getByRole("slider", { name: /Kroom min C/ }), { target: { value: "0" } });
-    fireEvent.change(screen.getByRole("slider", { name: /Kroom max C/ }), { target: { value: "0.4" } });
-    expect(status("Valitud punkte")).toBe(String(6789 - 51));
-    fireEvent.click(screen.getByRole("checkbox", { name: /Kaasa neutraalsed/ }));
-    expect(status("Valitud punkte")).toBe("6789");
+    fireEvent.change(screen.getByRole("slider", { name: "Kroom vähemalt" }), { target: { value: "0.3" } });
+    fireEvent.change(screen.getByRole("slider", { name: "Kroom kuni" }), { target: { value: "0.1" } });
+    expect(screen.getByRole("alert")).toHaveTextContent("vähim väärtus peab olema suurimast väiksem");
+    expect(status("Valitud täppe")).toBe("—");
+  });
+
+  it("keeps the notebook's hue window and neutrals filter", () => {
+    render(<GamutSection colors={colors} simulated={false} />);
+    fireEvent.change(screen.getByRole("slider", { name: "Tooni vahemik" }), { target: { value: "30" } });
+    const narrow = Number(status("Valitud täppe")?.replace(/D/g, ""));
+    expect(narrow).toBeLessThan(6789 - 51);
+    fireEvent.click(screen.getByRole("checkbox", { name: /Kaasa hallid/ }));
+    expect(Number(status("Valitud täppe")?.replace(/D/g, ""))).toBe(narrow - 51);
+  });
+
+  it("shows readable slider values with units and range ends", () => {
+    render(<GamutSection colors={colors} simulated={false} />);
+    expect(screen.getByRole("slider", { name: "Tooni vahemik" })).toHaveAttribute("aria-valuetext", "360°");
   });
 
   it("describes the view for screen readers, with or without the image's colours", async () => {
