@@ -21,6 +21,7 @@ Every fixed bug, newest first. Follow the `fix-bug` skill to add one.
 
 | Date | Type | Description | Fix | Issue | State machine |
 |---|---|---|---|---|---|
+| 2026-11-21 | test | The extension test for the 100,000-path PDF limit timed out under full-suite load (5.7 s against the 5 s default), on main too | Give that test a 20 s timeout; the limit itself is unchanged | #90 | — |
 | 2026-11-21 | ui | In the colour table the artefact bar spread over the next column and values wrapped over several lines; alpha showed as a bare "000"; reported in the user test | Cells stay on one line in a sideways-scrolling box; the artefact cell is a fixed-width bar and number ("—" for 0); alpha reads "läbipaistmatus N %" | #90 | — |
 | 2026-11-21 | ui | Zooming was too abrupt on laptops: the pixel viewer moved a whole zoom level on every wheel event, and a trackpad pinch sends many small events, so one gesture skipped several levels; reported in the user test | Small wheel steps add up to one level per 100 px (`accumulateWheel`, tested at 99 and 100 px); the 3D view normalises and caps each step | #90 | — |
 | 2026-11-21 | logic | The colour count chosen on the upload form was lost: "Ava demo" always opened 5000 colours, and the results heading printed the requested count even when the image had fewer colours, so the page kept saying "5000 sagedasemat värvi"; reported in the user test | The demo link carries `?top_n`, the heading and hint name the rows actually listed, and the 3D view gets the same top N colours; regression tests written first | #90 | — |
