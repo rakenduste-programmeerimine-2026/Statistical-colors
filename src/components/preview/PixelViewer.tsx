@@ -19,6 +19,8 @@ import {
   type View,
 } from "@/core/preview/zoom";
 import { BackgroundPicker, backgroundCss, type BackgroundPreset } from "../BackgroundPicker";
+import { useViewerBackground } from "../useViewerBackground";
+import { CIE_GREY } from "@/core/viewer/viewer-prefs";
 import { button, hint } from "../ui";
 import { decodeImage, MAX_PREVIEW_PIXELS, PreviewTooLargeError, type DecodedImage } from "./decode";
 
@@ -48,7 +50,7 @@ async function toBlob(source: Blob | string): Promise<Blob> {
 const STAGE_PRESETS: BackgroundPreset[] = [
   { label: "vaikimisi", hex: null },
   { label: "valge", hex: "#ffffff" },
-  { label: "hall", hex: "#808080" },
+  { label: "CIE hall (L* 50)", hex: CIE_GREY },
   { label: "must", hex: "#000000" },
 ];
 
@@ -66,7 +68,7 @@ export function PixelViewer({ source, name }: { source: Blob | string; name: str
   const [manual, setManual] = useState<{ image: DecodedImage; view: View } | null>(null);
   const [grid, setGrid] = useState(false);
   // Null keeps the reference viewer's stage colour (P-037).
-  const [stage, setStage] = useState<string | null>(null);
+  const [stage, setStage] = useViewerBackground("pixel");
   const [hover, setHover] = useState<Hover | null>(null);
   const drag = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
 
