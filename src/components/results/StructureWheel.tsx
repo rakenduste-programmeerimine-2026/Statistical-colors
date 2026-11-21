@@ -6,6 +6,7 @@ import { MODEL_LABELS, structureLabel } from "@/core/analysis/ontology";
 import { modelHue, wheelColor, type ColorModel } from "@/core/color/models";
 import { clampChroma, formatOklch, oklchCss, oklchToSrgb, srgbToOklch, type Oklch } from "@/core/color/oklch";
 import { arcPath, chromaRadius, deltaERadius, lightnessRingWidth, medianLightness, polar, ringChroma, ringSegments } from "@/core/color/wheel";
+import { formatDelta } from "@/core/analysis/format";
 import { hint } from "../ui";
 
 const SIZE = 320;
@@ -131,7 +132,7 @@ export function StructureWheel({ structure, palette }: Props) {
                 strokeWidth={ringWidth}
               />
               <circle data-testid="actual" cx={actual.x} cy={actual.y} r={r} fill={oklchCss(p.actual)} stroke="var(--color-page)" strokeWidth={2}>
-                <title>{`Tegelik: ${formatOklch(p.actual)}, L ${p.actual.l.toFixed(3)}, ΔL tumedaimast ${deltaL.toFixed(3)}${cluster ? `, osakaal ${cluster.share.toFixed(2)}%` : ""}`}</title>
+                <title>{`Tegelik: ${formatOklch(p.actual)}, L ${p.actual.l.toFixed(3)}, ΔL tumedaimast ${formatDelta(deltaL, "0, see on tumedaim")}${cluster ? `, osakaal ${cluster.share.toFixed(2)}%` : ""}`}</title>
               </circle>
             </g>
           );
@@ -145,7 +146,7 @@ export function StructureWheel({ structure, palette }: Props) {
             <g key={`ideal-${p.clusterId}-${i}`}>
               <circle cx={ideal.x} cy={ideal.y} r={r} fill="none" stroke="var(--color-page)" strokeWidth={4} />
               <circle data-testid="ideal" cx={ideal.x} cy={ideal.y} r={r} fill="none" className="stroke-delta" strokeWidth={1.5}>
-                <title>{`Ideaal: ${formatOklch(p.ideal)}, ΔE ${p.deltaE.toFixed(3)}`}</title>
+                <title>{`Ideaal: ${formatOklch(p.ideal)}, ΔE ${formatDelta(p.deltaE, "0, täpne")}`}</title>
               </circle>
             </g>
           );
@@ -174,9 +175,9 @@ export function StructureWheel({ structure, palette }: Props) {
               <tr key={`${p.clusterId}-${i}`}>
                 <td className="border-b border-line-soft p-1.5 font-mono">{formatOklch(p.actual)}</td>
                 <td className="border-b border-line-soft p-1.5 font-mono">{formatOklch(p.ideal)}</td>
-                <td className="border-b border-line-soft p-1.5 font-mono">{p.deltaE.toFixed(3)}</td>
+                <td className="border-b border-line-soft p-1.5 font-mono">{formatDelta(p.deltaE, "0 (täpne)")}</td>
                 <td className="border-b border-line-soft p-1.5 font-mono">{p.actual.l.toFixed(3)}</td>
-                <td className="border-b border-line-soft p-1.5 font-mono">{(p.actual.l - darkest).toFixed(3)}</td>
+                <td className="border-b border-line-soft p-1.5 font-mono">{formatDelta(p.actual.l - darkest, "tumedaim")}</td>
               </tr>
             ))}
           </tbody>

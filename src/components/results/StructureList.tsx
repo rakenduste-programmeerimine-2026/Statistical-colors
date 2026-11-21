@@ -2,6 +2,7 @@
 
 import type { ColorStructure } from "@/core/analysis/color-analysis";
 import { FAMILY_LABELS, MODEL_LABELS, structureLabel } from "@/core/analysis/ontology";
+import { formatDelta } from "@/core/analysis/format";
 import { formatOklch, oklchCss } from "@/core/color/oklch";
 
 interface Props {
@@ -64,7 +65,7 @@ export function RampStrip({ structure }: { structure: ColorStructure }) {
             <span className="flex w-24 shrink-0 flex-col gap-1">
               <span className="h-12 rounded-md border border-ink/25" style={{ background: oklchCss(p.actual) }} />
               <span className="font-mono text-[11px] leading-tight">{formatOklch(p.actual)}</span>
-              <span className="font-mono text-[11px] text-muted">ΔE ideaalist {p.deltaE.toFixed(3)}</span>
+              <span className="font-mono text-[11px] text-muted">ΔE ideaalist {formatDelta(p.deltaE, "0 (täpne)")}</span>
             </span>
           </div>
         ))}
