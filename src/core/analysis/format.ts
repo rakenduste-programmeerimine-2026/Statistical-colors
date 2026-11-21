@@ -35,3 +35,11 @@ export const hexOf = (c: Pick<ColorCount, "r" | "g" | "b">) => formatHex({ r: c.
 export function formatOpacity(a: number): string {
   return `läbipaistmatus ${Math.round((a / 255) * 100)} %`;
 }
+
+/**
+ * A ΔE or ΔL with three decimals, but a word instead of "0.000" (P-042: a bare
+ * "000" tells the user nothing). `zero` says what a zero difference means there.
+ */
+export function formatDelta(value: number, zero: string): string {
+  return Math.abs(value) < 0.0005 ? zero : value.toFixed(3);
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cssColor, formatHex, formatPercent, formatTuple } from "./format";
+import { cssColor, formatDelta, formatHex, formatPercent, formatTuple } from "./format";
 
 describe("formatHex", () => {
   it.each([
@@ -41,4 +41,14 @@ describe("formatPercent", () => {
     expect(formatPercent(100)).toBe("100.000000%");
     expect(formatPercent(12.3456789)).toBe("12.345679%");
   });
+});
+
+describe("formatDelta", () => {
+  it.each([
+    [0, "täpne"],
+    [0.000499, "täpne"],
+    [-0.000499, "täpne"],
+    [0.0006, "0.001"],
+    [0.0123, "0.012"],
+  ])("%s → %s", (v, out) => expect(formatDelta(v, "täpne")).toBe(out));
 });
