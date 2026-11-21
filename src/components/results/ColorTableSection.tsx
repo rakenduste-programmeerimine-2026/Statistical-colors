@@ -8,13 +8,13 @@ import { card, hint } from "../ui";
 import { ColorFilters } from "./ColorFilters";
 import { ColorTable } from "./ColorTable";
 
+const nf = new Intl.NumberFormat("et-EE");
+
 /**
  * The top-N colour table with equivalence-class filters. Filters run over every
  * colour the analysis holds, not only the top N, and the table shows the N most
  * frequent matches (P-033 item 3).
  */
-const nf = new Intl.NumberFormat("et-EE");
-
 export function ColorTableSection({ analysis, topN }: { analysis: ImageAnalysis; topN: number }) {
   const [filter, setFilter] = useState<ColorFilter>(NO_FILTER);
   const bands = useMemo(() => shareBands(analysis.colors.map((c) => c.percent)), [analysis.colors]);
@@ -44,7 +44,7 @@ export function ColorTableSection({ analysis, topN }: { analysis: ImageAnalysis;
       </p>
       {analysis.rowDataStatus === "simulated" && (
         <p role="note" className="mt-2 rounded-lg border border-warn p-2.5">
-          Näidisandmed: segupikslite ja artefaktide tõenäosuse ning värviklastrid arvutab server, mis pole veel valmis.
+          Näidisandmed: segupikslite sarnasuse ja värviklastrid arvutab server, mis pole veel valmis.
           {analysis.example ? " Värvid ja kogused on uuringu päris andmed." : ""}
         </p>
       )}
