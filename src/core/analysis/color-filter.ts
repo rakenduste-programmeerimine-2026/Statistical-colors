@@ -19,6 +19,15 @@ export function topArtefact(c: ColorCount): ColorArtefact | undefined {
   return c.artefacts?.reduce<ColorArtefact | undefined>((best, a) => (!best || a.chance > best.chance ? a : best), undefined);
 }
 
+/**
+ * The colour's blend similarity (the `artefact.antialias-blend` entry), the
+ * value the table column and the filter show (P-039 item 2); other artefact
+ * kinds are not blend similarity.
+ */
+export function blendSimilarity(c: ColorCount): number | undefined {
+  return c.artefacts?.find((a) => a.kind === "artefact.antialias-blend")?.chance;
+}
+
 export function isFiltered(f: ColorFilter): boolean {
   return f.band !== null || f.cluster !== null || f.artefact !== "all";
 }
@@ -31,9 +40,9 @@ export function filterColors(colors: ColorCount[], f: ColorFilter, bands: ShareB
     if (f.cluster !== null && c.clusterId !== f.cluster) return false;
     if (f.artefact !== "all") {
       // Colours without a value are neither likely nor clean.
-      const top = topArtefact(c);
-      if (!top) return false;
-      if ((top.chance >= LIKELY_ARTEFACT) !== (f.artefact === "likely")) return false;
+      const similarity = blendSimilarity(c);
+      if (similarity === undefined) return false;
+      if ((similarity >= LIKELY_ARTEFACT) !== (f.artefact === "likely")) return false;
     }
     return true;
   });

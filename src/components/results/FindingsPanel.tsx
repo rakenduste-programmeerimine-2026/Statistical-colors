@@ -11,7 +11,6 @@ const SEVERITY_CLASS: Record<Finding["severity"], string> = {
   problem: "border-error",
 };
 
-/** Any finding the server sends, grouped by ontology area; unknown kinds use their own title. */
 /**
  * Confidence in words, never as "100 %" (#90: a percentage suggested proof).
  * A measured value says so: it is exact for the image, but still not proof of
@@ -32,6 +31,7 @@ const EXPLAIN: Record<string, string> = {
   "ui.dark-mode": "Suurim ühtlane värv on tume ja katab suure osa pildist, ning selle peal on palju heledamaid värve. Ilma lehe andmeteta on see oletus.",
 };
 
+/** Any finding the server sends, grouped by ontology area; unknown kinds use their own title. */
 export function FindingsPanel({ findings, palette }: { findings: Finding[]; palette: PaletteCluster[] }) {
   const byId = new Map(palette.map((c) => [c.id, c]));
   const areas = AREA_ORDER.filter((a) => findings.some((f) => f.area === a));
@@ -98,8 +98,12 @@ export function FindingsPanel({ findings, palette }: { findings: Finding[]; pale
                       {f.clusterIds
                         .map((id) => byId.get(id))
                         .filter((c): c is PaletteCluster => !!c)
-                        .map((c) => formatOklch(c.color))
-                        .join(", ")}
+                        .map((c, i) => (
+                          <span key={c.id}>
+                            {i > 0 && ", "}
+                            {formatOklch(c.color)} <ColorName color={c.color} />
+                          </span>
+                        ))}
                     </p>
                   ) : null}
                   {f.meta.caveats?.length ? (

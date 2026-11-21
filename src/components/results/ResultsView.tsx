@@ -17,7 +17,6 @@ import { saveFile } from "./download";
 
 type Loaded = { status: "loading" } | { status: "missing" } | { status: "ready"; analysis: ImageAnalysis };
 
-/** The original results.html: image summary, CSV downloads and the top-N table. */
 const nf = new Intl.NumberFormat("et-EE");
 
 function Stat({ label, value }: { label: React.ReactNode; value: string }) {
@@ -29,6 +28,7 @@ function Stat({ label, value }: { label: React.ReactNode; value: string }) {
   );
 }
 
+/** The original results.html: image summary, CSV downloads and the top-N table. */
 export function ResultsView() {
   const { analysis: service } = useServices();
   const { id } = useParams<{ id: string }>();

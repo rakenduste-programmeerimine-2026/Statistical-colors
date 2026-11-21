@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { ColorAnalysis } from "@/core/analysis/color-analysis";
 import { card, hint } from "../ui";
 import { FindingsPanel } from "./FindingsPanel";
@@ -52,17 +52,21 @@ const STATUS_LABELS = { done: "tehtud", skipped: "vahele jäetud", "not-implemen
 export function ColorAnalysisSection({ analysis }: { analysis: ColorAnalysis }) {
   const [selectedId, setSelectedId] = useState(analysis.structures[0]?.id ?? "");
   const selected = analysis.structures.find((s) => s.id === selectedId);
+  // The section can be folded away (#90); the heading stays a heading for screen readers.
+  const [open, setOpen] = useState(true);
+  const bodyId = useId();
 
   return (
     <section className={card} aria-labelledby="color-analysis-heading">
-      <details open className="group/analysis">
-      <summary className="cursor-pointer list-none">
-        <h2 id="color-analysis-heading" className="inline text-xl font-bold">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="color-analysis-heading" className="text-xl font-bold">
           Värvianalüüs
         </h2>
-        <span className="ml-2 text-sm text-muted group-open/analysis:hidden">(näita)</span>
-        <span className="ml-2 hidden text-sm text-muted group-open/analysis:inline">(peida)</span>
-      </summary>
+        <button type="button" aria-expanded={open} aria-controls={bodyId} onClick={() => setOpen((o) => !o)} className="text-sm underline">
+          {open ? "Peida" : "Näita"}
+        </button>
+      </div>
+      <div id={bodyId} hidden={!open}>
       {analysis.status === "simulated" && (
         <p role="note" className="mt-2 rounded-lg border border-warn p-2.5">
           Näidisandmed: värvianalüüsi arvutab server, mis pole veel valmis. Allolev on genereeritud, et näidata, kuidas tulemus
@@ -118,7 +122,7 @@ export function ColorAnalysisSection({ analysis }: { analysis: ColorAnalysis }) 
           <FindingsPanel findings={analysis.findings} palette={analysis.palette} />
         </div>
       )}
-      </details>
+      </div>
     </section>
   );
 }

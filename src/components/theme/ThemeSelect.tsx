@@ -6,7 +6,7 @@ import { input } from "../ui";
 import { toOklch } from "./ThemeProvider";
 import { formatOklch, hexToOklch } from "@/core/color/oklch";
 import type { NameIndex } from "@/core/color/names";
-import { colorNameText, useNameIndex } from "../ColorName";
+import { ColorName, colorNameText, useNameIndex } from "../ColorName";
 
 /**
  * What a theme is called in the list: its own name, else its colours' names
@@ -74,7 +74,7 @@ export function ThemeSelect({ themes, currentId, onSelect, shown, labelId }: Pro
                   <Select.ItemText>{themeLabel(theme, index)}</Select.ItemText>
                   {/* Outside ItemText, so typeahead finds the name; the codes stay visible (#91). */}
                   <span className="font-mono text-xs text-muted">
-                    {theme.bg} / {theme.text}
+                    {theme.bg} <ColorName color={hexToOklch(theme.bg)} /> / {theme.text} <ColorName color={hexToOklch(theme.text)} />
                   </span>
                   <span className="font-mono text-xs text-muted">
                     {formatOklch(hexToOklch(theme.bg))} / {formatOklch(hexToOklch(theme.text))}

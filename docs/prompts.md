@@ -647,3 +647,12 @@ Issue: #90, #91
 
    [AUDIT: performance-analyst] Server-side filtering would be slower: it adds a network round trip and leaves the row-building cost unchanged. Row virtualisation would be fastest, but the user chose "No, keep all rows rendered". So the table renders every row, with memoised rows and deferred filtering (P-039 item 7 stands).
 2. Colour names use `color-name-list@14.86.0`: MIT, 32,004 names, about 318 KB gzip, loaded with `import()` only when needed [AUDIT: library-auditor]. The nearest-name search is our own: an OKLab grid index searched until no unsearched cell can be nearer, tested against brute force. `nearest-color` was rejected because it measures distance in RGB.
+
+## P-041 (2026-11-21): Audits recorded after the compliance review
+
+Type: approved decision
+Source: library-auditor, performance-analyst and local measurements
+Issue: #91
+
+1. [AUDIT: library-auditor] Drag-and-drop upload uses the platform API (`DataTransfer.files` plus the native file input), with no library. react-dropzone, Uppy and FilePond add nothing a single-image box needs. Re-audit react-dropzone if #15 brings multiple files or folders.
+2. [AUDIT: performance-analyst] Colour names need no Web Worker. Building the index is a one-time cost, measured at 33 ms in Node. Lookups are cached per colour. 5000 table rows render in about 1.7 s in jsdom with or without names (measured), so names add no measurable cost. The name list loads only when a component that shows a name mounts.

@@ -17,7 +17,7 @@ export function ThemeWidget() {
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !e.defaultPrevented && setOpen(false);
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
@@ -38,12 +38,13 @@ export function ThemeWidget() {
         />
         <span className="[writing-mode:vertical-rl]">{open ? "Sulge teema" : "Teema"}</span>
       </button>
+      {/* Mounted only while open, so a closed widget does not load the colour-name list (P-040 item 2). */}
       <div
         id={panelId}
         hidden={!open}
         className="max-h-[80vh] w-[min(40rem,calc(100vw-4rem))] overflow-auto rounded-bl-xl border border-r-0 border-line bg-page shadow-[0_4px_16px_oklch(0_0_0/0.15)]"
       >
-        <ThemePicker />
+        {open && <ThemePicker />}
       </div>
     </aside>
   );

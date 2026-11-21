@@ -29,13 +29,13 @@ const MESSAGES: Record<UploadError | "invalid-image", string> = {
 
 const ACCEPT = ALLOWED_EXTENSIONS.map((ext) => `.${ext}`).join(",");
 
-/** Upload form from the original upload.html: one image, alpha option and top N. */
 /** The demo opens with the colour count chosen on the form, like an upload (#90). */
 function demoHref(topN: string): string {
   const n = clampTopN(topN);
   return n === TOP_N_DEFAULT ? `/results/${DEMO_ID}` : `/results/${DEMO_ID}?top_n=${n}`;
 }
 
+/** Upload form from the original upload.html: one image, alpha option and top N. */
 export function UploadForm() {
   const { analysis } = useServices();
   const router = useRouter();
@@ -99,7 +99,8 @@ export function UploadForm() {
             e.preventDefault();
             setDragging(true);
           }}
-          onDragLeave={() => setDragging(false)}
+          // Moving over the box's own text fires dragleave too; only leaving the box counts.
+          onDragLeave={(e) => !e.currentTarget.contains(e.relatedTarget as Node | null) && setDragging(false)}
           onDrop={(e) => {
             e.preventDefault();
             setDragging(false);
