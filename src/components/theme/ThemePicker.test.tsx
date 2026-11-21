@@ -107,10 +107,31 @@ describe("ThemePicker", () => {
     await waitFor(() => expect(screen.getByRole("textbox", { name: "Taust" })).toHaveValue("#000000"));
 
     await u.click(screen.getByRole("combobox", { name: "Salvestatud teemad" }));
-    await u.click(await screen.findByRole("option", { name: "#ffffff / #111111" }));
+    await u.click(await screen.findByRole("option", { name: /^Vaikimisi/ }));
 
     expect(screen.getByRole("textbox", { name: "Taust" })).toHaveValue("#ffffff");
     expect(pageVar("--theme-text")).toBe("oklch(from #111111 l c h)");
     await waitFor(async () => expect((await services.themes.load()).currentId).toBe("default"));
+  });
+
+  it("saves a theme under the name typed, and lists it by that name (#91)", async () => {
+    const services = testServices();
+    renderWithServices(<ThemePicker />, services);
+    const u = userEvent.setup();
+    const bg = screen.getByRole("textbox", { name: "Taust" });
+    await u.clear(bg);
+    await u.type(bg, "#123456");
+    await u.type(screen.getByRole("textbox", { name: "Teema nimi (valikuline)" }), "  Öine   sinine  ");
+    await u.click(screen.getByRole("button", { name: "Salvesta teema" }));
+
+    await waitFor(async () => expect((await services.themes.load()).themes.at(-1)?.name).toBe("Öine sinine"));
+    expect(screen.getByRole("textbox", { name: "Teema nimi (valikuline)" })).toHaveValue("");
+    await u.click(screen.getByRole("combobox", { name: "Salvestatud teemad" }));
+    expect(await screen.findByRole("option", { name: /^Öine sinine/ })).toBeInTheDocument();
+  });
+
+  it("limits a name to 40 characters", () => {
+    renderWithServices(<ThemePicker />);
+    expect(screen.getByRole("textbox", { name: "Teema nimi (valikuline)" })).toHaveAttribute("maxLength", "40");
   });
 });
