@@ -632,3 +632,18 @@ Issue: #90, #91, #92
 10. **Ownership in `src/core/analysis/`.** The teammates own `blends.ts`, `palette-clusters.ts`, `harmonies.ts`, `contrast.ts`, `gamut-coverage.ts`, `ui-mode.ts`, `palette-types.ts`, `compute-color-analysis.ts`, `src/core/count-colors.ts` and the Supabase adapters. The frontend files (`color-filter.ts`, `share-bands.ts`, `format.ts`, `ontology.ts`, `color-analysis.ts` types, `color-analysis-check.ts`) may change.
 11. [UNDERSTANDING] **Zoom.** The pixel viewer accumulates small wheel and trackpad deltas, moving one zoom level per about 100 px. The 3D view's wheel zoom is gentler, with the step per event capped. Plain scrolling keeps its P-021 and P-036 meaning.
 12. [UNDERSTANDING] **Analysis cache.** Caching the analysis result is a frontend decorator around the `AnalysisService` port, not an edit inside the Supabase adapter. Any server-side speed-up goes to the team as an issue.
+
+## P-040 (2026-11-21): Table speed and colour-name decisions
+
+Type: approved decision
+Source: the user's answer, the performance analysis and the library audit
+Issue: #90, #91
+
+1. "Determine which would be faster" — measured on 5000 colours in vitest/jsdom:
+   - filter logic: 0.2 ms;
+   - the analysis: 21 ms;
+   - OKLCH text: 4.3 ms;
+   - building the table rows: 4.6 s.
+
+   [AUDIT: performance-analyst] Server-side filtering would be slower: it adds a network round trip and leaves the row-building cost unchanged. Row virtualisation would be fastest, but the user chose "No, keep all rows rendered". So the table renders every row, with memoised rows and deferred filtering (P-039 item 7 stands).
+2. Colour names use `color-name-list@14.86.0`: MIT, 32,004 names, about 318 KB gzip, loaded with `import()` only when needed [AUDIT: library-auditor]. The nearest-name search is our own: an OKLab grid index searched until no unsearched cell can be nearer, tested against brute force. `nearest-color` was rejected because it measures distance in RGB.
