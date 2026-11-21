@@ -656,3 +656,24 @@ Issue: #91
 
 1. [AUDIT: library-auditor] Drag-and-drop upload uses the platform API (`DataTransfer.files` plus the native file input), with no library. react-dropzone, Uppy and FilePond add nothing a single-image box needs. Re-audit react-dropzone if #15 brings multiple files or folders.
 2. [AUDIT: performance-analyst] Colour names need no Web Worker. Building the index is a one-time cost, measured at 33 ms in Node. Lookups are cached per colour. 5000 table rows render in about 1.7 s in jsdom with or without names (measured), so names add no measurable cost. The name list loads only when a component that shows a name mounts.
+
+## P-042 (2026-11-21): Challenge to the algorithm work, and "do so"
+
+Type: requirement
+Source: the user's messages
+Issue: #90, #92, #95
+
+Quoted:
+
+> - The blend "chance" can never fall between 0 and 50 %, so it's really a yes/no flag. that sounds like the algorithm approach is flawed no? 130ms sounds horrible in graphics programming 3D rework sounds like it had way too many changes what id you do? the 000 wasn't meant as aplha what did you change because of it? Go over the lean algorithms to confirm what they are doing is actually effective at what what they claim to do
+
+Then, after the answer proposed four next steps (correct the algorithm docs, a real complete-linkage counterexample in Lean, a faster clustering prototype measured locally, fix the real "000"):
+
+> do so
+
+Understood as:
+
+1. [UNDERSTANDING] `docs/algorithms/` must say plainly what Lean proves (facts about small models) and what was measured by running the code. "[AUDIT: lean]" must not suggest the TypeScript itself was verified.
+2. [UNDERSTANDING] The blend score is a distance threshold, not a probability, and has no spatial evidence. The redesign (pixel-neighbour evidence) goes to the team in #95.
+3. [UNDERSTANDING] The faster clustering stays in the local test build (P-039 item 9).
+4. [UNDERSTANDING] The user did not say where "000" was. The strongest candidate is the structure wheel's ΔL and ΔE columns, which always print "0.000" for the darkest colour and the anchor. That is what gets fixed. The alpha change from P-039 stays unless the user asks to revert it.
