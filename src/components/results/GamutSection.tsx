@@ -15,6 +15,8 @@ const nf = new Intl.NumberFormat("et-EE");
 
 interface Props {
   colors: ColorCount[];
+  /** The table's count: the 3D view shows the same colours (#90). */
+  topN?: number;
   /** The server's coverage figure; absent until it sends one. */
   coverage?: GamutCoverage;
   simulated: boolean;
@@ -26,7 +28,8 @@ interface Props {
  * Step 2 snaps the image's colours onto the lattice and colours them in, to
  * show how much of the sRGB gamut the image covers.
  */
-export function GamutSection({ colors, coverage, simulated }: Props) {
+export function GamutSection({ colors: allColors, topN, coverage, simulated }: Props) {
+  const colors = useMemo(() => (topN === undefined ? allColors : allColors.slice(0, topN)), [allColors, topN]);
   const [spaceId, setSpaceId] = useState<GamutSpaceId>("oklab");
   const space = SPACES[spaceId];
   const [hueCenter, setHueCenter] = useState(270);

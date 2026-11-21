@@ -112,7 +112,8 @@ export function ResultsView() {
 
       <GamutSection
         key={`gamut-${analysis.id}`}
-        colors={analysis.colors.slice(0, topN)}
+        colors={analysis.colors}
+        topN={topN}
         coverage={analysis.colorAnalysis?.gamut}
         simulated={analysis.colorAnalysis?.status === "simulated"}
       />

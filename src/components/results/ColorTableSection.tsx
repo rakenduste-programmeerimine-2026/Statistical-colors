@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { filterColors, isFiltered, NO_FILTER, type ColorFilter } from "@/core/analysis/color-filter";
 import { shareBands } from "@/core/analysis/share-bands";
 import type { ImageAnalysis } from "@/core/analysis/types";
@@ -23,9 +23,11 @@ export function ColorTableSection({ analysis, topN }: { analysis: ImageAnalysis;
     for (const c of analysis.colors) if (c.clusterId) counts.set(c.clusterId, (counts.get(c.clusterId) ?? 0) + 1);
     return (analysis.colorAnalysis?.palette ?? []).filter((p) => counts.has(p.id)).map((cluster) => ({ cluster, count: counts.get(cluster.id)! }));
   }, [analysis]);
-  const hasArtefacts = analysis.colors.some((c) => c.artefacts?.length);
-  const matches = useMemo(() => filterColors(analysis.colors, filter, bands), [analysis.colors, filter, bands]);
-  const rows = matches.slice(0, topN);
+  const hasArtefacts = useMemo(() => analysis.colors.some((c) => c.artefacts?.length), [analysis.colors]);
+  // The chips answer at once; the table follows when the browser is free (#90: filtering felt slow).
+  const applied = useDeferredValue(filter);
+  const matches = useMemo(() => filterColors(analysis.colors, applied, bands), [analysis.colors, applied, bands]);
+  const rows = useMemo(() => matches.slice(0, topN), [matches, topN]);
   // The heading names the rows listed: the chosen count, or every colour when there are fewer (#90).
   const listed = Math.min(topN, analysis.uniqueColors);
 
@@ -54,7 +56,9 @@ export function ColorTableSection({ analysis, topN }: { analysis: ImageAnalysis;
             : `${matches.length} värvi ${analysis.colors.length}-st vastab filtrile; tabelis on ${rows.length} sagedasemat.`}
         </p>
       )}
-      <ColorTable colors={rows} includeAlpha={analysis.includeAlpha} />
+      <div aria-busy={applied !== filter}>
+        <ColorTable colors={rows} includeAlpha={analysis.includeAlpha} />
+      </div>
     </section>
   );
 }
