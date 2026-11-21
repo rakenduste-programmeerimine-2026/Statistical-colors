@@ -69,3 +69,7 @@ Changing the file, the alpha checkbox or top N does not change the state. Top N 
 - HiddenPending fails: [UNDERSTANDING] the error is queued on the hidden form and shown on return. Not tested.
 - React StrictMode runs the cleanup once at mount in development: [UNDERSTANDING] harmless, the reset values equal the initial ones.
 - `analyze` takes no `AbortSignal`, so a running analysis cannot be cancelled. [AUDIT: `analysis-service.ts`]
+
+## Drop zone (#91)
+
+[UNDERSTANDING] Dropping a file is the same event as picking one (`pick`): it sets the file, clears the error and notes extra files. `dragging` is a visual flag only (border highlight), set on dragover and cleared on dragleave or drop. The idle → processing → error/navigated machine above is unchanged.

@@ -64,3 +64,14 @@ Every page colour is applied as `oklch(from <hex> l c h)` (P-018 item 4).
 - Saving when storage throws: the theme stays in memory for this visit only, with no message.
 - Two tabs saving at the same time: the last write wins, with no message.
 - More than 7 characters typed: blocked by `maxLength` (tested).
+
+## Theme widget (#91)
+
+Status: implicit (one boolean, `open` in `ThemeWidget.tsx`). Decision: keep implicit [UNDERSTANDING]: two states, no invalid combination.
+
+| From | Event | To | Source |
+|---|---|---|---|
+| Closed | press the "Teema" tab | Open | [PROMPT P-038] "minimeeritud kujul kaasa paremal servas widgetina" |
+| Open | press "Sulge teema" or Escape | Closed | [UNDERSTANDING] |
+
+Saving now takes an optional name; saving the same colours with a name renames the saved theme [UNDERSTANDING].

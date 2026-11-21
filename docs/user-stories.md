@@ -512,3 +512,43 @@ Source: [PROMPT P-038] "Add the gray used in scientific tests where just noticab
 Acceptance criteria:
 - Given either viewer, then "CIE hall (L* 50)" (#777777, CIE 116 reference background) is a background option.
 - Given I choose a background and reload, then the viewer keeps it.
+
+## Theme names, colour names, theme widget and upload (#91)
+
+### US-224: Name my saved themes
+
+Automaton: Theme picker
+Source: [PROMPT P-038] "Salvestatud teemadele ei saa nime panna currently allow user set names"
+
+Acceptance criteria:
+- Given a name (at most 40 characters; spaces trimmed and joined), when I save, then the theme is listed under that name, with its codes underneath.
+- Given no name, then the theme is listed by its colours' names, e.g. "Snow / Night".
+- Given the same colours saved again with a new name, then the theme is renamed, not duplicated.
+- Given themes saved before names existed, then they still load.
+
+### US-225: A name for every colour code
+
+Source: [PROMPT P-038] "every place where a color code is add a label use npm color-name-list"
+
+Acceptance criteria:
+- Given a colour code in the table, the pixel readout, the theme fields, findings, cluster chips, the ramp strip, the wheel table or the 3D tooltip, then "≈ name" (the nearest name by ΔE in OKLab) is shown next to it once the list has loaded.
+- Given the list has not loaded yet, then the codes are shown without names and nothing else waits.
+
+### US-226: Change the theme from anywhere on the page
+
+Automaton: Theme picker, widget open/closed
+Source: [PROMPT P-038] "Teema valiku asi ei liigu minimeeritud kujul kaasa paremal servas widgetina"
+
+Acceptance criteria:
+- Given any scroll position, then a "Teema" tab with the current colours stays on the right edge.
+- Given I open it, then the whole picker appears; Escape or the tab closes it.
+
+### US-227: Find the upload at a glance
+
+Automaton: Upload form
+Source: [PROMPT P-038] "Pildi üleslaadimise kast/nupp jääb raskesti märgatavaks."
+
+Acceptance criteria:
+- Given the upload page, then a large dashed box says "Lohista pilt siia" with a filled "Vali pilt" button, and "Töötle pilti" is the filled main action.
+- Given I drop an image, then it is taken and previewed as if picked; a wrong type is refused on submit.
+- Given I drop several files, then the first is taken and I am told.
