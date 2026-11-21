@@ -1,5 +1,6 @@
 "use client";
 
+import type React from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -8,6 +9,7 @@ import { clampTopN } from "@/core/analysis/upload-rules";
 import type { CsvKind, ImageAnalysis } from "@/core/analysis/types";
 import { PixelViewer } from "../preview/PixelViewer";
 import { button, card } from "../ui";
+import { Term } from "../Term";
 import { ColorAnalysisSection } from "./ColorAnalysisSection";
 import { ColorTableSection } from "./ColorTableSection";
 import { GamutSection } from "./GamutSection";
@@ -16,6 +18,17 @@ import { saveFile } from "./download";
 type Loaded = { status: "loading" } | { status: "missing" } | { status: "ready"; analysis: ImageAnalysis };
 
 /** The original results.html: image summary, CSV downloads and the top-N table. */
+const nf = new Intl.NumberFormat("et-EE");
+
+function Stat({ label, value }: { label: React.ReactNode; value: string }) {
+  return (
+    <div className="rounded-lg bg-line-soft/60 px-3 py-2">
+      <dt className="text-sm text-muted">{label}</dt>
+      <dd className="m-0 text-lg font-bold">{value}</dd>
+    </div>
+  );
+}
+
 export function ResultsView() {
   const { analysis: service } = useServices();
   const { id } = useParams<{ id: string }>();
@@ -73,17 +86,16 @@ export function ResultsView() {
       )}
 
       <section className={card} aria-label="Pildi andmed">
-        <div className="text-muted">
-          Pilt: <span className="font-mono">{analysis.fileName}</span>
-        </div>
-        <div className="mt-1.5">
-          Mõõdud:{" "}
-          <b>
-            {analysis.width} × {analysis.height}
-          </b>{" "}
-          | Piksleid kokku: <b>{analysis.totalPixels}</b> | Unikaalseid värve: <b>{analysis.uniqueColors}</b> | Režiim:{" "}
-          <b>{analysis.includeAlpha ? "RGBA" : "RGB"}</b>
-        </div>
+        <h2 className="truncate text-lg font-bold" title={analysis.fileName}>
+          {analysis.fileName}
+        </h2>
+        {/* Key figures first, in large type; nothing technical here (#90). */}
+        <dl className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Stat label="Mõõdud" value={`${nf.format(analysis.width)} × ${nf.format(analysis.height)} px`} />
+          <Stat label="Piksleid kokku" value={nf.format(analysis.totalPixels)} />
+          <Stat label={<Term k="uniqueColors">Unikaalseid värve</Term>} value={nf.format(analysis.uniqueColors)} />
+          <Stat label="Režiim" value={analysis.includeAlpha ? "RGBA (läbipaistvusega)" : "RGB"} />
+        </dl>
         <div className="mt-2.5 flex flex-wrap gap-2.5">
           <button type="button" className={button} onClick={() => download("pixels")}>
             Laadi alla piksel-haaval CSV

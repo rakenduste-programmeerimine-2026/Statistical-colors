@@ -52,14 +52,15 @@ describe("ResultsView", () => {
     saveFile.mockReset();
   });
 
-  it("shows the image summary like the original", async () => {
+  it("shows the image summary as labelled key figures (#90)", async () => {
     renderWithServices(<ResultsView />, servicesWith(analysis));
     const summary = await screen.findByRole("region", { name: "Pildi andmed" });
-    expect(summary).toHaveTextContent("palette.png");
-    expect(summary).toHaveTextContent("Mõõdud: 2 × 2");
-    expect(summary).toHaveTextContent("Piksleid kokku: 4");
-    expect(summary).toHaveTextContent("Unikaalseid värve: 3");
-    expect(summary).toHaveTextContent("Režiim: RGB");
+    expect(within(summary).getByRole("heading", { name: "palette.png" })).toBeInTheDocument();
+    const figure = (term: RegExp) => within(summary).getByText(term, { selector: "dt, dt *" }).closest("div")?.querySelector("dd")?.textContent;
+    expect(figure(/^Mõõdud$/)).toBe("2 × 2 px");
+    expect(figure(/^Piksleid kokku$/)).toBe("4");
+    expect(figure(/^Unikaalseid värve$/)).toBe("3");
+    expect(figure(/^Režiim$/)).toBe("RGB");
   });
 
   it("shows the top N chosen on upload", async () => {

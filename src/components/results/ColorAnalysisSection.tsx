@@ -17,6 +17,35 @@ const STEP_LABELS: Record<ColorAnalysis["pipeline"][number]["step"], string> = {
   roles: "Rollid",
   findings: "Leiud",
 };
+/** Readable names for the analysis settings the server reports (#90: raw keys said nothing). */
+const PARAM_LABELS: Record<string, string> = {
+  maxDistance: "Suurim kaugus sirgest (sRGB väärtust)",
+  maxSharePercent: "Segupiksli suurim osakaal (%)",
+  endpointMinSharePercent: "Sirge otsa väikseim osakaal (%)",
+  maxEndpoints: "Sirge otsi kuni",
+  tMin: "Asukoht sirgel vähemalt",
+  tMax: "Asukoht sirgel kuni",
+  tolerance: "Lubatud kõrvalekalle",
+  floorPercent: "Osakaalu alampiir (%)",
+  z: "Haruldase värvi piir (z-skoor)",
+  tau: "Klastri suurus (ΔE)",
+  linkage: "Rühmitamise viis",
+  maxColors: "Rühmitatavaid värve kuni",
+  c0: "Väikseim kroom harmoonias",
+  lambda: "Lihtsuse eelistus",
+  maxErr: "Suurim toonivahe ideaalist (°)",
+  minCoverage: "Vähim kaetud osa",
+  minScore: "Vähim skoor",
+  accentMaxHueSpread: "Aktsendi suurim toonihajuvus (°)",
+  neutralMinShare: "Neutraalsete vähim osakaal (%)",
+  maxClusters: "Võrreldavaid värve kuni",
+  minSharePercent: "Vähim osakaal (%)",
+  darkMinShare: "Tumeda tausta vähim osakaal (%)",
+  darkMaxL: "Tumeda tausta suurim heledus",
+  darkMaxSpread: "Tumeda tausta suurim hajuvus (ΔE)",
+  contentMinDeltaL: "Sisu vähim heleduse vahe",
+  contentMinShare: "Sisu vähim osakaal (%)",
+};
 const STATUS_LABELS = { done: "tehtud", skipped: "vahele jäetud", "not-implemented": "pole veel" } as const;
 
 /** The server's colour analysis on the results page (P-030, P-031). */
@@ -26,30 +55,38 @@ export function ColorAnalysisSection({ analysis }: { analysis: ColorAnalysis }) 
 
   return (
     <section className={card} aria-labelledby="color-analysis-heading">
-      <h2 id="color-analysis-heading" className="text-xl font-bold">
-        Värvianalüüs
-      </h2>
+      <details open className="group/analysis">
+      <summary className="cursor-pointer list-none">
+        <h2 id="color-analysis-heading" className="inline text-xl font-bold">
+          Värvianalüüs
+        </h2>
+        <span className="ml-2 text-sm text-muted group-open/analysis:hidden">(näita)</span>
+        <span className="ml-2 hidden text-sm text-muted group-open/analysis:inline">(peida)</span>
+      </summary>
       {analysis.status === "simulated" && (
         <p role="note" className="mt-2 rounded-lg border border-warn p-2.5">
           Näidisandmed: värvianalüüsi arvutab server, mis pole veel valmis. Allolev on genereeritud, et näidata, kuidas tulemus
           välja näeb.
         </p>
       )}
-      <p className={`${hint} mt-2`}>Tulemus on sisendiga kooskõlas, kuid pole tõestatud originaal (#32).</p>
+      <p className={`${hint} mt-2`}>Tulemus on pildiga kooskõlas, kuid ei tõesta, kuidas pilt tehti.</p>
 
       <details className="mt-3">
-        <summary className="cursor-pointer text-sm">Töövoog</summary>
-        <ol className="mt-2 pl-5 text-sm">
+        <summary className="cursor-pointer text-sm">Tehnilised üksikasjad: töötluse sammud ja seaded</summary>
+        <ol className="mt-2 flex flex-col gap-2 pl-5 text-sm">
           {analysis.pipeline.map((p) => (
             <li key={p.step}>
-              {STEP_LABELS[p.step]}: {STATUS_LABELS[p.status]}
+              <span className="font-bold">{STEP_LABELS[p.step]}</span> — {STATUS_LABELS[p.status]}
+              {p.removedShare ? <span className="text-muted">; eemaldati {p.removedShare.toFixed(1)} % pikslitest</span> : null}
               {p.params ? (
-                <span className="font-mono text-muted">
-                  {" "}
-                  ({Object.entries(p.params)
-                    .map(([k, v]) => `${k} ${v}`)
-                    .join(", ")})
-                </span>
+                <dl className="mt-0.5 grid grid-cols-[auto_auto] justify-start gap-x-3 text-muted">
+                  {Object.entries(p.params).map(([k, v]) => (
+                    <div key={k} className="contents">
+                      <dt>{PARAM_LABELS[k] ?? k}</dt>
+                      <dd className="m-0 font-mono">{String(v)}</dd>
+                    </div>
+                  ))}
+                </dl>
               ) : null}
             </li>
           ))}
@@ -81,6 +118,7 @@ export function ColorAnalysisSection({ analysis }: { analysis: ColorAnalysis }) 
           <FindingsPanel findings={analysis.findings} palette={analysis.palette} />
         </div>
       )}
+      </details>
     </section>
   );
 }

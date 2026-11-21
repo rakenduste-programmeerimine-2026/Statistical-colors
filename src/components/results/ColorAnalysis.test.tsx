@@ -5,7 +5,7 @@ import { prng } from "@/adapters/simulated/random";
 import { generateColorAnalysis } from "@/adapters/simulated/color-analysis";
 import type { ColorAnalysis, Finding } from "@/core/analysis/color-analysis";
 import { ColorAnalysisSection } from "./ColorAnalysisSection";
-import { FindingsPanel } from "./FindingsPanel";
+import { confidenceText, FindingsPanel } from "./FindingsPanel";
 import { RampStrip } from "./StructureList";
 import { StructureWheel } from "./StructureWheel";
 
@@ -136,7 +136,8 @@ describe("FindingsPanel", () => {
   it("shows a known kind's label, severity as text, confidence, provenance and requirements", () => {
     render(<FindingsPanel palette={[]} findings={[finding({ severity: "warning", caveats: undefined } as Partial<Finding>)]} />);
     expect(screen.getByRole("heading", { name: "Tume režiim" })).toBeInTheDocument();
-    expect(screen.getByText("Hoiatus · kindlus 72%")).toBeInTheDocument();
+    // A measured value is called measured, never "100 %" (#90).
+    expect(screen.getByText("Hoiatus · mõõdetud väärtus")).toBeInTheDocument();
     expect(screen.getByText(/mõõdetud · piisab pikslitest · a rule/)).toBeInTheDocument();
   });
 
@@ -194,5 +195,29 @@ describe("ColorAnalysisSection", () => {
   it("does not claim simulation for a computed analysis", () => {
     render(<ColorAnalysisSection analysis={{ ...analysis(), status: "computed" }} />);
     expect(screen.queryByRole("note")).not.toBeInTheDocument();
+  });
+});
+
+describe("confidenceText (#90: never '100 %')", () => {
+  it.each([
+    [0.49, "inferred", "kindlus: madal"],
+    [0.5, "inferred", "kindlus: keskmine"],
+    [0.79, "fitted", "kindlus: keskmine"],
+    [0.8, "fitted", "kindlus: kõrge"],
+    [1, "inferred", "kindlus: kõrge"],
+    [1, "measured", "mõõdetud väärtus"],
+  ] as const)("reads confidence %f (%s) as %s", (confidence, provenance, text) => {
+    expect(confidenceText({ confidence, provenance })).toBe(text);
+    expect(confidenceText({ confidence, provenance })).not.toMatch(/%/);
+  });
+});
+
+describe("ColorAnalysisSection collapsing (#90)", () => {
+  it("can be folded away, and keeps technical settings behind their own disclosure with readable names", () => {
+    const { container } = render(<ColorAnalysisSection analysis={analysis()} />);
+    const outer = container.querySelector("details");
+    expect(outer).toHaveAttribute("open");
+    expect(screen.getByText("Tehnilised üksikasjad: töötluse sammud ja seaded")).toBeInTheDocument();
+    expect(screen.queryByText(/#32/)).not.toBeInTheDocument();
   });
 });
