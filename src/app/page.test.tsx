@@ -12,10 +12,10 @@ describe("Home page", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Värvi tükeldaja" })).toBeInTheDocument();
   });
 
-  it("has the theme picker and the upload form, as the original upload page", () => {
+  it("has the upload form; the theme picker moved to the layout's right-edge widget (#91)", () => {
     renderWithServices(<Home />);
 
-    expect(screen.getByRole("heading", { name: "Teema" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Pildi üleslaadimine" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Teema" })).not.toBeInTheDocument();
   });
 });

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { ThemeWidget } from "@/components/theme/ThemeWidget";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -25,7 +26,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          {children}
+          {/* One theme widget on every page, on the right edge (#91). */}
+          <ThemeWidget />
+        </ThemeProvider>
       </body>
     </html>
   );
