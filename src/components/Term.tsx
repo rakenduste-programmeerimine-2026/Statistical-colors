@@ -31,6 +31,8 @@ export function Term({ k, children }: { k: GlossaryKey; children: ReactNode }) {
       <span
         id={id}
         role="tooltip"
+        // Kept out of the term's name (a table heading stays "OKLCH"); screen readers get it through aria-describedby.
+        aria-hidden="true"
         className={`absolute top-full left-0 z-30 mt-1 w-72 rounded-md border border-line bg-page p-2 text-left text-sm font-normal whitespace-normal text-ink shadow-[0_4px_12px_oklch(0_0_0/0.15)] ${open ? "" : "sr-only"}`}
       >
         {GLOSSARY[k]}

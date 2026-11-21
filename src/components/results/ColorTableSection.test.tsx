@@ -33,6 +33,8 @@ const analysis = (over: Partial<ImageAnalysis> = {}): ImageAnalysis => ({
   colorAnalysis,
   ...over,
 });
+/** The filter chips of a group (the group's label is a term button too). */
+const chips = (group: string) => within(screen.getByRole("group", { name: group })).getAllByRole("button").filter((b) => b.hasAttribute("aria-pressed"));
 const bodyRows = () => within(screen.getByRole("table")).getAllByRole("row").slice(1);
 
 describe("ColorTableSection", () => {
@@ -58,7 +60,7 @@ describe("ColorTableSection", () => {
 
   it("offers share bands with counts and filters over every colour, beyond the top N", async () => {
     render(<ColorTableSection analysis={analysis()} topN={2} />);
-    const bands = within(screen.getByRole("group", { name: "Osakaalu klass" })).getAllByRole("button");
+    const bands = chips("Osakaalu klass");
     expect(bands.map((b) => b.textContent)).toEqual(["kõik", "30–40 % · 2 värvi", "0.010–0.030 % · 3 värvi"]);
 
     await userEvent.setup().click(bands[2]);
@@ -71,7 +73,7 @@ describe("ColorTableSection", () => {
   it("filters by cluster and by artefact, combined, and says when nothing matches", async () => {
     const user = userEvent.setup();
     render(<ColorTableSection analysis={analysis()} topN={5} />);
-    const clusters = within(screen.getByRole("group", { name: "Värviklaster" })).getAllByRole("button");
+    const clusters = chips("Värviklaster");
     expect(clusters).toHaveLength(3);
     await user.click(clusters[1]);
     expect(bodyRows()).toHaveLength(3);
@@ -80,10 +82,10 @@ describe("ColorTableSection", () => {
     // c0 rows with chance ≥ 0.5: 0.9 and exactly 0.5.
     expect(bodyRows()).toHaveLength(2);
 
-    await user.click(within(screen.getByRole("group", { name: "Osakaalu klass" })).getAllByRole("button")[1]);
+    await user.click(chips("Osakaalu klass")[1]);
     expect(screen.getByRole("status")).toHaveTextContent("Ükski värv ei vasta filtrile.");
 
-    await user.click(within(screen.getByRole("group", { name: "Osakaalu klass" })).getByRole("button", { name: "kõik" }));
+    await user.click(chips("Osakaalu klass").find((b) => b.textContent === "kõik")!);
     expect(bodyRows()).toHaveLength(2);
   });
 

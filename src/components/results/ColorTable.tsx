@@ -1,4 +1,5 @@
-import { memo } from "react";
+import { memo, type ReactNode } from "react";
+import { Term } from "../Term";
 import {
   cssColor,
   formatOpacity,
@@ -19,6 +20,17 @@ interface Props {
 const cell =
   "whitespace-nowrap border-b border-line-soft px-2 py-1.5 text-left align-middle";
 
+/** Column headings; colour terms explain themselves on hover, focus or tap (#90). */
+const headers = (includeAlpha: boolean): [string, ReactNode][] => [
+  ["swatch", "Näidis"],
+  ["rgb", <Term key="t" k="srgb">{includeAlpha ? "RGBA" : "RGB"}</Term>],
+  ["hex", <Term key="t" k="hex">Hex</Term>],
+  ["oklch", <Term key="t" k="oklch">OKLCH</Term>],
+  ["count", "Kogus"],
+  ["share", <Term key="t" k="share">Osakaal pildist</Term>],
+  ["blend", <Term key="t" k="blendSimilarity">Segupiksli sarnasus</Term>],
+];
+
 /** The top-N table from the original results.html. */
 export function ColorTable({ colors, includeAlpha }: Props) {
   return (
@@ -27,20 +39,8 @@ export function ColorTable({ colors, includeAlpha }: Props) {
       <table className="w-full border-collapse">
         <thead>
           <tr>
-            {[
-              "Näidis",
-              includeAlpha ? "RGBA" : "RGB",
-              "Hex",
-              "OKLCH",
-              "Kogus",
-              "Osakaal pildist",
-              "Segupiksli sarnasus",
-            ].map((h) => (
-              <th
-                key={h}
-                scope="col"
-                className={`${cell} sticky top-0 bg-page`}
-              >
+            {headers(includeAlpha).map(([key, h]) => (
+              <th key={key} scope="col" className={`${cell} sticky top-0 bg-page`}>
                 {h}
               </th>
             ))}
