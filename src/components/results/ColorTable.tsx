@@ -8,7 +8,7 @@ import {
   hexOf,
 } from "@/core/analysis/format";
 import type { ColorCount } from "@/core/analysis/types";
-import { topArtefact } from "@/core/analysis/color-filter";
+import { blendSimilarity } from "@/core/analysis/color-filter";
 import { formatOklch, srgbToOklch } from "@/core/color/oklch";
 
 interface Props {
@@ -96,9 +96,9 @@ const Row = memo(function Row({ c }: { c: ColorCount }) {
  * bar and number that never spread into the next column (#90); "—" for 0.
  */
 function ArtefactCell({ color }: { color: ColorCount }) {
-  const top = topArtefact(color);
-  if (!top || top.chance <= 0) return <span className="text-muted">—</span>;
-  const percent = Math.round(top.chance * 100);
+  const similarity = blendSimilarity(color);
+  if (!similarity || similarity <= 0) return <span className="text-muted">—</span>;
+  const percent = Math.round(similarity * 100);
   return (
     <span
       className="inline-flex w-36 shrink-0 items-center gap-2 text-sm"

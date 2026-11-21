@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import { prng } from "@/adapters/simulated/random";
@@ -214,9 +214,14 @@ describe("confidenceText (#90: never '100 %')", () => {
 
 describe("ColorAnalysisSection collapsing (#90)", () => {
   it("can be folded away, and keeps technical settings behind their own disclosure with readable names", () => {
-    const { container } = render(<ColorAnalysisSection analysis={analysis()} />);
-    const outer = container.querySelector("details");
-    expect(outer).toHaveAttribute("open");
+    render(<ColorAnalysisSection analysis={analysis()} />);
+    expect(screen.getByRole("heading", { level: 2, name: "Värvianalüüs" })).toBeInTheDocument();
+    const toggle = screen.getByRole("button", { name: "Peida" });
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(toggle);
+    expect(screen.getByRole("button", { name: "Näita" })).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByText("Tehnilised üksikasjad: töötluse sammud ja seaded")).not.toBeVisible();
+    fireEvent.click(screen.getByRole("button", { name: "Näita" }));
     expect(screen.getByText("Tehnilised üksikasjad: töötluse sammud ja seaded")).toBeInTheDocument();
     expect(screen.queryByText(/#32/)).not.toBeInTheDocument();
   });
