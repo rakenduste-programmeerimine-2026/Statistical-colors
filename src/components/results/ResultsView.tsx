@@ -127,7 +127,6 @@ export function ResultsView() {
         colors={analysis.colors}
         topN={topN}
         coverage={analysis.colorAnalysis?.gamut}
-        simulated={analysis.colorAnalysis?.status === "simulated"}
       />
 
       <ColorTableSection key={analysis.id} analysis={analysis} topN={topN} />

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
-import { simulateGamut } from "@/adapters/simulated/gamut";
+import { computeGamutCoverage } from "@/core/analysis/gamut-coverage";
 import type { ColorCount } from "@/core/analysis/types";
 import { latticeFor } from "@/core/gamut/lattice";
 import { snapColors } from "@/core/gamut/snap";
@@ -17,22 +17,21 @@ const colors: ColorCount[] = [
 const status = (term: string) => screen.getByText(term, { selector: "dt" }).nextElementSibling?.textContent;
 
 describe("GamutSection", () => {
-  it("shows the server's coverage, labelled when simulated", () => {
-    render(<GamutSection colors={colors} coverage={simulateGamut(colors)} simulated />);
+  it("shows the server's coverage", () => {
+    render(<GamutSection colors={colors} coverage={computeGamutCoverage(colors)} />);
     // The terms carry their explanations for screen readers, so check the figures, not one sentence.
     expect(screen.getByRole("status")).toHaveTextContent("0.03 %");
     expect(screen.getByRole("status")).toHaveTextContent("(2 / 6789 OKLab");
     expect(screen.getByRole("button", { name: "just märgatav erinevus" })).toHaveAccessibleDescription(/JND/);
-    expect(screen.getByRole("status")).toHaveTextContent("Näidisandmed");
   });
 
   it("says so when the server sent no coverage", () => {
-    render(<GamutSection colors={colors} simulated={false} />);
+    render(<GamutSection colors={colors} />);
     expect(screen.getByRole("status")).toHaveTextContent("Katvust pole server veel saatnud.");
   });
 
   it("starts with the whole cloud selected, in OKLab (P-039 item 1)", () => {
-    render(<GamutSection colors={colors} simulated={false} />);
+    render(<GamutSection colors={colors} />);
     expect(status("Ruum")).toBe("OKLab (a, b, L)");
     expect(status("Võimalikke täppe")).toBe("6789");
     expect(status("Valitud täppe")).toBe("6789");
@@ -42,7 +41,7 @@ describe("GamutSection", () => {
   });
 
   it("explains the big and small dots in a legend", () => {
-    render(<GamutSection colors={colors} simulated={false} />);
+    render(<GamutSection colors={colors} />);
     const legend = screen.getByRole("list", { name: "Legend" });
     expect(legend).toHaveTextContent("väike täpp: võimalik värv");
     expect(legend).toHaveTextContent("suur raamiga täpp: pildi värv");
@@ -50,7 +49,7 @@ describe("GamutSection", () => {
   });
 
   it("switches to CIELAB with the whole cloud, every one of its 13 000 dots selected", async () => {
-    render(<GamutSection colors={colors} simulated={false} />);
+    render(<GamutSection colors={colors} />);
     await userEvent.setup().click(screen.getByRole("radio", { name: "CIELAB (D50)" }));
     expect(status("Ruum")).toBe("CIELAB (D50) (a*, b*, L*)");
     // Estonian number format groups with a no-break space.
@@ -60,7 +59,7 @@ describe("GamutSection", () => {
   });
 
   it("filters by lightness and says how many dots it shows", () => {
-    render(<GamutSection colors={colors} simulated={false} />);
+    render(<GamutSection colors={colors} />);
     fireEvent.change(screen.getByRole("slider", { name: "Heledus kuni" }), { target: { value: "0.5" } });
     const shown = Number(status("Valitud täppe")?.replace(/D/g, ""));
     expect(shown).toBeGreaterThan(0);
@@ -71,7 +70,7 @@ describe("GamutSection", () => {
   });
 
   it("refuses a minimum above the maximum", () => {
-    render(<GamutSection colors={colors} simulated={false} />);
+    render(<GamutSection colors={colors} />);
     fireEvent.change(screen.getByRole("slider", { name: "Kroom vähemalt" }), { target: { value: "0.3" } });
     fireEvent.change(screen.getByRole("slider", { name: "Kroom kuni" }), { target: { value: "0.1" } });
     expect(screen.getByRole("alert")).toHaveTextContent("vähim väärtus peab olema suurimast väiksem");
@@ -79,7 +78,7 @@ describe("GamutSection", () => {
   });
 
   it("keeps the notebook's hue window and neutrals filter", () => {
-    render(<GamutSection colors={colors} simulated={false} />);
+    render(<GamutSection colors={colors} />);
     fireEvent.change(screen.getByRole("slider", { name: "Tooni vahemik" }), { target: { value: "30" } });
     const narrow = Number(status("Valitud täppe")?.replace(/D/g, ""));
     expect(narrow).toBeLessThan(6789 - 51);
@@ -88,12 +87,12 @@ describe("GamutSection", () => {
   });
 
   it("shows readable slider values with units and range ends", () => {
-    render(<GamutSection colors={colors} simulated={false} />);
+    render(<GamutSection colors={colors} />);
     expect(screen.getByRole("slider", { name: "Tooni vahemik" })).toHaveAttribute("aria-valuetext", "360°");
   });
 
   it("describes the view for screen readers, with or without the image's colours", async () => {
-    render(<GamutSection colors={colors} coverage={simulateGamut(colors)} simulated />);
+    render(<GamutSection colors={colors} coverage={computeGamutCoverage(colors)} />);
     const canvas = screen.getByRole("img", { name: /Värviruum 3D/ });
     expect(canvas).toHaveAccessibleName("Värviruum 3D: OKLab, 6789 võimalikku värvi. Pildi 3 värvi täidavad 2 punkti. Pilt katab 0.03 % sRGB gamutist.");
     expect(canvas).toHaveAttribute("tabindex", "0");
@@ -102,7 +101,7 @@ describe("GamutSection", () => {
   });
 
   it("explains the camera keys for the chosen mode", async () => {
-    render(<GamutSection colors={colors} simulated={false} />);
+    render(<GamutSection colors={colors} />);
     expect(screen.getByText(/Tiirle: lohista pööramiseks/)).toBeInTheDocument();
     await userEvent.setup().click(screen.getByRole("radio", { name: "Lenda" }));
     expect(screen.getByText(/Lenda: W A S D või nooled liigutavad, Q ja E alla ja üles/)).toBeInTheDocument();

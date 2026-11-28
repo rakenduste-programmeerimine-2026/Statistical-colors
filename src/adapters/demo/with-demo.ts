@@ -2,7 +2,7 @@ import type { AnalysisService } from "@/core/analysis/analysis-service";
 import type { CsvKind, ImageAnalysis } from "@/core/analysis/types";
 import { generateColorAnalysis } from "../simulated/color-analysis";
 import { simulateColorRows } from "../simulated/color-rows";
-import { simulateGamut } from "../simulated/gamut";
+import { computeGamutCoverage } from "@/core/analysis/gamut-coverage";
 import { hash, prng } from "../simulated/random";
 
 /**
@@ -27,8 +27,11 @@ async function loadDemo(): Promise<ImageAnalysis> {
   const analysis = structuredClone(data.default) as ImageAnalysis;
   // The study's colours are real; the colour analysis is simulated and labelled so (P-031 item 10).
   // PLACEHOLDER(#55): replace with the server's analysis of the demo image once it exists.
-  // PLACEHOLDER(#74): the coverage is computed from the study's real colours, the way the server will.
-  const colorAnalysis = { ...generateColorAnalysis(prng(hash(`${DEMO_ID}:color`))), gamut: simulateGamut(analysis.colors) };
+  // The coverage is real: the server's own computation (#74) on the study's colours.
+  const colorAnalysis = {
+    ...generateColorAnalysis(prng(hash(`${DEMO_ID}:color`))),
+    gamut: computeGamutCoverage(analysis.colors, analysis.uniqueColors),
+  };
   // PLACEHOLDER(#69): the per-colour artefact chance and cluster are simulated too; the counts stay real (P-033 item 1).
   const colors = simulateColorRows(analysis.colors, colorAnalysis, prng(hash(`${DEMO_ID}:rows`)));
   return { ...analysis, colors, rowDataStatus: "simulated", colorAnalysis };

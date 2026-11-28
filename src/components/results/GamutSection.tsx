@@ -22,7 +22,6 @@ interface Props {
   topN?: number;
   /** The server's coverage figure; absent until it sends one. */
   coverage?: GamutCoverage;
-  simulated: boolean;
 }
 
 /** The whole cloud: every hue, chroma and lightness, neutrals included (P-039 item 1). */
@@ -40,7 +39,7 @@ const wholeCloud = (space: GamutSpace) => ({
  * large, so you see how much of the whole the image covers. The notebook's
  * selection (cell 19) plus a lightness range sit in a collapsed filter panel.
  */
-export function GamutSection({ colors: allColors, topN, coverage, simulated }: Props) {
+export function GamutSection({ colors: allColors, topN, coverage }: Props) {
   const colors = useMemo(() => (topN === undefined ? allColors : allColors.slice(0, topN)), [allColors, topN]);
   const [spaceId, setSpaceId] = useState<GamutSpaceId>("oklab");
   const space = SPACES[spaceId];
@@ -94,7 +93,6 @@ export function GamutSection({ colors: allColors, topN, coverage, simulated }: P
             Pilt <Term k="coverage">katab</Term> <b>{(coverage.coverage * 100).toFixed(2)} %</b> <Term k="gamut">sRGB gamutist</Term> (
             {nf.format(coverage.occupiedCells)} / {nf.format(coverage.totalCells)} <Term k="oklab">OKLab</Term>-rakku, iga rakk on üks{" "}
             <Term k="jnd">just märgatav erinevus</Term>).
-            {simulated && <span className="text-muted"> Näidisandmed: arvutatud brauseris, kuni server seda saadab.</span>}
             {spaceId !== coverage.space && <span className="block text-sm text-muted">Katvus on määratud OKLab-is; <Term k="cielab">CIELAB</Term>-i võrk on veidi teistsugune.</span>}
           </>
         ) : (
