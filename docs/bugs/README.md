@@ -21,6 +21,8 @@ Every fixed bug, newest first. Follow the `fix-bug` skill to add one.
 
 | Date | Type | Description | Fix | Issue | State machine |
 |---|---|---|---|---|---|
+| 2026-11-21 | ui | The structure wheel always printed 0.000 for the darkest colour's ΔL and for an exact match's ΔE, which read as a missing value | Show "tumedaim" and "0 (täpne)" instead (P-042) | #90 | — |
+| 2026-11-21 | ui | Found by the compliance review: some colour codes still had no name, the closed theme widget mounted the picker and loaded the name list on every page, Escape handled inside the widget also closed it, and the drop highlight flickered over the box's text | Name the remaining codes, mount the picker only when the widget is open, stop Escape at the widget, and keep the highlight steady over child elements | #91 | `docs/automata/color-names.md` |
 | 2026-11-21 | test | The extension test for the 100,000-path PDF limit timed out under full-suite load (5.7 s against the 5 s default), on main too | Give that test a 20 s timeout; the limit itself is unchanged | #90 | — |
 | 2026-11-21 | logic | The "Segupiksli sarnasus" column and its filter showed the highest chance of any artefact kind, so a simulated JPEG or banding chance could appear as blend similarity; found by the compliance review before the PR | Column and filter read only the `artefact.antialias-blend` entry (`blendSimilarity`) | #90 | — |
 | 2026-11-21 | ui | In the colour table the artefact bar spread over the next column and values wrapped over several lines; alpha showed as a bare "000"; reported in the user test | Cells stay on one line in a sideways-scrolling box; the artefact cell is a fixed-width bar and number ("—" for 0); alpha reads "läbipaistmatus N %" | #90 | — |
