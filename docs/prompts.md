@@ -713,3 +713,16 @@ Approved decisions (the user's answers to the conflict review):
 Understood as:
 
 3. [UNDERSTANDING] The tags of agent reviews such as `[AUDIT: performance-analyst]` are not changed by this entry.
+
+## P-045 (2026-11-28): The demo uses the real colour analysis
+
+Type: approved decision
+Source: the user's answer
+Issue: #55, #69
+
+Context: #55 is still open, but the real colour analysis was merged in PR #88, and the Supabase adapter runs `analyseColors` on every stored analysis. The demo still simulated its analysis, with `PLACEHOLDER(#55)` and `PLACEHOLDER(#69)` markers.
+
+Quoted answer: "Use real analysis"
+
+1. The demo runs `analyseColors` on the study's real colours (format BMP), as the server does for a stored image. Its analysis and rows are `"computed"`, and the demo no longer shows "Näidisandmed". This supersedes the last sentence of P-031 item 10 ("its colour analysis is simulated and labelled as such").
+2. [UNDERSTANDING] The stub, which runs without a backend, keeps its simulated analysis and its markers.
