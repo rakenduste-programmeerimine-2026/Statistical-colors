@@ -63,6 +63,15 @@ describe("images RLS", () => {
     expect(rows[0].owner_id).toBe(USER_B);
   });
 
+  it("the owner can store their own top N and read it back", async () => {
+    await actAs(db, USER_B);
+    const { rows } = await db.query<{ top_n: number }>(
+      `insert into public.images (file_name, format, width, height, unique_colors, top_n)
+       values ('b.bmp', 'bmp', 1, 1, 1, 42) returning top_n`,
+    );
+    expect(rows[0].top_n).toBe(42);
+  });
+
   it("a user cannot insert an image on behalf of someone else", async () => {
     await actAs(db, USER_B);
     await expect(
@@ -100,6 +109,7 @@ describe("images RLS", () => {
     ["owner_id", USER_B],
     ["unique_colors", 1],
     ["file_name", "renamed.png"],
+    ["top_n", 10],
   ])("owner cannot change %s after insert", async (column, value) => {
     await actAs(db, USER_A);
     await expect(

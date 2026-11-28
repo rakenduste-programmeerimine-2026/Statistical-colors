@@ -1,9 +1,9 @@
 # Colour analysis contract (`colorAnalysis`, schema v1)
 
-The server attaches `colorAnalysis` to each stored analysis returned by `getAnalysis` (#55). The frontend only displays it (#54). Until the server sends it, the frontend stub synthesises one with `status: "simulated"` (`src/adapters/stub/stub-color-analysis.ts`).
+`colorAnalysis` comes with each stored analysis returned by `getAnalysis` (#55), and the results page only displays it (#54). **Interim solution for #55:** the real adapter computes it in `SupabaseAnalysisService.getAnalysis`, which runs in the browser, with `status: "computed"` (see [What is computed](#what-is-computed)). P-031 item 1 asks the server to compute it, but P-018 item 3 and P-031 item 8 rule out Route Handlers and Server Actions in this repository, so the computation is pure code in `src/core/analysis/` that a server can later call unchanged. Recording this as a decision in `docs/prompts.md` is left to the frontend owner. The stub and the demo synthesise one with `status: "simulated"` (`src/adapters/simulated/color-analysis.ts`).
 
 - Types: `src/core/analysis/color-analysis.ts`. That file is the contract; this page explains it.
-- Check: `checkColorAnalysis()` in `src/core/analysis/color-analysis-check.ts`. The real adapter (#40) should run it, and the contract test `analysis-service.contract.ts` does.
+- Check: `checkColorAnalysis()` in `src/core/analysis/color-analysis-check.ts`. The real adapter (#40) runs it and `checkColorRows()` on every read, and the contract test `analysis-service.contract.ts` does too. On a failure nothing is thrown: a failing `colorAnalysis` is left out (and the rows lose their `clusterId`), failing row data is left out (`artefacts`, `clusterId`, `rowDataStatus`; the counts stay), and the errors go to `console.warn`.
 - Codes and kinds: `docs/ontology/README.md`.
 
 Sources: [PROMPT P-030], [PROMPT P-031]. Thresholds marked [AUDIT: experiment …] come from `prototypes/colour-analysis/` (unverified prototypes; the backend team decides the final values).
@@ -65,9 +65,9 @@ These go on each row of `ImageAnalysis.colors`, the colour list behind the "sage
 
 | Field | Type | Meaning |
 |---|---|---|
-| `artefacts?` | `{ kind, chance }[]` | The likelihood (0–1) that this colour is a blend pixel (segupiksel, `artefact.antialias-blend`) or another artefact (`docs/ontology/07-digital-artefacts.md`). [UNDERSTANDING] For blends, the share of the colour's pixels that blend snap (#29) assigned to two neighbours. |
-| `clusterId?` | string | The `colorAnalysis.palette` cluster the colour belongs to (#31). |
-| `ImageAnalysis.rowDataStatus?` | `"computed"` | `"simulated"` | The stub and the demo send `"simulated"`; the table then says so. |
+| `artefacts?` | `{ kind, chance }[]` | The likelihood (0–1) that this colour is a blend pixel (segupiksel, `artefact.antialias-blend`) or another artefact (`docs/ontology/07-digital-artefacts.md`). Computed from the colour list (#29): every row gets `artefact.antialias-blend` with chance 1 − d / 12 when it is a rare colour between two frequent ones, otherwise 0; it is a geometric closeness, not a pixel share (see [Blend colours](#blend-colours-29)). The earlier reading, "the share of the colour's pixels that blend snap assigned to two neighbours", needs pixel neighbours and is superseded for the computed rows. |
+| `clusterId?` | string | The `colorAnalysis.palette` cluster the colour belongs to (#31). Computed: only the colours the cluster was built from, so a cluster's `share` is the sum of its rows' `percent`. Blend colours, colours under the share floor and colours beyond the 300 clustered have no `clusterId`. |
+| `ImageAnalysis.rowDataStatus?` | `"computed"` | `"simulated"` | The real adapter sends `"computed"`: clusters, and `artefacts` with the blend chance only (see [Blend colours](#blend-colours-29)); other artefact kinds are not sent yet (#63). The stub and the demo send `"simulated"`; the table then says so. |
 
 - **Row count:** the table filters by share band, cluster and artefact over **every colour in `colors`**, and shows the N most frequent matches (P-033 item 3). #69 asks the server to send every colour, or to add a filter query to the port.
 - **Check:** `checkColorRows()` checks these fields (chance 0–1, non-empty kind, known cluster ids).
@@ -87,14 +87,87 @@ These go on each row of `ImageAnalysis.colors`, the colour list behind the "sage
 | `meta` | As everywhere |
 
 - **Reference code:** the frontend uses the same lattice and snapping for drawing (`src/core/gamut/lattice.ts`, `snap.ts`), and the stub uses it to simulate the figure. An unverified prototype is `prototypes/colour-analysis/E10-gamut-lattice.mts`.
-- **Colours counted:** every colour of the image counts (all of them, not the top N; #69).
+- **Colours counted:** every colour of the image counts (all of them, not the top N; #69). The computed figure uses the stored colours (up to 5000); when the image has more, `meta.method` says the figure is a lower bound.
 - **Check:** `checkColorAnalysis` verifies that `coverage` equals `occupiedCells / totalCells`.
 - **Simulated values:** the stub's and the demo's figure carries `provenance: "measured"` (it is measured from their colours), and simulation is flagged by `colorAnalysis.status === "simulated"`, which the page shows as "Näidisandmed".
 - **The 3D view gets nothing else from the server.** It builds the lattice and snaps `analysis.colors` itself.
 
+## What is computed
+
+`computeColorAnalysis()` (`src/core/analysis/compute-color-analysis.ts`) builds the analysis from the stored colour list (up to 5000 colours, most frequent first). `SupabaseAnalysisService.getAnalysis` (#40) runs it on every read, because the analysis itself is not stored yet (#73), so a reload gives the same result. Nothing needs pixel positions.
+
+| Step | Status | What it does | Code |
+|---|---|---|---|
+| `blend-snap` | done | Blend colours from the colour list, see below; they are set aside before the share filter and clustering, and `removedShare` is their sum | `blends.ts` |
+| `share-filter` | done | Drops colours under 0.05 % share or with z < −2 on the log10 share; `removedShare` is their sum | `palette-clusters.ts` |
+| `convert` | done | sRGB → OKLab/OKLCH, CSS Color 4 matrices | `src/core/color/oklch.ts` |
+| `cluster` | done (skipped when no colour is left) | Complete linkage in OKLab, τ 0.02, on the 300 most frequent kept colours (distance matrix, Lance–Williams max update) | `palette-clusters.ts` |
+| `structures` | done | Harmony templates and two palette types, see below. Ramps, the other palette types and other models are not implemented (#56, #58, #59) | `harmonies.ts`, `palette-types.ts` |
+| `contrast` | done (skipped with fewer than 2 large clusters) | WCAG 2 contrast, see below | `contrast.ts` |
+| `roles` | not-implemented | Needs scene data or Figma variables (#60, #66) | – |
+| `findings` | done | `accessibility.contrast`, `ui.dark-mode` and `artefact.antialias-blend`; the dark-mode thresholds are its parameters | `contrast.ts`, `ui-mode.ts`, `blends.ts` |
+
+Also: `inputKind` comes from the stored image format (png, gif, bmp → `png-lossless`; jpeg → `jpeg-lossy`; webp or unknown → `unknown`). `sourceProfile` is `"srgb"`, because every image is decoded as 8-bit sRGB (P-031 item 6).
+
+### Harmonies
+
+- **Templates:** complementary (0, 180), analogous (−30, 0, 30), triadic (0, 120, 240), split-complementary (0, 150, 210), square (0, 90, 180, 270). Rectangle, Matsuda sectors and HSL/HSV/RYB fitting (#57) are not implemented.
+- **Input:** clusters with C ≥ 0.04; greys never count toward coverage or fill a spoke.
+- **Rotations:** whole degrees, plus every rotation that puts a spoke exactly on a cluster (the dominant-hue anchor of #33), so an exact template gives ΔE 0.
+- **A template fits** when every spoke has a cluster within 15° and those clusters hold at least **0.8** of the chromatic share (`coverage`). Clusters further away are simply not part of the structure. Per template the rotation with the lowest Σ w·err² / Σ w wins.
+- **Score** = coverage × (1 − rms hue error / 15°). Fits with a score under **0.3** are not reported. `residual` is the share-weighted mean hue error in degrees; `meta.confidence` equals the score.
+- **Points:** only the clusters on spokes. The ideal keeps the cluster's L and C and moves h to the spoke, so `deltaE` is the hue error at that chroma.
+- **Nesting:** a complementary whose clusters all belong to a fitting square gets `nestedIn: [square]`. A pure square is reported only as a square (the complementary covers 0.5).
+- **Not added:** a minimum share per spoke (for example 10 %). It would reject 60–30–10 accent designs.
+
+**Why 0.8 and 0.3** [AUDIT: measurement 2026-11-19, a script outside the repository; equal-chroma random hues, random shares, spokes within 15°]:
+
+| Random hues | Palettes passing any one template at coverage ≥ 0.3 (docs/ontology/02) | at ≥ 0.8 |
+|---|---|---|
+| 5 | 3–78 % | 2–20 % |
+| 8 | 31–95 % | 1–8 % |
+| 12 | 71–99 % | 0–2 % |
+| 20 | 89–100 % | 0 % |
+
+300 palettes per row; the range is over the five templates. Each spoke catches ±15°, so four spokes cover a third of the wheel by chance; 0.3 lets most random palettes through. In the unit test (100 fixed-seed 12-hue palettes), coverage 0.8 alone let 5 through, with scores 0.18–0.65: all chance clusters of hues, two of them with one spoke held by a single 7–9 % cluster. With the 0.3 score floor, 2 of 100 pass (scores 0.31 and 0.38). Palettes of 3–5 colours can still look like a harmony by chance; every structure carries `consistent-not-proven`.
+
+### Blend colours (#29)
+
+From the colour list only (#29: a blend lies "kahe päris värvi A ja B vahel"); pixel neighbours are not used.
+
+- **Real colours (segment ends):** the up to 20 most frequent colours with at least 1 % share.
+- **A blend candidate:** a colour under 1 % whose projection on a segment AB lies at t ∈ [0.1, 0.9] (between the ends, not next to one) and within 6 values of the segment. Distances are Euclidean in encoded 8-bit sRGB (0–255 per channel), where edges are blended; alpha is ignored.
+- **`chance`** on every row (`kind: "artefact.antialias-blend"`): 1 − d / 12 for the nearest such segment (1 on it, 0.5 at d = 6), otherwise 0. So every candidate counts as likely (≥ 0.5) and the table's "puhas" filter finds the rest. **This differs from the field's definition above** ("the share of that colour's pixels snapped"): every pixel of one colour has the same value, so from the colour list the chance is a geometric closeness, not a pixel share.
+- **Effect:** colours with chance ≥ 0.5 are left out of the share filter and clustering, so they cannot add fake hues (`docs/ontology/07`). They are not added to the end colours' share.
+- **Finding `artefact.antialias-blend`:** blend share and number of blend colours, confidence 0.5, caveats `consistent-not-proven` and `antialias-blend`. A flat swatch that happens to lie between two frequent colours also scores as a blend; telling them apart needs pixel neighbours.
+
+### Palette types (#59)
+
+Structures with `family: "palette"`, after the harmonies. Chromatic means C ≥ 0.04, as for harmonies.
+
+- **`palette.achromatic`:** every cluster has C < 0.04 (`docs/ontology/README.md`: "all C < 0.04").
+- **`palette.neutral-plus-accent`:** every chromatic cluster lies within 15° of the largest chromatic cluster's hue (shades of one accent, such as a button and its hover colour, count as one), and the neutral clusters cover at least 50 %. The ontology says only "one chromatic cluster plus neutrals"; 15° and 50 % are chosen values.
+- **Points:** every cluster. A neutral's ideal is the pure grey of its lightness, so `deltaE` is its chroma; an accent's ideal is itself. `coverage` and `score` are 1, `provenance: "measured"`, caveat `consistent-not-proven`.
+- `palette.monochrome`, `two-level-lightness`, `equal-spacing` and `full-wheel` are not implemented.
+
+### Contrast
+
+- **Pairs:** every pair of the up to 6 largest clusters with at least 1 % share, using each cluster's `representativeRgb` (its most frequent colour). The lighter colour is `fgClusterId`. `worstCaseRatio` is not sent.
+- **Passes:** AA text ≥ 4.5, AA large text and non-text ≥ 3, AAA text ≥ 7.
+- **Finding `accessibility.contrast`:** one per image, rating the palette as a whole, because two similar tones are normal design: **info** when any pair reaches 4.5, **notice** when the best reaches 3, **warning** otherwise. Metrics: highest and lowest ratio, pairs ≥ 4.5 and pairs ≥ 3. Swatches: the highest-contrast pair (the best text and background candidate). Whether the colours are next to each other is not known from colours alone; the detail says so.
+
+### Dark mode (#60)
+
+The E9 rule from `docs/ontology/05-ui-structure.md` on the clusters, plus a flatness test, so it needs no layout:
+
+- **Background:** the largest cluster covers ≥ 35 %, has L ≤ 0.3 and `spreadDeltaE` ≤ 0.01 (a flat colour, not a noisy dark photo).
+- **Content:** the other clusters with |ΔL| ≥ 0.4 from it cover ≥ 1 % in total.
+- **Finding `ui.dark-mode`:** severity info, `provenance: "inferred"`, confidence 0.6, caveat `needs-scene-data`, `requires: "pixels"`. Metrics: background L, background share, content share. Swatches: the background and the largest content cluster.
+- **No finding:** a dark background without light content, a noisy dark background, a light image, or a mid-tone one. `ui.light-mode` is not reported. The extension's colour-scheme data (#61) would confirm it.
+
 ## Server steps and default parameters
 
-[UNDERSTANDING] Suggested order and defaults; the backend team decides the final values.
+[UNDERSTANDING] Suggested order and defaults; the backend team decides the final values. What is implemented, with its final values, is in [What is computed](#what-is-computed).
 
 | Step | Default | Source |
 |---|---|---|

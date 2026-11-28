@@ -76,6 +76,7 @@ export type Database = {
           include_alpha: boolean
           owner_id: string
           summary_csv_path: string | null
+          top_n: number
           total_pixels: number | null
           unique_colors: number
           width: number
@@ -91,6 +92,7 @@ export type Database = {
           include_alpha?: boolean
           owner_id?: string
           summary_csv_path?: string | null
+          top_n?: number
           total_pixels?: number | null
           unique_colors: number
           width: number
@@ -106,6 +108,7 @@ export type Database = {
           include_alpha?: boolean
           owner_id?: string
           summary_csv_path?: string | null
+          top_n?: number
           total_pixels?: number | null
           unique_colors?: number
           width?: number

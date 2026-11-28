@@ -1,3 +1,4 @@
+import type { ImageFormat } from "../image-format";
 import type { ColorAnalysis } from "./color-analysis";
 
 /** Options the user picks on the upload form. */
@@ -42,6 +43,8 @@ export interface ImageAnalysis {
   totalPixels: number;
   uniqueColors: number;
   includeAlpha: boolean;
+  /** The decoded file format, when it was stored (images.format). */
+  format?: ImageFormat;
   /** Top N chosen on upload; the results page can override it. */
   topN: number;
   /**
