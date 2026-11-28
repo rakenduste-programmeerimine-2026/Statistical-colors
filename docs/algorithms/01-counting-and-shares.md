@@ -24,4 +24,4 @@
 
 - **Input:** the shares.
 - **Output:** bands, each a contiguous run of the shares sorted descending. The list is cut at gaps of at least half a decade in log10(share), at most 6 bands. With no such gap it falls back to decade bands.
-- **Invariant:** [AUDIT: lean `pieces_flatten`, `pieces_total`] whatever the cuts, the bands put back together are the sorted list, with the same total. So every colour is in exactly one band. Tests also check that `bandOf` finds exactly one band for each share.
+- **Invariant:** [LOCAL RUN: lean `pieces_flatten`, `pieces_total`] whatever the cuts, the bands put back together are the sorted list, with the same total. So every colour is in exactly one band. Tests also check that `bandOf` finds exactly one band for each share.

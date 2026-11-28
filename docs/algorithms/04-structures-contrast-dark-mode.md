@@ -29,6 +29,6 @@ These depend only on the palette, so they inherit the clustering's correctness.
 ## Dark mode (`ui-mode.ts`)
 
 - **Rule:** the largest cluster has share ≥ 35 %, L ≤ 0.3 and diameter ≤ 0.01; and content clusters with ΔL ≥ 0.4 hold ≥ 1 %.
-- [AUDIT: comparison] Clusters are built with τ = 0.02, so a background with JPEG-like noise has a diameter between 0.01 and 0.02. It fails the 0.01 test: a dark UI with background noise ±3 is **not detected**.
+- [LOCAL RUN: comparison] Clusters are built with τ = 0.02, so a background with JPEG-like noise has a diameter between 0.01 and 0.02. It fails the 0.01 test: a dark UI with background noise ±3 is **not detected**.
 - **Improvement (#96):** the flatness limit becomes τ.
-  - [AUDIT: comparison] In the local build the same dark UI is detected. Its background forms clusters of diameter about 0.0197, and the light text forms its own cluster, because leftover colours now start clusters (#94).
+  - [LOCAL RUN: comparison] In the local build the same dark UI is detected. Its background forms clusters of diameter about 0.0197, and the light text forms its own cluster, because leftover colours now start clusters (#94).

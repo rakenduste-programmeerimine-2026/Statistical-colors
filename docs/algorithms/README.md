@@ -6,10 +6,11 @@ This folder models every step of the colour analysis that `analyseColors` (`src/
 - what was checked;
 - the improvement proposed in #93–#96.
 
-Sources are tagged:
-- **[AUDIT: lean T]**: theorem T in `ColourPipeline.lean`, checked locally with Lean 4.36.0. Only standard axioms (`propext`, `Quot.sound`, `Classical.choice`), no `sorryAx`. **Lean checks a small model written by hand, not the TypeScript.** The model matches the code only as far as the reading of the code is right; nothing links them mechanically. See "What Lean shows, and what it does not".
-- **[AUDIT: comparison]**: measured locally by running the current and the improved code on the same inputs.
-- **[AUDIT: property test]**: an executable property, run on random inputs.
+Sources are tagged. None of these is an independent audit: Claude ran every check marked "run" itself. Only the REPO RUN checks can be repeated from this repository.
+- **[LOCAL RUN: lean T]**: theorem T in `ColourPipeline.lean`, checked locally with Lean 4.36.0. Only standard axioms (`propext`, `Quot.sound`, `Classical.choice`), no `sorryAx`. **Lean checks a small model written by hand, not the TypeScript.** The model matches the code only as far as the reading of the code is right; nothing links them mechanically. See "What Lean shows, and what it does not".
+- **[LOCAL RUN: comparison]**: measured locally by running the current and the improved code on the same inputs.
+- **[LOCAL RUN: property test]**: an executable property, run on random inputs.
+- **[REPO RUN: experiment E10]**: the committed prototype `prototypes/colour-analysis/E10-gamut-lattice.mts` and its vitest, which anyone can rerun.
 - **[PROMPT P-###]**: a requirement.
 - **[UNDERSTANDING]**: Claude's reading.
 
@@ -76,7 +77,7 @@ Grading the score (#95) removes the jump at 50 % but not these. Detecting antial
 
 ## Improvements: what changes, measured
 
-[AUDIT: comparison] Timings are medians of 15 runs after 3 warm-up runs, in Node (vitest). The earlier one-shot figures (31 → 130 ms) included start-up cost and are withdrawn. The input is the photo-like image: sky and sand with noise, 5000 colours.
+[LOCAL RUN: comparison] Timings are medians of 15 runs after 3 warm-up runs, in Node (vitest). The earlier one-shot figures (31 → 130 ms) included start-up cost and are withdrawn. The input is the photo-like image: sky and sand with noise, 5000 colours.
 
 | Version | Palette step | Whole analysis | Palette describes | Every pair in a cluster within τ |
 |---|---|---|---|---|
@@ -86,8 +87,8 @@ Grading the score (#95) removes the jump at 50 % but not these. Detecting antial
 | Local v7 (grid cells of side τ/√3, then complete linkage on the cells) | ≈32 ms | ≈41 ms | 86.4 % | yes |
 
 Notes:
-- **v6 is exact but unusable on photos.** 1.9 million of the 12.5 million colour pairs are within τ. At τ = 1 JND an 8-bit photo is a continuum: one 8-bit step is about 0.004 ΔE_OK. Exact complete linkage then costs O(n² log n). [AUDIT: property test] On 41 inputs of up to 290 colours it makes exactly the same groups as the current full scan.
-- **v7 quantises first.** A cube of side τ/√3 has diameter τ, so every cell is already tight, in O(n). Only the 90 non-empty cells are then linked. [AUDIT: property test] On 21 inputs of up to 1000 colours, every colour is in exactly one cluster and every pair in a cluster is within τ. Its groups differ from exact complete linkage, because the cell boundaries are fixed.
+- **v6 is exact but unusable on photos.** 1.9 million of the 12.5 million colour pairs are within τ. At τ = 1 JND an 8-bit photo is a continuum: one 8-bit step is about 0.004 ΔE_OK. Exact complete linkage then costs O(n² log n). [LOCAL RUN: property test] On 41 inputs of up to 290 colours it makes exactly the same groups as the current full scan.
+- **v7 quantises first.** A cube of side τ/√3 has diameter τ, so every cell is already tight, in O(n). Only the 90 non-empty cells are then linked. [LOCAL RUN: property test] On 21 inputs of up to 1000 colours, every colour is in exactly one cluster and every pair in a cluster is within τ. Its groups differ from exact complete linkage, because the cell boundaries are fixed.
 - **Dark mode exposes a model limit.** A noisy dark background spreads wider than τ, so every version that keeps clusters within τ must split it (v7: four clusters of 20–28 %). The dark-mode rule needs one cluster over its share minimum, so v7 misses it; v5's greedy pass happened to detect it. [UNDERSTANDING] The rule should sum clusters by lightness band instead of requiring one cluster. This is a design question for the team (#96).
 - **The other inputs:** demo palette 100 % → 99.06 %; dark UI 90.5 % → 100 %; flat graphic 99 % → 99 %. No share is unaccounted in v5 or v7.
 
