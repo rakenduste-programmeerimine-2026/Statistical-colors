@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { generateColorAnalysis } from "@/adapters/simulated/color-analysis";
 import { prng } from "@/adapters/simulated/random";
-import { simulateGamut } from "@/adapters/simulated/gamut";
+import { computeGamutCoverage } from "@/core/analysis/gamut-coverage";
 import { checkColorAnalysis } from "./color-analysis-check";
 import type { ColorAnalysis } from "./color-analysis";
 import { findingLabel, FINDING_LABELS, structureLabel, STRUCTURE_LABELS } from "./ontology";
 
 const valid = () => generateColorAnalysis(prng(7));
-const gamut = () => simulateGamut([{ r: 9, g: 9, b: 9, count: 1, percent: 100 }]);
+const gamut = () => computeGamutCoverage([{ r: 9, g: 9, b: 9, count: 1, percent: 100 }]);
 
 describe("checkColorAnalysis", () => {
   it("accepts a consistent analysis, with and without gamut coverage", () => {

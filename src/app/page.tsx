@@ -1,4 +1,3 @@
-import { ThemePicker } from "@/components/theme/ThemePicker";
 import { UploadForm } from "@/components/upload/UploadForm";
 
 export default function Home() {
@@ -8,7 +7,6 @@ export default function Home() {
       <p className="mb-4 mt-2 text-lg text-muted">
         Laadi üles pilt ja saa täpne ülevaade kõigist kasutatud värvidest ja nende osakaalust – ilma ümardamiseta.
       </p>
-      <ThemePicker />
       <UploadForm />
     </main>
   );

@@ -284,3 +284,30 @@ describe("renderer", () => {
     expect(Array.from(bytes)).toEqual([1, 2, 3, 4]);
   });
 });
+
+describe("lightness range and the whole-cloud default (P-039 item 1)", () => {
+  const all = { hueCenter: 0, hueWidth: 360, chromaMin: 0, chromaMax: 1000, includeNeutrals: true };
+
+  it("selects and draws every dot when everything is selected, CIELAB included", () => {
+    for (const space of [OKLAB, CIELAB]) {
+      const lat = latticeFor(space);
+      const s = selectLattice(lat, { ...all, lightMin: 0, lightMax: space.lMax })!;
+      expect(s.selectedCount).toBe(lat.n);
+      expect(s.foreground.length).toBe(lat.n);
+    }
+  });
+
+  it("keeps only dots inside the lightness range, edges included", () => {
+    const lat = latticeFor(OKLAB);
+    const s = selectLattice(lat, { ...all, lightMin: 0.4, lightMax: 0.6 })!;
+    for (const i of s.foreground) {
+      expect(lat.l[i]).toBeGreaterThanOrEqual(0.4 - 1e-6);
+      expect(lat.l[i]).toBeLessThanOrEqual(0.6 + 1e-6);
+    }
+    expect(s.selectedCount).toBeGreaterThan(0);
+  });
+
+  it("refuses a lightness minimum above the maximum", () => {
+    expect(selectLattice(latticeFor(OKLAB), { ...all, lightMin: 0.7, lightMax: 0.6 })).toBeNull();
+  });
+});

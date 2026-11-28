@@ -6,7 +6,20 @@ import { MODEL_LABELS, structureLabel } from "@/core/analysis/ontology";
 import { modelHue, wheelColor, type ColorModel } from "@/core/color/models";
 import { clampChroma, formatOklch, oklchCss, oklchToSrgb, srgbToOklch, type Oklch } from "@/core/color/oklch";
 import { arcPath, chromaRadius, deltaERadius, lightnessRingWidth, medianLightness, polar, ringChroma, ringSegments } from "@/core/color/wheel";
+import { formatDelta } from "@/core/analysis/format";
 import { hint } from "../ui";
+import { ColorName, colorNameText, useNameIndex } from "../ColorName";
+import { Term } from "../Term";
+import type { GlossaryKey } from "@/core/glossary";
+
+/** The points table's headings, with an explanation for each colour term (P-038). */
+const POINT_HEADINGS: [string, GlossaryKey | null][] = [
+  ["Tegelik", null],
+  ["Ideaalne", null],
+  ["ΔE", "deltaE"],
+  ["L", "lightness"],
+  ["ΔL", "lightness"],
+];
 
 const SIZE = 320;
 const C = SIZE / 2;
@@ -33,6 +46,11 @@ interface Props {
  * circles that grow with their ΔE; actual colours are filled dots.
  */
 export function StructureWheel({ structure, palette }: Props) {
+  const nameIndex = useNameIndex();
+  const named = (c: Oklch) => {
+    const n = colorNameText(nameIndex, c);
+    return n ? ` ≈ ${n}` : "";
+  };
   const [model, setModel] = useState<ColorModel>("oklch");
   const titleId = useId();
   const descId = useId();
@@ -131,7 +149,7 @@ export function StructureWheel({ structure, palette }: Props) {
                 strokeWidth={ringWidth}
               />
               <circle data-testid="actual" cx={actual.x} cy={actual.y} r={r} fill={oklchCss(p.actual)} stroke="var(--color-page)" strokeWidth={2}>
-                <title>{`Tegelik: ${formatOklch(p.actual)}, L ${p.actual.l.toFixed(3)}, ΔL tumedaimast ${deltaL.toFixed(3)}${cluster ? `, osakaal ${cluster.share.toFixed(2)}%` : ""}`}</title>
+                <title>{`Tegelik: ${formatOklch(p.actual)}${named(p.actual)}, L ${p.actual.l.toFixed(3)}, ΔL tumedaimast ${formatDelta(deltaL, "0, see on tumedaim")}${cluster ? `, osakaal ${cluster.share.toFixed(2)}%` : ""}`}</title>
               </circle>
             </g>
           );
@@ -145,7 +163,7 @@ export function StructureWheel({ structure, palette }: Props) {
             <g key={`ideal-${p.clusterId}-${i}`}>
               <circle cx={ideal.x} cy={ideal.y} r={r} fill="none" stroke="var(--color-page)" strokeWidth={4} />
               <circle data-testid="ideal" cx={ideal.x} cy={ideal.y} r={r} fill="none" className="stroke-delta" strokeWidth={1.5}>
-                <title>{`Ideaal: ${formatOklch(p.ideal)}, ΔE ${p.deltaE.toFixed(3)}`}</title>
+                <title>{`Ideaal: ${formatOklch(p.ideal)}${named(p.ideal)}, ΔE ${formatDelta(p.deltaE, "0, täpne")}`}</title>
               </circle>
             </g>
           );
@@ -162,9 +180,9 @@ export function StructureWheel({ structure, palette }: Props) {
         <table className="mt-2 w-full border-collapse text-sm">
           <thead>
             <tr>
-              {["Tegelik", "Ideaalne", "ΔE", "L", "ΔL"].map((h) => (
+              {POINT_HEADINGS.map(([h, k]) => (
                 <th key={h} className="border-b border-line-soft p-1.5 text-left">
-                  {h}
+                  {k ? <Term k={k}>{h}</Term> : h}
                 </th>
               ))}
             </tr>
@@ -172,11 +190,15 @@ export function StructureWheel({ structure, palette }: Props) {
           <tbody>
             {structure.points.map((p, i) => (
               <tr key={`${p.clusterId}-${i}`}>
-                <td className="border-b border-line-soft p-1.5 font-mono">{formatOklch(p.actual)}</td>
-                <td className="border-b border-line-soft p-1.5 font-mono">{formatOklch(p.ideal)}</td>
-                <td className="border-b border-line-soft p-1.5 font-mono">{p.deltaE.toFixed(3)}</td>
+                <td className="border-b border-line-soft p-1.5 font-mono">
+                  {formatOklch(p.actual)} <ColorName color={p.actual} />
+                </td>
+                <td className="border-b border-line-soft p-1.5 font-mono">
+                  {formatOklch(p.ideal)} <ColorName color={p.ideal} />
+                </td>
+                <td className="border-b border-line-soft p-1.5 font-mono">{formatDelta(p.deltaE, "0 (täpne)")}</td>
                 <td className="border-b border-line-soft p-1.5 font-mono">{p.actual.l.toFixed(3)}</td>
-                <td className="border-b border-line-soft p-1.5 font-mono">{(p.actual.l - darkest).toFixed(3)}</td>
+                <td className="border-b border-line-soft p-1.5 font-mono">{formatDelta(p.actual.l - darkest, "tumedaim")}</td>
               </tr>
             ))}
           </tbody>

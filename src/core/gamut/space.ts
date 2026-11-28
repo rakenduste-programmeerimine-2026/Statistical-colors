@@ -19,10 +19,9 @@ export interface GamutSpace {
   abLimit: number;
   /** World units per space unit, so both spaces draw with lightness 0–1. */
   scale: number;
-  /** Chroma slider range and the notebook's default selection. */
+  /** Chroma slider range. */
   chromaMax: number;
   chromaStep: number;
-  defaultChroma: [number, number];
   /** Digits to print coordinates with. */
   digits: number;
   toCoords(rgb: Rgb8): Vec3;
@@ -40,7 +39,6 @@ export const OKLAB: GamutSpace = {
   scale: 1,
   chromaMax: 0.4,
   chromaStep: 0.005,
-  defaultChroma: [0.1, 0.2],
   digits: 3,
   toCoords: srgbToOklab,
   toLinearSrgb: oklabToLinearSrgb,
@@ -57,7 +55,6 @@ export const CIELAB: GamutSpace = {
   scale: 0.01,
   chromaMax: 160,
   chromaStep: 1,
-  defaultChroma: [40, 80],
   digits: 1,
   toCoords: srgbToLab,
   toLinearSrgb: labToLinearSrgb,

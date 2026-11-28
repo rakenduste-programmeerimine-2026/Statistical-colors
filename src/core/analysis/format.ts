@@ -27,3 +27,19 @@ export function cssColor(color: Pick<ColorCount, "r" | "g" | "b" | "a">): string
 export function formatPercent(percent: number): string {
   return `${percent.toFixed(6)}%`;
 }
+
+/** `#RRGGBB` without alpha, for display; the CSV keeps `formatHex`. */
+export const hexOf = (c: Pick<ColorCount, "r" | "g" | "b">) => formatHex({ r: c.r, g: c.g, b: c.b });
+
+/** Alpha 0–255 as a readable opacity, e.g. "läbipaistmatus 50 %" (#90: "000" said nothing). */
+export function formatOpacity(a: number): string {
+  return `läbipaistmatus ${Math.round((a / 255) * 100)} %`;
+}
+
+/**
+ * A ΔE or ΔL with three decimals, but a word instead of "0.000" (P-042: a bare
+ * "000" tells the user nothing). `zero` says what a zero difference means there.
+ */
+export function formatDelta(value: number, zero: string): string {
+  return Math.abs(value) < 0.0005 ? zero : value.toFixed(3);
+}

@@ -8,6 +8,7 @@ import {
   normalizeHex,
   parseThemeState,
   setCurrentTheme,
+  cleanThemeName,
 } from "./theme";
 
 describe("normalizeHex", () => {
@@ -65,5 +66,32 @@ describe("parseThemeState", () => {
       themes: [{ id: "a", bg: "#000000" }, { id: "b", bg: "#000000", text: "#ffffff" }],
     });
     expect(state).toEqual({ currentId: "b", themes: [{ id: "b", bg: "#000000", text: "#ffffff" }] });
+  });
+});
+
+describe("theme names (#91)", () => {
+  it("cleans names: trims, joins spaces, cuts at 40, drops empty and non-text", () => {
+    expect(cleanThemeName("  Öine   sinine ")).toBe("Öine sinine");
+    expect(cleanThemeName("x".repeat(41))).toHaveLength(40);
+    expect(cleanThemeName("x".repeat(40))).toHaveLength(40);
+    expect(cleanThemeName("   ")).toBeUndefined();
+    expect(cleanThemeName(7)).toBeUndefined();
+  });
+
+  it("names a new theme, and renames it when the same colours are saved with a name", () => {
+    let s = addTheme(DEFAULT_THEME_STATE, "#000000", "#ffffff", "Öö");
+    expect(s.themes.at(-1)?.name).toBe("Öö");
+    s = addTheme(s, "#000000", "#ffffff");
+    expect(s.themes.at(-1)?.name).toBe("Öö");
+    s = addTheme(s, "#000000", "#ffffff", "Kesköö");
+    expect(s.themes.filter((t) => t.bg === "#000000")).toHaveLength(1);
+    expect(s.themes.at(-1)?.name).toBe("Kesköö");
+  });
+
+  it("loads themes saved before names existed, and drops a bad name but keeps the theme", () => {
+    const old = parseThemeState({ currentId: "a", themes: [{ id: "a", bg: "#000000", text: "#ffffff" }] });
+    expect(old.themes[0]).toEqual({ id: "a", bg: "#000000", text: "#ffffff" });
+    const bad = parseThemeState({ currentId: "a", themes: [{ id: "a", bg: "#000000", text: "#ffffff", name: 42 }] });
+    expect(bad.themes[0]).toEqual({ id: "a", bg: "#000000", text: "#ffffff" });
   });
 });

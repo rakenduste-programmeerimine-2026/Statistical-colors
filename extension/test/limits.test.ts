@@ -65,7 +65,8 @@ describe("PDF limits", () => {
     const over = await parsePdfPage(page(MAX_PDF_PATHS + 1));
     expect(over.paths).toHaveLength(MAX_PDF_PATHS);
     expect(over.truncated).toBe("path limit");
-  });
+    // Two pages of 100,000 paths take about 3–6 s when the whole suite runs at once (it timed out at the 5 s default).
+  }, 20_000);
 
   it("stops at the time budget", async () => {
     let t = 0;

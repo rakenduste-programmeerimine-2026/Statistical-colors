@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import type { ColorAnalysis } from "@/core/analysis/color-analysis";
+import type { GlossaryKey } from "@/core/glossary";
+import { Term } from "../Term";
 import { card, hint } from "../ui";
 import { FindingsPanel } from "./FindingsPanel";
 import { RampStrip, StructureList } from "./StructureList";
@@ -17,39 +19,88 @@ const STEP_LABELS: Record<ColorAnalysis["pipeline"][number]["step"], string> = {
   roles: "Rollid",
   findings: "Leiud",
 };
+/** Readable names for the analysis settings the server reports (#90: raw keys said nothing). */
+const PARAM_LABELS: Record<string, string> = {
+  maxDistance: "Suurim kaugus sirgest (sRGB väärtust)",
+  maxSharePercent: "Segupiksli suurim osakaal (%)",
+  endpointMinSharePercent: "Sirge otsa väikseim osakaal (%)",
+  maxEndpoints: "Sirge otsi kuni",
+  tMin: "Asukoht sirgel vähemalt",
+  tMax: "Asukoht sirgel kuni",
+  tolerance: "Lubatud kõrvalekalle",
+  floorPercent: "Osakaalu alampiir (%)",
+  z: "Haruldase värvi piir (z-skoor)",
+  tau: "Klastri suurus (ΔE)",
+  linkage: "Rühmitamise viis",
+  maxColors: "Rühmitatavaid värve kuni",
+  c0: "Väikseim kroom harmoonias",
+  lambda: "Lihtsuse eelistus",
+  maxErr: "Suurim toonivahe ideaalist (°)",
+  minCoverage: "Vähim kaetud osa",
+  minScore: "Vähim skoor",
+  accentMaxHueSpread: "Aktsendi suurim toonihajuvus (°)",
+  neutralMinShare: "Neutraalsete vähim osakaal (%)",
+  maxClusters: "Võrreldavaid värve kuni",
+  minSharePercent: "Vähim osakaal (%)",
+  darkMinShare: "Tumeda tausta vähim osakaal (%)",
+  darkMaxL: "Tumeda tausta suurim heledus",
+  darkMaxSpread: "Tumeda tausta suurim hajuvus (ΔE)",
+  contentMinDeltaL: "Sisu vähim heleduse vahe",
+  contentMinShare: "Sisu vähim osakaal (%)",
+};
+/** Steps whose name is a colour term with its own explanation (P-038). */
+const STEP_TERMS: Partial<Record<ColorAnalysis["pipeline"][number]["step"], GlossaryKey>> = {
+  "blend-snap": "blend",
+  convert: "oklch",
+  cluster: "cluster",
+};
 const STATUS_LABELS = { done: "tehtud", skipped: "vahele jäetud", "not-implemented": "pole veel" } as const;
 
 /** The server's colour analysis on the results page (P-030, P-031). */
 export function ColorAnalysisSection({ analysis }: { analysis: ColorAnalysis }) {
   const [selectedId, setSelectedId] = useState(analysis.structures[0]?.id ?? "");
   const selected = analysis.structures.find((s) => s.id === selectedId);
+  // The section can be folded away (#90); the heading stays a heading for screen readers.
+  const [open, setOpen] = useState(true);
+  const bodyId = useId();
 
   return (
     <section className={card} aria-labelledby="color-analysis-heading">
-      <h2 id="color-analysis-heading" className="text-xl font-bold">
-        Värvianalüüs
-      </h2>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="color-analysis-heading" className="text-xl font-bold">
+          Värvianalüüs
+        </h2>
+        <button type="button" aria-expanded={open} aria-controls={bodyId} onClick={() => setOpen((o) => !o)} className="text-sm underline">
+          {open ? "Peida" : "Näita"}
+        </button>
+      </div>
+      <div id={bodyId} hidden={!open}>
       {analysis.status === "simulated" && (
         <p role="note" className="mt-2 rounded-lg border border-warn p-2.5">
           Näidisandmed: värvianalüüsi arvutab server, mis pole veel valmis. Allolev on genereeritud, et näidata, kuidas tulemus
           välja näeb.
         </p>
       )}
-      <p className={`${hint} mt-2`}>Tulemus on sisendiga kooskõlas, kuid pole tõestatud originaal (#32).</p>
+      <p className={`${hint} mt-2`}>Tulemus on pildiga kooskõlas, kuid ei tõesta, kuidas pilt tehti.</p>
 
       <details className="mt-3">
-        <summary className="cursor-pointer text-sm">Töövoog</summary>
-        <ol className="mt-2 pl-5 text-sm">
+        <summary className="cursor-pointer text-sm">Tehnilised üksikasjad: töötluse sammud ja seaded</summary>
+        <ol className="mt-2 flex flex-col gap-2 pl-5 text-sm">
           {analysis.pipeline.map((p) => (
             <li key={p.step}>
-              {STEP_LABELS[p.step]}: {STATUS_LABELS[p.status]}
+              <span className="font-bold">
+                <StepName step={p.step} />
+              </span> — {STATUS_LABELS[p.status]}
+              {p.removedShare ? <span className="text-muted">; eemaldati {p.removedShare.toFixed(1)} % pikslitest</span> : null}
               {p.params ? (
-                <span className="font-mono text-muted">
-                  {" "}
-                  ({Object.entries(p.params)
-                    .map(([k, v]) => `${k} ${v}`)
-                    .join(", ")})
-                </span>
+                <dl className="mt-0.5 grid grid-cols-[auto_auto] justify-start gap-x-3 text-muted">
+                  {Object.entries(p.params).map(([k, v]) => (
+                    <div key={k} className="contents">
+                      <dt>{PARAM_LABELS[k] ?? k}</dt>
+                      <dd className="m-0 font-mono">{String(v)}</dd>
+                    </div>
+                  ))}
+                </dl>
               ) : null}
             </li>
           ))}
@@ -60,6 +111,10 @@ export function ColorAnalysisSection({ analysis }: { analysis: ColorAnalysis }) 
         <div className="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div>
             <h3 className="text-lg font-bold">Struktuurid</h3>
+            <p className={hint}>
+              Värvid, mis moodustavad <Term k="harmony">harmoonia</Term>, astmestiku või ülemineku. <Term k="deltaE">ΔE</Term>{" "}
+              näitab, kui kaugel on tegelik värv ideaalsest.
+            </p>
             <div className="mt-2">
               <StructureList structures={analysis.structures} selectedId={selectedId} onSelect={setSelectedId} />
             </div>
@@ -81,6 +136,12 @@ export function ColorAnalysisSection({ analysis }: { analysis: ColorAnalysis }) 
           <FindingsPanel findings={analysis.findings} palette={analysis.palette} />
         </div>
       )}
+      </div>
     </section>
   );
+}
+
+function StepName({ step }: { step: ColorAnalysis["pipeline"][number]["step"] }) {
+  const term = STEP_TERMS[step];
+  return term ? <Term k={term}>{STEP_LABELS[step]}</Term> : STEP_LABELS[step];
 }
