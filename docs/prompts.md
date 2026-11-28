@@ -677,3 +677,20 @@ Understood as:
 2. [UNDERSTANDING] The blend score is a distance threshold, not a probability, and has no spatial evidence. The redesign (pixel-neighbour evidence) goes to the team in #95.
 3. [UNDERSTANDING] The faster clustering stays in the local test build (P-039 item 9).
 4. [UNDERSTANDING] The user did not say where "000" was. The strongest candidate is the structure wheel's ΔL and ΔE columns, which always print "0.000" for the darkest colour and the anchor. That is what gets fixed. The alpha change from P-039 stays unless the user asks to revert it.
+
+## P-043 (2026-11-28): Missing tooltips and unused glossary entries
+
+Type: requirement
+Source: the user's message, after the compliance review of PR #97
+Issue: #90
+
+Quoted:
+
+> fix the missing tooltips and unused glossary entries
+
+Understood as:
+
+1. [UNDERSTANDING] This continues P-038 ("Terminitele on vaja tööriistavihjeid"). Every glossary entry is shown by some component instead of being removed. The new tooltips are on the findings confidence words, the structure wheel's ΔE, L and ΔL headings, a short hint under "Struktuurid" (harmony, ΔE), the blend, OKLCH and cluster step names, OKLab, CIELAB and JND in the gamut coverage text, and "sagedasemat värvi" in the table heading (top N).
+2. [UNDERSTANDING] Tooltips are not placed inside the structure list's item buttons, because a button inside a button is invalid. The hint above the list explains those terms instead.
+3. [UNDERSTANDING] The confidence words and their reason stay visible (P-039 item 3). The tooltip only adds the explanation.
+4. [UNDERSTANDING] A test fails when a glossary entry is not used by any component.
