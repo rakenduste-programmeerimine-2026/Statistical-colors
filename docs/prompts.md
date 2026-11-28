@@ -694,3 +694,22 @@ Understood as:
 2. [UNDERSTANDING] Tooltips are not placed inside the structure list's item buttons, because a button inside a button is invalid. The hint above the list explains those terms instead.
 3. [UNDERSTANDING] The confidence words and their reason stay visible (P-039 item 3). The tooltip only adds the explanation.
 4. [UNDERSTANDING] A test fails when a glossary entry is not used by any component.
+
+## P-044 (2026-11-28): Source tags for Claude's own runs, and the real gamut coverage
+
+Type: requirement and approved decisions
+Source: the user's message and answers, after the compliance review of PR #97
+Issue: #92, #74
+
+Quoted:
+
+> fix the AUDIT labels and the PLACEHOLDER(#74) markers
+
+Approved decisions (the user's answers to the conflict review):
+
+1. **Tags.** "Approve new tags": `[LOCAL RUN: …]` marks a check Claude ran on the developer's machine whose code stays local (Lean, comparisons, property tests). `[REPO RUN: …]` marks one whose code is committed and can be rerun (experiment E10). Neither is an independent audit. They sit beside `[UNDERSTANDING]` as Claude's own work. Earlier entries in this file keep their `[AUDIT: …]` tags as written.
+2. **Gamut note.** "Remove note": the stub and the demo call the server's own `computeGamutCoverage` (#74, closed) on the image's colours, so the coverage is not simulated and the gamut panel has no "Näidisandmed" note. This supersedes the last sentence of P-036 item 6 ("The stub and the demo compute it the same way and mark it simulated").
+
+Understood as:
+
+3. [UNDERSTANDING] The tags of agent reviews such as `[AUDIT: performance-analyst]` are not changed by this entry.
