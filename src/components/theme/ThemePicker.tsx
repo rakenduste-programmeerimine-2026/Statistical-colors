@@ -1,7 +1,8 @@
 "use client";
 
-import { useId } from "react";
-import { button, card, hint, label } from "../ui";
+import { useId, useState } from "react";
+import { THEME_NAME_MAX } from "@/core/theme/theme";
+import { button, card, hint, input, label } from "../ui";
 import { ColorField } from "./ColorField";
 import { ThemeSelect } from "./ThemeSelect";
 import { useTheme } from "./ThemeProvider";
@@ -10,6 +11,8 @@ import { useTheme } from "./ThemeProvider";
 export function ThemePicker() {
   const { state, preview, setPreview, save, select } = useTheme();
   const savedLabelId = useId();
+  const nameId = useId();
+  const [name, setName] = useState("");
 
   return (
     <section className={card} aria-labelledby="theme-heading">
@@ -20,7 +23,25 @@ export function ThemePicker() {
         <ColorField label="Taust" value={preview.bg} onChange={(bg) => setPreview({ ...preview, bg })} />
         <ColorField label="Tekst" value={preview.text} onChange={(text) => setPreview({ ...preview, text })} />
         <div className="min-w-60 flex-1">
-          <button type="button" className={`${button} mt-4`} onClick={() => save(preview.bg, preview.text)}>
+          <label htmlFor={nameId} className={label}>
+            Teema nimi (valikuline)
+          </label>
+          <input
+            id={nameId}
+            className={`${input} mt-2`}
+            maxLength={THEME_NAME_MAX}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="nt Tume kontrast"
+          />
+          <button
+            type="button"
+            className={`${button} mt-2`}
+            onClick={() => {
+              void save(preview.bg, preview.text, name);
+              setName("");
+            }}
+          >
             Salvesta teema
           </button>
           <span className={`${hint} mt-1.5`}>Salvestatakse selle brauseri mällu.</span>

@@ -33,20 +33,34 @@ const analysis = (over: Partial<ImageAnalysis> = {}): ImageAnalysis => ({
   colorAnalysis,
   ...over,
 });
+/** The filter chips of a group (the group's label is a term button too). */
+const chips = (group: string) => within(screen.getByRole("group", { name: group })).getAllByRole("button").filter((b) => b.hasAttribute("aria-pressed"));
 const bodyRows = () => within(screen.getByRole("table")).getAllByRole("row").slice(1);
 
 describe("ColorTableSection", () => {
-  it("shows each colour's most likely artefact with its chance, and says the values are simulated", () => {
+  it("shows each colour's blend similarity as a fixed-width bar and number, and says the values are simulated", () => {
     render(<ColorTableSection analysis={analysis()} topN={2} />);
-    expect(screen.getByRole("columnheader", { name: "Segupiksel / artefakt" })).toBeInTheDocument();
-    expect(bodyRows()[0]).toHaveTextContent("10 %Servade silumise vahevärvid");
-    expect(screen.getByRole("meter", { name: "Servade silumise vahevärvid: 60 %" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "Segupiksli sarnasus" })).toBeInTheDocument();
+    expect(bodyRows()[0]).toHaveTextContent(/10 %$/);
+    expect(screen.getByRole("img", { name: "Segupiksli sarnasus 60 %" })).toHaveClass("w-36", "shrink-0");
     expect(screen.getByRole("note")).toHaveTextContent("Näidisandmed");
+  });
+
+  it("names the rows it lists, not the requested count, when there are fewer colours (regression #90)", () => {
+    render(<ColorTableSection analysis={analysis({ uniqueColors: 5 })} topN={5000} />);
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("5 sagedasemat värvi");
+    expect(screen.getByText(/tabelis on kõik 5 värvi/)).toBeInTheDocument();
+  });
+
+  it("names the requested count when it is smaller than the number of colours", () => {
+    render(<ColorTableSection analysis={analysis({ uniqueColors: 5 })} topN={2} />);
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("2 sagedasemat värvi");
+    expect(screen.getByText(/tabelis on 2 sagedasemat 5-st/)).toBeInTheDocument();
   });
 
   it("offers share bands with counts and filters over every colour, beyond the top N", async () => {
     render(<ColorTableSection analysis={analysis()} topN={2} />);
-    const bands = within(screen.getByRole("group", { name: "Osakaalu klass" })).getAllByRole("button");
+    const bands = chips("Osakaalu klass");
     expect(bands.map((b) => b.textContent)).toEqual(["kõik", "30–40 % · 2 värvi", "0.010–0.030 % · 3 värvi"]);
 
     await userEvent.setup().click(bands[2]);
@@ -59,19 +73,19 @@ describe("ColorTableSection", () => {
   it("filters by cluster and by artefact, combined, and says when nothing matches", async () => {
     const user = userEvent.setup();
     render(<ColorTableSection analysis={analysis()} topN={5} />);
-    const clusters = within(screen.getByRole("group", { name: "Värviklaster" })).getAllByRole("button");
+    const clusters = chips("Värviklaster");
     expect(clusters).toHaveLength(3);
     await user.click(clusters[1]);
     expect(bodyRows()).toHaveLength(3);
 
-    await user.click(screen.getByRole("button", { name: "tõenäoline (≥ 50 %)" }));
+    await user.click(screen.getByRole("button", { name: "sarnane segupikslile (≥ 50 %)" }));
     // c0 rows with chance ≥ 0.5: 0.9 and exactly 0.5.
     expect(bodyRows()).toHaveLength(2);
 
-    await user.click(within(screen.getByRole("group", { name: "Osakaalu klass" })).getAllByRole("button")[1]);
+    await user.click(chips("Osakaalu klass")[1]);
     expect(screen.getByRole("status")).toHaveTextContent("Ükski värv ei vasta filtrile.");
 
-    await user.click(within(screen.getByRole("group", { name: "Osakaalu klass" })).getByRole("button", { name: "kõik" }));
+    await user.click(chips("Osakaalu klass").find((b) => b.textContent === "kõik")!);
     expect(bodyRows()).toHaveLength(2);
   });
 

@@ -1,7 +1,9 @@
 import type { PaletteCluster } from "@/core/analysis/color-analysis";
+import { Term } from "../Term";
 import type { ColorFilter } from "@/core/analysis/color-filter";
 import type { ShareBand } from "@/core/analysis/share-bands";
 import { formatOklch, oklchCss } from "@/core/color/oklch";
+import { ColorName } from "../ColorName";
 
 interface Props {
   value: ColorFilter;
@@ -19,7 +21,7 @@ export function ColorFilters({ value, onChange, bands, clusters, hasArtefacts }:
   return (
     <div className="mt-3 flex flex-col gap-2">
       <div role="group" aria-label="Osakaalu klass" className="flex flex-wrap items-center gap-1.5">
-        <span className="text-sm text-muted">Osakaal:</span>
+        <span className="text-sm text-muted"><Term k="share">Osakaal</Term>:</span>
         <button type="button" aria-pressed={value.band === null} className={chip(value.band === null)} onClick={() => onChange({ ...value, band: null })}>
           kõik
         </button>
@@ -32,7 +34,7 @@ export function ColorFilters({ value, onChange, bands, clusters, hasArtefacts }:
 
       {clusters.length > 0 && (
         <div role="group" aria-label="Värviklaster" className="flex flex-wrap items-center gap-1.5">
-          <span className="text-sm text-muted">Klaster:</span>
+          <span className="text-sm text-muted"><Term k="cluster">Klaster</Term>:</span>
           <button type="button" aria-pressed={value.cluster === null} className={chip(value.cluster === null)} onClick={() => onChange({ ...value, cluster: null })}>
             kõik
           </button>
@@ -45,7 +47,7 @@ export function ColorFilters({ value, onChange, bands, clusters, hasArtefacts }:
               onClick={() => onChange({ ...value, cluster: cluster.id })}
             >
               <span aria-hidden className="inline-block size-3.5 rounded-sm border border-ink/25" style={{ background: oklchCss(cluster.color) }} />
-              <span className="font-mono text-xs">{formatOklch(cluster.color)}</span> · {count} värvi
+              <span className="font-mono text-xs">{formatOklch(cluster.color)}</span> <ColorName color={cluster.color} className="text-xs" /> · {count} värvi
             </button>
           ))}
         </div>
@@ -53,12 +55,12 @@ export function ColorFilters({ value, onChange, bands, clusters, hasArtefacts }:
 
       {hasArtefacts && (
         <div role="group" aria-label="Segupiksel või artefakt" className="flex flex-wrap items-center gap-1.5">
-          <span className="text-sm text-muted">Segupiksel / artefakt:</span>
+          <span className="text-sm text-muted"><Term k="blendSimilarity">Segupiksli sarnasus</Term>:</span>
           {(
             [
               ["all", "kõik"],
-              ["likely", "tõenäoline (≥ 50 %)"],
-              ["clean", "puhas (< 50 %)"],
+              ["likely", "sarnane segupikslile (≥ 50 %)"],
+              ["clean", "ei sarnane (< 50 %)"],
             ] as const
           ).map(([v, text]) => (
             <button key={v} type="button" aria-pressed={value.artefact === v} className={chip(value.artefact === v)} onClick={() => onChange({ ...value, artefact: v })}>

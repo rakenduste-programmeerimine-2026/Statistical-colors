@@ -1,12 +1,35 @@
 import type { Finding, PaletteCluster } from "@/core/analysis/color-analysis";
+import { GLOSSARY } from "@/core/glossary";
 import { AREA_LABELS, AREA_ORDER, CAVEAT_LABELS, findingLabel, PROVENANCE_LABELS, REQUIRES_LABELS, SEVERITY_LABELS } from "@/core/analysis/ontology";
 import { formatOklch, oklchCss } from "@/core/color/oklch";
+import { ColorName } from "../ColorName";
+import { Term } from "../Term";
 
 const SEVERITY_CLASS: Record<Finding["severity"], string> = {
   info: "border-line",
   notice: "border-notice",
   warning: "border-warn",
   problem: "border-error",
+};
+
+/**
+ * Confidence in words, never as "100 %" (#90: a percentage suggested proof).
+ * A measured value says so: it is exact for the image, but still not proof of
+ * how the image was made.
+ */
+export function confidenceText(meta: Pick<Finding["meta"], "confidence" | "provenance">): string {
+  if (meta.provenance === "measured") return "mõõdetud väärtus";
+  if (meta.confidence < 0.5) return "kindlus: madal";
+  if (meta.confidence < 0.8) return "kindlus: keskmine";
+  return "kindlus: kõrge";
+}
+
+/** What a finding measures, in plain words, for the kinds that confused testers (#90). */
+const EXPLAIN: Record<string, string> = {
+  "artefact.antialias-blend": `${GLOSSARY.blendSimilarity} Osakaal on nende värvide pikslite summa kogu pildist. Leid ütleb, et need värvid tekkisid tõenäoliselt servade silumisest, mitte et keegi need valis.`,
+  "accessibility.contrast": GLOSSARY.contrast,
+  "accessibility.wcag-fail": GLOSSARY.contrast,
+  "ui.dark-mode": "Suurim ühtlane värv on tume ja katab suure osa pildist, ning selle peal on palju heledamaid värve. Ilma lehe andmeteta on see oletus.",
 };
 
 /** Any finding the server sends, grouped by ontology area; unknown kinds use their own title. */
@@ -28,7 +51,7 @@ export function FindingsPanel({ findings, palette }: { findings: Finding[]; pale
                   <header className="flex flex-wrap items-baseline justify-between gap-2">
                     <h4 className="font-bold">{findingLabel(f)}</h4>
                     <span className="text-sm">
-                      {SEVERITY_LABELS[f.severity]} · kindlus {Math.round(f.meta.confidence * 100)}%
+                      {SEVERITY_LABELS[f.severity]} · <Term k="confidence">{confidenceText(f.meta)}</Term>
                     </span>
                   </header>
                   {f.detail && <p className="mt-1">{f.detail}</p>}
@@ -54,6 +77,7 @@ export function FindingsPanel({ findings, palette }: { findings: Finding[]; pale
                         <li key={i} className="flex items-center gap-1.5 text-sm">
                           <span aria-hidden className="inline-block size-5 rounded-md border border-ink/25" style={{ background: oklchCss(s.color) }} />
                           <span className="font-mono">{formatOklch(s.color)}</span>
+                          <ColorName color={s.color} />
                           {s.label && <span className="text-muted">{s.label}</span>}
                         </li>
                       ))}
@@ -75,8 +99,12 @@ export function FindingsPanel({ findings, palette }: { findings: Finding[]; pale
                       {f.clusterIds
                         .map((id) => byId.get(id))
                         .filter((c): c is PaletteCluster => !!c)
-                        .map((c) => formatOklch(c.color))
-                        .join(", ")}
+                        .map((c, i) => (
+                          <span key={c.id}>
+                            {i > 0 && ", "}
+                            {formatOklch(c.color)} <ColorName color={c.color} />
+                          </span>
+                        ))}
                     </p>
                   ) : null}
                   {f.meta.caveats?.length ? (
@@ -86,9 +114,18 @@ export function FindingsPanel({ findings, palette }: { findings: Finding[]; pale
                       ))}
                     </ul>
                   ) : null}
-                  <p className="mt-2 text-xs text-muted">
-                    {PROVENANCE_LABELS[f.meta.provenance]} · {REQUIRES_LABELS[f.meta.requires]} · {f.meta.method}
-                  </p>
+                  {EXPLAIN[f.kind] && (
+                    <details className="mt-2 text-sm">
+                      <summary className="cursor-pointer">Mida see mõõdab?</summary>
+                      <p className="mt-1">{EXPLAIN[f.kind]}</p>
+                    </details>
+                  )}
+                  <details className="mt-2 text-xs text-muted">
+                    <summary className="cursor-pointer">Kuidas see leiti?</summary>
+                    <p className="mt-1">
+                      {PROVENANCE_LABELS[f.meta.provenance]} · {REQUIRES_LABELS[f.meta.requires]} · {f.meta.method}
+                    </p>
+                  </details>
                 </article>
               ))}
           </div>

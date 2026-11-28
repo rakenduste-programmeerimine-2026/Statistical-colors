@@ -455,3 +455,100 @@ Acceptance criteria:
 - Given a preset or any colour, then only that view's background changes; the page theme does not.
 - Given a dark background in the 3D view, then its text, rings and faint lattice turn light.
 - Given "vaikimisi" or "lehe taust", then the view returns to its default.
+
+## User-test fixes on the results page (#90)
+
+### US-218: See the colour count I chose
+
+Source: [PROMPT P-038] "Värvide arvu muutmisel näitab rakendus ikka 5000 värvi."
+
+As a user, I want the results to show the number of colours I asked for, so that the page matches my choice.
+
+Acceptance criteria:
+- Given I set 100 on the upload form, then "Ava demo" opens the demo with `?top_n=100`.
+- Given an image with fewer colours than I asked for, then the heading names the colours listed ("5 sagedasemat värvi") and the hint says "tabelis on kõik 5 värvi".
+
+### US-219: Zoom smoothly on a laptop
+
+Automaton: Pixel viewer, wheel zoom
+Source: [PROMPT P-038] "Zoomimine sülearvutitel on liiga järsk."
+
+Acceptance criteria:
+- Given Ctrl plus scroll, then 99 px of movement does not change the zoom and 100 px moves one level.
+- Given a fast flick in the 3D view, then one event moves the camera at most a capped step.
+
+### US-220: Understand the results without colour science
+
+Source: [PROMPT P-038] "Terminitele on vaja tööriistavihjeid", "Pilditöötluse info on „debuggeri tasemel“", "Tulemus „100% kindel“ tekitab põhjendamatut usaldust."
+
+Acceptance criteria:
+- Given a colour term (OKLCH, ΔE, kroom, gamut, segupiksel…), then hover, keyboard focus or a tap explains it in Estonian.
+- Given the results page, then the key figures are shown in large type with Estonian number formatting, and technical settings sit behind "Tehnilised üksikasjad" with readable names.
+- Given a finding, then its confidence reads madal, keskmine, kõrge or "mõõdetud väärtus", never a percentage; "Mida see mõõdab?" explains it.
+- Given the colour analysis section, then it can be folded away.
+
+### US-221: A readable colour table
+
+Source: [PROMPT P-038] "Värvide väärtused tabelis on jagatud mitmele reale", "The chance of being a artefact percentage bar element jääb teiste elementide peale"
+
+Acceptance criteria:
+- Given a narrow window, then values stay on one line and the table scrolls sideways.
+- Given a colour, then the blend similarity is a fixed-width bar and a number, or "—" for 0.
+- Given alpha, then it reads "läbipaistmatus N %", not "000".
+
+### US-222: The whole colour cloud by default
+
+Automaton: 3D colour-space view, selection
+Source: [PROMPT P-038] "Vaikesätted peaks näitama kogu mummukeste pilve"
+
+Acceptance criteria:
+- Given the 3D view, then every dot is in its own colour, and a drawn legend explains small dots (possible colours) and large ringed dots (the image's colours, size by share).
+- Given the Filtreeri panel, then I can narrow hue, chroma and lightness and include or exclude greys, and the sliders show their value, unit and range ends.
+
+### US-223: Compare colours on the CIE grey
+
+Source: [PROMPT P-038] "Add the gray used in scientific tests where just noticable difference is tested as one of the default background options saved everywhere."
+
+Acceptance criteria:
+- Given either viewer, then "CIE hall (L* 50)" (#777777, CIE 116 reference background) is a background option.
+- Given I choose a background and reload, then the viewer keeps it.
+
+## Theme names, colour names, theme widget and upload (#91)
+
+### US-224: Name my saved themes
+
+Automaton: Theme picker
+Source: [PROMPT P-038] "Salvestatud teemadele ei saa nime panna currently allow user set names"
+
+Acceptance criteria:
+- Given a name (at most 40 characters; spaces trimmed and joined), when I save, then the theme is listed under that name, with its codes underneath.
+- Given no name, then the theme is listed by its colours' names, e.g. "Snow / Night".
+- Given the same colours saved again with a new name, then the theme is renamed, not duplicated.
+- Given themes saved before names existed, then they still load.
+
+### US-225: A name for every colour code
+
+Source: [PROMPT P-038] "every place where a color code is add a label use npm color-name-list"
+
+Acceptance criteria:
+- Given a colour code in the table, the pixel readout, the theme fields and saved-theme list, findings (swatches and colour lists), cluster chips, the ramp strip, the wheel (table and hover titles) or the 3D tooltip, then "≈ name" (the nearest name by ΔE in OKLab) is shown next to it once the list has loaded.
+- Given the list has not loaded yet, then the codes are shown without names and nothing else waits.
+
+### US-226: Change the theme from anywhere on the page
+
+Automaton: Theme picker, widget open/closed
+Source: [PROMPT P-038] "Teema valiku asi ei liigu minimeeritud kujul kaasa paremal servas widgetina"
+
+Acceptance criteria:
+- Given any scroll position, then a "Teema" tab with the current colours stays on the right edge.
+- Given I open it, then the whole picker appears; Escape or the tab closes it.
+
+### US-227: Find the upload at a glance
+
+Automaton: Upload form
+Source: [PROMPT P-038] "Pildi üleslaadimise kast/nupp jääb raskesti märgatavaks."
+
+Acceptance criteria:
+- Given the upload page, then a large dashed box says "Lohista pilt siia" with a filled "Vali pilt" button, and "Töötle pilti" is the filled main action.
+- Given I drop an image, then it is taken and previewed as if picked; a wrong type is refused on submit.
+- Given I drop several files, then the first is taken and I am told.

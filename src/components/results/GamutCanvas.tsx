@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { srgbToOklab, oklabToLinearSrgb, linearToSrgb8 } from "@/core/color/oklch";
+import { wheelPixels } from "@/core/preview/zoom";
 import { applyKeys, basis, defaultCamera, GAMUT_CENTER, look, move, MOVE_CODES, orbitCamera, orbitOf, project, type Camera } from "@/core/gamut/camera";
 import { frameLoop, type FrameLoop } from "@/core/gamut/frame-loop";
 import type { Lattice } from "@/core/gamut/lattice";
 import type { SelectionResult } from "@/core/gamut/select";
 import type { SnappedColors } from "@/core/gamut/snap";
 import { clearFrame, makeFrame, pack, pickNearest, splatDiscs, splatSquares, type Frame, type PointSet } from "@/core/gamut/splat";
+import { colorNameText, useNameIndex } from "../ColorName";
 
 export type CameraMode = "orbit" | "fly";
 
@@ -69,6 +71,7 @@ export function GamutCanvas({ lattice, selection, snapped, mode, resetKey, label
   const keysRef = useRef(new Set<string>());
   const modeRef = useRef(mode);
   const [size, setSize] = useState(FALLBACK_SIZE);
+  const nameIndex = useNameIndex();
   // The hover readout belongs to one view; a new space or a reset makes it stale, so it is not shown.
   const view = `${lattice.space.id}:${resetKey}`;
   const [hover, setHover] = useState<{ x: number; y: number; text: string; view: string } | null>(null);
@@ -201,17 +204,19 @@ export function GamutCanvas({ lattice, selection, snapped, mode, resetKey, label
       const sets = [snapped?.occupied, selection?.foreground].filter((s): s is Int32Array => !!s && s.length > 0);
       let k = -1;
       for (const s of sets) if ((k = pickNearest(camRef.current, canvas.width, canvas.height, pts, s, mx, my, 6 * dpr)) >= 0) break;
-      setHover(k < 0 ? null : { x: e.clientX - rect.left, y: e.clientY - rect.top, text: describePoint(lattice, k, snapped), view });
+      setHover(k < 0 ? null : { x: e.clientX - rect.left, y: e.clientY - rect.top, text: describePoint(lattice, k, snapped, colorNameText(nameIndex, { r: lattice.rgb[3 * k], g: lattice.rgb[3 * k + 1], b: lattice.rgb[3 * k + 2] })), view });
     };
     const onUp = () => (drag = null);
     const onLeave = () => setHover(null);
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       const cam = camRef.current;
+      // Normalised and capped per event, so a fast trackpad flick cannot jump (#90).
+      const d = Math.max(-60, Math.min(60, wheelPixels(e.deltaY, e.deltaMode)));
       if (mode === "orbit") {
         const o = orbitOf(cam, GAMUT_CENTER);
-        camRef.current = orbitCamera(GAMUT_CENTER, Math.min(6, Math.max(0.3, o.distance * Math.exp(e.deltaY * 0.001))), o.yaw, o.pitch);
-      } else camRef.current = move(cam, -e.deltaY * 0.001, 0, 0);
+        camRef.current = orbitCamera(GAMUT_CENTER, Math.min(6, Math.max(0.3, o.distance * Math.exp(d * 0.0015))), o.yaw, o.pitch);
+      } else camRef.current = move(cam, -d * 0.0015, 0, 0);
       setHover(null);
       schedule();
     };
@@ -248,7 +253,7 @@ export function GamutCanvas({ lattice, selection, snapped, mode, resetKey, label
       canvas.removeEventListener("blur", onBlur);
       keys.clear();
     };
-  }, [mode, lattice, pts, selection, snapped, view]);
+  }, [mode, lattice, pts, selection, snapped, view, nameIndex]);
 
   // Dispose returns the loop to idle, so a remount (React's development double mount) draws again.
   useEffect(
@@ -283,10 +288,10 @@ export function GamutCanvas({ lattice, selection, snapped, mode, resetKey, label
 }
 
 /** The hover text for a lattice point (the notebook's hover: L, a, b), plus the image's share when occupied. */
-export function describePoint(lattice: Lattice, k: number, snapped: SnappedColors | null): string {
+export function describePoint(lattice: Lattice, k: number, snapped: SnappedColors | null, name = ""): string {
   const { axes, digits } = lattice.space;
   const hex = "#" + [0, 1, 2].map((j) => lattice.rgb[3 * k + j].toString(16).padStart(2, "0")).join("").toUpperCase();
-  const lines = [`${axes[0]}=${lattice.l[k].toFixed(digits)}  ${axes[1]}=${lattice.a[k].toFixed(digits)}  ${axes[2]}=${lattice.b[k].toFixed(digits)}  ${hex}`];
+  const lines = [`${axes[0]}=${lattice.l[k].toFixed(digits)}  ${axes[1]}=${lattice.a[k].toFixed(digits)}  ${axes[2]}=${lattice.b[k].toFixed(digits)}  ${hex}` + (name ? `  ≈ ${name}` : "")];
   if (snapped && snapped.count[k] > 0) lines.push(`Pildi värve: ${snapped.count[k]}, osakaal ${snapped.share[k].toFixed(2)} %`);
   return lines.join("\n");
 }

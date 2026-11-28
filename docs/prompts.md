@@ -594,3 +594,135 @@ Decisions:
 2. [UNDERSTANDING] On a background with OKLCH lightness below 0.6 the 3D view's text, rings and faint lattice switch to light colours.
 3. [UNDERSTANDING] The choice resets on reload; it is not part of the saved theme.
 4. [UNDERSTANDING] Chosen values of the ΔE circles (explained to the user): radius = base + 300 px × ΔE, at most base + 21 px (reached at ΔE 0.07), where base is the largest colour dot with its lightness ring on that wheel plus 3 px.
+
+## P-038 (2026-11-21): User-test feedback, colour names, theme widget, and Lean verification
+
+Type: requirement
+Source: user prompt
+Issue: #90, #91, #92 (frontend and docs), #93–#96 (backend)
+
+> Värvide arvu muutmisel näitab rakendus ikka 5000 värvi. Zoomimine sülearvutitel on liiga järsk. Filtreerimine teeb brauseri aeglaseks, sest töötlus käib front-endis determine which would be faster.
+> The chance of being a artefact percentage bar element jääb teiste elementide peale tabeli vaates. Salvestatud teemadele ei saa nime panna currently allow user set names and in general every place where a color code is add a label use npm color-name-list. Praegu on näha ainult värvikoodid, mistõttu on mitme teema seast õiget raske leida. Teema valiku asi ei liigu minimeeritud kujul kaasa paremal servas widgetina, seega peab üles ja alla kerima. Pildi üleslaadimise kast/nupp jääb raskesti märgatavaks. Pilditöötluse info on „debuggeri tasemel“, võtab palju ruumi ja on raskesti loetav. Seda ei saa kokku voltida, visuaalne hierarhia on nõrk ja näiteks väärtus „000“ ei ütle kasutajale midagi. Terminitele on vaja tööriistavihjeid (tooltip'e), sest kasutaja ei tunne värviteadust. Digitaalsete artefaktide tuvastus jäi segaseks: polnud selge, mida see mõõdab ja mille põhjal protsendid arvutatakse. Tulemus „100% kindel“ tekitab põhjendamatut usaldust. 3D-vaade: jäi selgusetuks, mida tähendavad suured ja väikesed mummud ilma seletusteta. Vaikesätted peaks näitama kogu mummukeste pilve ja alamenüü taga peidetult peaks saama vaid filtreerida ja seal hulgas ka heleduse järgi and the slider labels should be more easily readable. Värvide väärtused tabelis on jagatud mitmele reale, ühel real oleks need loetavamad. Add the gray used in scientific tests where just noticable difference is tested as one of the default background options saved everywhere. verify backend algorithms using lean build, model them properly in documentation and find possible improvement places,locally using lean build a plan for a better algorithm and test it repeat if nessassary build and give a seperate local test build to test out.
+
+Answers:
+- Lean: install via winget. (A complete Lean 4.36.0 toolchain from P-010 was found and used, because the winget toolchain download failed for lack of disk space.)
+- Improved algorithms: "Local test build only".
+- Colour names: the full `color-name-list`, loaded lazily.
+- Base: a sync PR from main to develop-frontend first (#89).
+- 3D view default: "All dots in full colour".
+- Artefacts: "Show as explained score".
+- Upload and grey: "Drag-and-drop upload box", "Remember chosen backgrounds", "JND grey preset in every picker", "for 2 use the actual standardized gray used in lab tests when comparing colors according to international standards replace one of the other grays allready there".
+- Colour count: "Upload form; no paging".
+
+## P-039 (2026-11-21): Decisions from P-038
+
+Type: approved decision
+Source: P-038, the conflict review and the user's answers
+Issue: #90, #91, #92
+
+1. **3D view defaults.** They show every lattice dot in full colour: hue width 360, full chroma and lightness, neutrals included. This supersedes P-036 item 2's default selection. Cell 19's selection and the new lightness range move into a collapsed "Filtreeri" panel. The point cap is raised, so all 13,000 CIELAB dots draw. Slider labels become larger, with the value and units in a badge.
+2. **Artefacts.** The per-colour artefact value is shown as an explained similarity score, "Segupiksli sarnasus", with a tooltip saying what is measured and how. This supersedes the "chance" wording of P-032 and P-033 for display. The data field stays `chance`, and #95 asks the team to rename or redefine it.
+3. **Confidence.** Findings show confidence in words (madal, keskmine, kõrge) with the reason, never as "100 %".
+4. **Background grey.** The background grey is the CIE reference background for colour-difference evaluation: a uniform neutral grey of CIE L* = 50 (CIE 116-1995, the reference conditions of CIEDE2000), which is sRGB #777777 (L* 50.04). It replaces the "hall" preset in the pixel viewer and the 3D view.
+5. **Remembered backgrounds.** Each viewer remembers its chosen background in localStorage, through a port. This supersedes P-037 item 3.
+6. **Drag and drop.** Upload gets a drag-and-drop box. Dropped files pass the same checks as picked ones. Multiple files stay in #15. This pulls single-image drag and drop forward from P-018 item 1 and P-020 item 1.
+7. **Colour count.** The count chosen on the upload form is shown everywhere: heading, hint, filter counts, the 3D view and the demo. The table still renders all N rows at once, with no paging. Speed comes from memoising the per-row work.
+8. **Colour names.** Every colour code in the app's own pages gets a name from `color-name-list`: the nearest name by ΔE_OK, marked as approximate (≈). This excludes the extension popup and the Figma plugin. The names are English proper names; the UI stays Estonian.
+9. **Algorithms delivered locally only.** The improved algorithms stay in a local test build that is never pushed. This supersedes P-031 item 10's prototype sharing for this work. The findings reach the team as `docs/algorithms/` (#92) and the backend issues #93–#96, and the Lean sources stay local.
+10. **Ownership in `src/core/analysis/`.** The teammates own `blends.ts`, `palette-clusters.ts`, `harmonies.ts`, `contrast.ts`, `gamut-coverage.ts`, `ui-mode.ts`, `palette-types.ts`, `compute-color-analysis.ts`, `src/core/count-colors.ts` and the Supabase adapters. The frontend files (`color-filter.ts`, `share-bands.ts`, `format.ts`, `ontology.ts`, `color-analysis.ts` types, `color-analysis-check.ts`) may change.
+11. [UNDERSTANDING] **Zoom.** The pixel viewer accumulates small wheel and trackpad deltas, moving one zoom level per about 100 px. The 3D view's wheel zoom is gentler, with the step per event capped. Plain scrolling keeps its P-021 and P-036 meaning.
+12. [UNDERSTANDING] **Analysis cache.** Caching the analysis result is a frontend decorator around the `AnalysisService` port, not an edit inside the Supabase adapter. Any server-side speed-up goes to the team as an issue.
+
+## P-040 (2026-11-21): Table speed and colour-name decisions
+
+Type: approved decision
+Source: the user's answer, the performance analysis and the library audit
+Issue: #90, #91
+
+1. "Determine which would be faster" — measured on 5000 colours in vitest/jsdom:
+   - filter logic: 0.2 ms;
+   - the analysis: 21 ms;
+   - OKLCH text: 4.3 ms;
+   - building the table rows: 4.6 s.
+
+   [AUDIT: performance-analyst] Server-side filtering would be slower: it adds a network round trip and leaves the row-building cost unchanged. Row virtualisation would be fastest, but the user chose "No, keep all rows rendered". So the table renders every row, with memoised rows and deferred filtering (P-039 item 7 stands).
+2. Colour names use `color-name-list@14.86.0`: MIT, 32,004 names, about 318 KB gzip, loaded with `import()` only when needed [AUDIT: library-auditor]. The nearest-name search is our own: an OKLab grid index searched until no unsearched cell can be nearer, tested against brute force. `nearest-color` was rejected because it measures distance in RGB.
+
+## P-041 (2026-11-21): Audits recorded after the compliance review
+
+Type: approved decision
+Source: library-auditor, performance-analyst and local measurements
+Issue: #91
+
+1. [AUDIT: library-auditor] Drag-and-drop upload uses the platform API (`DataTransfer.files` plus the native file input), with no library. react-dropzone, Uppy and FilePond add nothing a single-image box needs. Re-audit react-dropzone if #15 brings multiple files or folders.
+2. [AUDIT: performance-analyst] Colour names need no Web Worker. Building the index is a one-time cost, measured at 33 ms in Node. Lookups are cached per colour. 5000 table rows render in about 1.7 s in jsdom with or without names (measured), so names add no measurable cost. The name list loads only when a component that shows a name mounts.
+
+## P-042 (2026-11-21): Challenge to the algorithm work, and "do so"
+
+Type: requirement
+Source: the user's messages
+Issue: #90, #92, #95
+
+Quoted:
+
+> - The blend "chance" can never fall between 0 and 50 %, so it's really a yes/no flag. that sounds like the algorithm approach is flawed no? 130ms sounds horrible in graphics programming 3D rework sounds like it had way too many changes what id you do? the 000 wasn't meant as aplha what did you change because of it? Go over the lean algorithms to confirm what they are doing is actually effective at what what they claim to do
+
+Then, after the answer proposed four next steps (correct the algorithm docs, a real complete-linkage counterexample in Lean, a faster clustering prototype measured locally, fix the real "000"):
+
+> do so
+
+Understood as:
+
+1. [UNDERSTANDING] `docs/algorithms/` must say plainly what Lean proves (facts about small models) and what was measured by running the code. "[AUDIT: lean]" must not suggest the TypeScript itself was verified.
+2. [UNDERSTANDING] The blend score is a distance threshold, not a probability, and has no spatial evidence. The redesign (pixel-neighbour evidence) goes to the team in #95.
+3. [UNDERSTANDING] The faster clustering stays in the local test build (P-039 item 9).
+4. [UNDERSTANDING] The user did not say where "000" was. The strongest candidate is the structure wheel's ΔL and ΔE columns, which always print "0.000" for the darkest colour and the anchor. That is what gets fixed. The alpha change from P-039 stays unless the user asks to revert it.
+
+## P-043 (2026-11-28): Missing tooltips and unused glossary entries
+
+Type: requirement
+Source: the user's message, after the compliance review of PR #97
+Issue: #90
+
+Quoted:
+
+> fix the missing tooltips and unused glossary entries
+
+Understood as:
+
+1. [UNDERSTANDING] This continues P-038 ("Terminitele on vaja tööriistavihjeid"). Every glossary entry is shown by some component instead of being removed. The new tooltips are on the findings confidence words, the structure wheel's ΔE, L and ΔL headings, a short hint under "Struktuurid" (harmony, ΔE), the blend, OKLCH and cluster step names, OKLab, CIELAB and JND in the gamut coverage text, and "sagedasemat värvi" in the table heading (top N).
+2. [UNDERSTANDING] Tooltips are not placed inside the structure list's item buttons, because a button inside a button is invalid. The hint above the list explains those terms instead.
+3. [UNDERSTANDING] The confidence words and their reason stay visible (P-039 item 3). The tooltip only adds the explanation.
+4. [UNDERSTANDING] A test fails when a glossary entry is not used by any component.
+
+## P-044 (2026-11-28): Source tags for Claude's own runs, and the real gamut coverage
+
+Type: requirement and approved decisions
+Source: the user's message and answers, after the compliance review of PR #97
+Issue: #92, #74
+
+Quoted:
+
+> fix the AUDIT labels and the PLACEHOLDER(#74) markers
+
+Approved decisions (the user's answers to the conflict review):
+
+1. **Tags.** "Approve new tags": `[LOCAL RUN: …]` marks a check Claude ran on the developer's machine whose code stays local (Lean, comparisons, property tests). `[REPO RUN: …]` marks one whose code is committed and can be rerun (experiment E10). Neither is an independent audit. They sit beside `[UNDERSTANDING]` as Claude's own work. Earlier entries in this file keep their `[AUDIT: …]` tags as written.
+2. **Gamut note.** "Remove note": the stub and the demo call the server's own `computeGamutCoverage` (#74, closed) on the image's colours, so the coverage is not simulated and the gamut panel has no "Näidisandmed" note. This supersedes the last sentence of P-036 item 6 ("The stub and the demo compute it the same way and mark it simulated").
+
+Understood as:
+
+3. [UNDERSTANDING] The tags of agent reviews such as `[AUDIT: performance-analyst]` are not changed by this entry.
+
+## P-045 (2026-11-28): The demo uses the real colour analysis
+
+Type: approved decision
+Source: the user's answer
+Issue: #55, #69
+
+Context: #55 is still open, but the real colour analysis was merged in PR #88, and the Supabase adapter runs `analyseColors` on every stored analysis. The demo still simulated its analysis, with `PLACEHOLDER(#55)` and `PLACEHOLDER(#69)` markers.
+
+Quoted answer: "Use real analysis"
+
+1. The demo runs `analyseColors` on the study's real colours (format BMP), as the server does for a stored image. Its analysis and rows are `"computed"`, and the demo no longer shows "Näidisandmed". This supersedes the last sentence of P-031 item 10 ("its colour analysis is simulated and labelled as such").
+2. [UNDERSTANDING] The stub, which runs without a backend, keeps its simulated analysis and its markers.

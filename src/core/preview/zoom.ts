@@ -75,3 +75,28 @@ export function pixelAt(view: View, x: number, y: number, image: Size): { x: num
   if (ix < 0 || iy < 0 || ix >= image.width || iy >= image.height) return null;
   return { x: ix, y: iy };
 }
+
+/** One zoom level per this many pixels of wheel or trackpad movement (P-039 item 11). */
+export const WHEEL_PX_PER_LEVEL = 100;
+
+/**
+ * A wheel event's movement in pixels, whatever unit the browser reports: lines
+ * (Firefox) count as 16 px and pages as 800 px.
+ */
+export function wheelPixels(deltaY: number, deltaMode = 0): number {
+  return deltaMode === 1 ? deltaY * 16 : deltaMode === 2 ? deltaY * 800 : deltaY;
+}
+
+/**
+ * Adds one wheel event to the movement collected so far and returns the whole
+ * zoom levels to move (positive zooms in) plus what is left over. A mouse
+ * notch (100 px) is one level, as before; a trackpad pinch sends many small
+ * events, which now add up instead of each jumping a level (#90). Turning
+ * back drops the leftover, so a reversal answers at once.
+ */
+export function accumulateWheel(rest: number, px: number, perLevel = WHEEL_PX_PER_LEVEL): { levels: number; rest: number } {
+  const total = Math.sign(rest) !== 0 && Math.sign(rest) !== Math.sign(px) ? px : rest + px;
+  const whole = Math.trunc(total / perLevel);
+  // "+ 0" turns -0 into 0.
+  return { levels: -whole + 0, rest: total - whole * perLevel };
+}

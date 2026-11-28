@@ -2,6 +2,7 @@ import { render } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { ServicesProvider, type Services } from "@/adapters/services";
 import { LocalThemeStore } from "@/adapters/browser/local-theme-store";
+import { LocalViewerPrefs } from "@/adapters/browser/local-viewer-prefs";
 import { StubAnalysisService } from "@/adapters/stub/stub-analysis-service";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
 
@@ -16,9 +17,11 @@ export function memoryStorage() {
 /** Fresh in-memory services for one test. */
 export function testServices(overrides: Partial<Services> = {}): Services {
   const themeStorage = memoryStorage();
+  const viewerStorage = memoryStorage();
   return {
     analysis: new StubAnalysisService(memoryStorage()),
     themes: new LocalThemeStore(() => themeStorage),
+    viewerPrefs: new LocalViewerPrefs(() => viewerStorage),
     ...overrides,
   };
 }

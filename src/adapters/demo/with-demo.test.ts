@@ -3,6 +3,7 @@ import { describeAnalysisServiceContract } from "@/core/analysis/analysis-servic
 import { StubAnalysisService } from "../stub/stub-analysis-service";
 import { DEMO_ID, withDemo } from "./with-demo";
 import { memoryStorage } from "@/test/render";
+import { checkColorAnalysis, checkColorRows } from "@/core/analysis/color-analysis-check";
 
 const sample = () => new File([new Uint8Array(64).fill(7)], "sample.png", { type: "image/png" });
 
@@ -26,10 +27,12 @@ describe("withDemo", () => {
       imageUrl: "/demo/palette.bmp",
     });
     expect(demo?.simulated).toBeUndefined();
-    // Real study colours, with a simulated colour analysis until the server sends one.
-    expect(demo?.colorAnalysis?.status).toBe("simulated");
+    // Real study colours, analysed the way the server analyses a stored image (P-045).
+    expect(demo?.colorAnalysis?.status).toBe("computed");
+    expect(checkColorAnalysis(demo!.colorAnalysis!)).toEqual([]);
+    expect(checkColorRows(demo!.colors, demo!.colorAnalysis)).toEqual([]);
     expect(demo?.colors).toHaveLength(295);
-    // The study's counts stay exactly as they were; artefact chances and clusters are simulated (P-033 item 1).
+    // The study's counts stay exactly as they were (P-033 item 1).
     expect(demo?.colors[0]).toMatchObject({
       r: 255,
       g: 255,
@@ -37,8 +40,7 @@ describe("withDemo", () => {
       count: 1664,
       percent: 8.125,
     });
-    expect(demo?.rowDataStatus).toBe("simulated");
-    expect(demo?.colors.every((c) => c.artefacts?.length && c.clusterId)).toBe(true);
+    expect(demo?.rowDataStatus).toBe("computed");
     expect(demo?.colors.reduce((sum, c) => sum + c.count, 0)).toBe(20480);
   });
 

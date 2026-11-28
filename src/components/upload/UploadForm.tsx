@@ -18,7 +18,7 @@ import {
   type UploadError,
 } from "@/core/analysis/upload-rules";
 import { PixelViewer } from "../preview/PixelViewer";
-import { button, card, hint, input, label } from "../ui";
+import { button, card, hint, input, label, primaryButton } from "../ui";
 
 const MESSAGES: Record<UploadError | "invalid-image", string> = {
   "no-file": "Faili pole valitud.",
@@ -28,6 +28,12 @@ const MESSAGES: Record<UploadError | "invalid-image", string> = {
 };
 
 const ACCEPT = ALLOWED_EXTENSIONS.map((ext) => `.${ext}`).join(",");
+
+/** The demo opens with the colour count chosen on the form, like an upload (#90). */
+function demoHref(topN: string): string {
+  const n = clampTopN(topN);
+  return n === TOP_N_DEFAULT ? `/results/${DEMO_ID}` : `/results/${DEMO_ID}?top_n=${n}`;
+}
 
 /** Upload form from the original upload.html: one image, alpha option and top N. */
 export function UploadForm() {
@@ -39,6 +45,14 @@ export function UploadForm() {
   const [topN, setTopN] = useState(String(TOP_N_DEFAULT));
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const [extra, setExtra] = useState(0);
+  /** A picked or dropped file goes the same way; the checks run on submit, as before. */
+  const pick = (f: File | null, count: number) => {
+    setFile(f);
+    setExtra(Math.max(0, count - 1));
+    setError(null);
+  };
 
   // cacheComponents makes Next.js hide this page in <Activity> on navigation instead of unmounting it, and
   // "Töötle teine pilt" shows the same instance again. Hiding runs layout effect cleanups, so go back to idle
@@ -78,16 +92,41 @@ export function UploadForm() {
         </p>
       )}
       <form onSubmit={handleSubmit} noValidate>
-        <label htmlFor={ids.file} className={label}>
-          Vali pilt
-        </label>
-        <input
-          id={ids.file}
-          className="mt-2"
-          type="file"
-          accept={ACCEPT}
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-        />
+        {/* A large drop zone with a clear button, so the upload is easy to find (#91). */}
+        <div
+          data-testid="drop-zone"
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
+          // Moving over the box's own text fires dragleave too; only leaving the box counts.
+          onDragLeave={(e) => !e.currentTarget.contains(e.relatedTarget as Node | null) && setDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragging(false);
+            const dropped = e.dataTransfer.files;
+            // One image at a time; several files at once stay in #15.
+            if (dropped.length) pick(dropped[0], dropped.length);
+          }}
+          className={`mt-2 flex flex-col items-center gap-2 rounded-xl border-2 border-dashed p-6 text-center ${dragging ? "border-ink bg-ink/5" : "border-line"}`}
+        >
+          <p className="m-0 text-lg font-bold">Lohista pilt siia</p>
+          <p className="m-0 text-muted">või</p>
+          <input
+            id={ids.file}
+            className="peer sr-only"
+            type="file"
+            accept={ACCEPT}
+            onChange={(e) => pick(e.target.files?.[0] ?? null, e.target.files?.length ?? 0)}
+          />
+          <label htmlFor={ids.file} className={`${primaryButton} peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-ink`}>
+            Vali pilt
+          </label>
+          <p className="m-0 text-sm" aria-live="polite">
+            {file ? `Valitud: ${file.name}` : "Faili pole veel valitud."}
+            {extra > 0 && <span className="block text-muted">Võeti esimene fail; korraga saab töödelda ühe pildi.</span>}
+          </p>
+        </div>
         {file && !validateUpload(file) && <PixelViewer source={file} name={file.name} />}
 
         <div className="flex flex-wrap gap-4">
@@ -122,10 +161,10 @@ export function UploadForm() {
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2.5">
-          <button type="submit" className={button} disabled={processing}>
+          <button type="submit" className={primaryButton} disabled={processing}>
             {processing ? "Töötlen…" : "Töötle pilti"}
           </button>
-          <Link className={button} href={`/results/${DEMO_ID}`}>
+          <Link className={button} href={demoHref(topN)}>
             Ava demo
           </Link>
         </div>

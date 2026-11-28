@@ -5,6 +5,19 @@ import type { Theme } from "@/core/theme/theme";
 import { input } from "../ui";
 import { toOklch } from "./ThemeProvider";
 import { formatOklch, hexToOklch } from "@/core/color/oklch";
+import type { NameIndex } from "@/core/color/names";
+import { ColorName, colorNameText, useNameIndex } from "../ColorName";
+
+/**
+ * What a theme is called in the list: its own name, else its colours' names
+ * ("Snow / Night"), else its codes until the names have loaded (#91).
+ */
+export function themeLabel(theme: Pick<Theme, "bg" | "text" | "name">, index: NameIndex | null): string {
+  if (theme.name) return theme.name;
+  const bg = colorNameText(index, hexToOklch(theme.bg));
+  const text = colorNameText(index, hexToOklch(theme.text));
+  return bg && text ? `${bg} / ${text}` : `${theme.bg} / ${theme.text}`;
+}
 
 /** Split swatch: left half background, right half text colour, as in the original. */
 function ThemeSwatch({ theme }: { theme: Pick<Theme, "bg" | "text"> }) {
@@ -27,6 +40,10 @@ interface Props {
 }
 
 export function ThemeSelect({ themes, currentId, onSelect, shown, labelId }: Props) {
+  const index = useNameIndex();
+  // The button names the saved theme while the preview matches it, else the previewed colours.
+  const current = themes.find((t) => t.id === currentId);
+  const shownLabel = current && current.bg === shown.bg && current.text === shown.text ? themeLabel(current, index) : themeLabel(shown, index);
   return (
     <Select.Root value={currentId} onValueChange={onSelect}>
       <Select.Trigger
@@ -35,9 +52,7 @@ export function ThemeSelect({ themes, currentId, onSelect, shown, labelId }: Pro
       >
         <span className="flex items-center gap-2.5 overflow-hidden">
           <ThemeSwatch theme={shown} />
-          <span className="font-mono">
-            {shown.bg} / {shown.text}
-          </span>
+          <span className="truncate">{shownLabel}</span>
         </span>
         <Select.Icon className="opacity-75">▾</Select.Icon>
       </Select.Trigger>
@@ -56,12 +71,11 @@ export function ThemeSelect({ themes, currentId, onSelect, shown, labelId }: Pro
               >
                 <ThemeSwatch theme={theme} />
                 <span className="flex flex-col">
-                  <Select.ItemText>
-                    <span className="font-mono">
-                      {theme.bg} / {theme.text}
-                    </span>
-                  </Select.ItemText>
-                  {/* Outside ItemText, so typeahead and the trigger keep the hex label. */}
+                  <Select.ItemText>{themeLabel(theme, index)}</Select.ItemText>
+                  {/* Outside ItemText, so typeahead finds the name; the codes stay visible (#91). */}
+                  <span className="font-mono text-xs text-muted">
+                    {theme.bg} <ColorName color={hexToOklch(theme.bg)} /> / {theme.text} <ColorName color={hexToOklch(theme.text)} />
+                  </span>
                   <span className="font-mono text-xs text-muted">
                     {formatOklch(hexToOklch(theme.bg))} / {formatOklch(hexToOklch(theme.text))}
                   </span>

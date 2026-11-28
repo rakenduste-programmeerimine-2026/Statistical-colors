@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { centered, clampLevel, fit, ONE_TO_ONE, pixelAt, ZOOM_LEVELS, zoomAt, zoomFactor, zoomLabel } from "./zoom";
+import { accumulateWheel, centered, clampLevel, fit, ONE_TO_ONE, pixelAt, ZOOM_LEVELS, zoomAt, zoomFactor, zoomLabel, wheelPixels } from "./zoom";
 
 const last = ZOOM_LEVELS.length - 1;
 const image = { width: 512, height: 40 };
@@ -82,5 +82,34 @@ describe("pixelAt", () => {
     [10, 20 + 40 * 4],
   ])("returns null outside the image at (%d, %d)", (x, y) => {
     expect(pixelAt(view, x, y, image)).toBeNull();
+  });
+});
+
+describe("wheel accumulation (#90)", () => {
+  it("moves one level per mouse notch, as before", () => {
+    expect(accumulateWheel(0, -100)).toEqual({ levels: 1, rest: 0 });
+    expect(accumulateWheel(0, 100)).toEqual({ levels: -1, rest: 0 });
+  });
+
+  it("collects small trackpad steps until they make a level: 99 px is not enough, 100 px is", () => {
+    let s = { levels: 0, rest: 0 };
+    for (let i = 0; i < 33; i++) s = accumulateWheel(s.rest, -3);
+    expect(s).toEqual({ levels: 0, rest: -99 });
+    s = accumulateWheel(s.rest, -1);
+    expect(s).toEqual({ levels: 1, rest: 0 });
+  });
+
+  it("drops the leftover when the direction turns", () => {
+    expect(accumulateWheel(-90, 20)).toEqual({ levels: 0, rest: 20 });
+  });
+
+  it("moves several levels for one large step", () => {
+    expect(accumulateWheel(0, -250)).toEqual({ levels: 2, rest: -50 });
+  });
+
+  it("reads lines and pages as pixels", () => {
+    expect(wheelPixels(3, 1)).toBe(48);
+    expect(wheelPixels(1, 2)).toBe(800);
+    expect(wheelPixels(-7, 0)).toBe(-7);
   });
 });

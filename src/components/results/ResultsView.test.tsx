@@ -52,14 +52,15 @@ describe("ResultsView", () => {
     saveFile.mockReset();
   });
 
-  it("shows the image summary like the original", async () => {
+  it("shows the image summary as labelled key figures (#90)", async () => {
     renderWithServices(<ResultsView />, servicesWith(analysis));
     const summary = await screen.findByRole("region", { name: "Pildi andmed" });
-    expect(summary).toHaveTextContent("palette.png");
-    expect(summary).toHaveTextContent("Mõõdud: 2 × 2");
-    expect(summary).toHaveTextContent("Piksleid kokku: 4");
-    expect(summary).toHaveTextContent("Unikaalseid värve: 3");
-    expect(summary).toHaveTextContent("Režiim: RGB");
+    expect(within(summary).getByRole("heading", { name: "palette.png" })).toBeInTheDocument();
+    const figure = (term: RegExp) => within(summary).getByText(term, { selector: "dt, dt *" }).closest("div")?.querySelector("dd")?.textContent;
+    expect(figure(/^Mõõdud$/)).toBe("2 × 2 px");
+    expect(figure(/^Piksleid kokku$/)).toBe("4");
+    expect(figure(/^Unikaalseid värve$/)).toBe("3");
+    expect(figure(/^Režiim$/)).toBe("RGB");
   });
 
   it("shows the top N chosen on upload", async () => {
@@ -86,9 +87,10 @@ describe("ResultsView", () => {
     const rgba = { ...analysis, includeAlpha: true, colors: [{ r: 1, g: 2, b: 3, a: 4, count: 4, percent: 100 }] };
     renderWithServices(<ResultsView />, servicesWith(rgba));
     const table = await screen.findByRole("table");
-    expect(within(table).getByRole("columnheader", { name: "Hex + alfa" })).toBeInTheDocument();
+    expect(within(table).getByRole("columnheader", { name: "RGBA" })).toBeInTheDocument();
     expect(within(table).getByRole("columnheader", { name: "OKLCH" })).toBeInTheDocument();
-    expect(table).toHaveTextContent("(1, 2, 3, 4)#010203 004oklch(8.23% 0.00804 240.75 / 0.016)4100.000000%");
+    // Alpha reads as opacity, not "004" (#90).
+    expect(table).toHaveTextContent("(1, 2, 3, 4)#010203läbipaistmatus 2 %oklch(8.23% 0.00804 240.75 / 0.016)4100.000000%");
   });
 
   it("warns when the data is simulated", async () => {

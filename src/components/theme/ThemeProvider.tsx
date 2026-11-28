@@ -14,7 +14,7 @@ interface ThemeContextValue {
   /** Colours currently shown on the page, saved or not. */
   preview: Preview;
   setPreview: (preview: Preview) => void;
-  save: (bg: string, text: string) => Promise<void>;
+  save: (bg: string, text: string, name?: string) => Promise<void>;
   select: (id: string) => Promise<void>;
 }
 
@@ -62,7 +62,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       state,
       preview,
       setPreview: setPreviewState,
-      save: (bg, text) => commit(addTheme(state, bg, text)),
+      save: (bg, text, name) => commit(addTheme(state, bg, text, name)),
       select: (id) => commit(setCurrentTheme(state, id)),
     }),
     [state, preview, commit],

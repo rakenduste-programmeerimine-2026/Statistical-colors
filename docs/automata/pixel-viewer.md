@@ -50,6 +50,10 @@ Initial state: Loading. No final state.
 
 Pointer move shows the stored value under the cursor in every state with an image; it never changes the state. The readout is cleared when the pointer leaves or the image changes.
 
+## Wheel zoom (#90)
+
+[AUDIT: zoom.test.ts] Ctrl or Cmd plus scroll adds the wheel movement up: one zoom level per 100 px (`accumulateWheel`). Lines count as 16 px and pages as 800 px. Turning back drops the leftover. A mouse notch (100 px) still moves one level. A trackpad pinch, which sends many small events, no longer skips several levels. The leftover lives in a ref (`wheelRest`); it is a counter, not a mode, so it stays implicit [UNDERSTANDING].
+
 ## Unknowns
 
 - A new source while the old one is still decoding: [UNDERSTANDING] the old result is ignored, because the effect for the old source is cancelled. Not tested.

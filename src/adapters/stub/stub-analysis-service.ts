@@ -2,7 +2,7 @@ import { AnalysisFailedError, InvalidImageError, type AnalysisService } from "@/
 import type { AnalysisOptions, ColorCount, CsvFile, CsvKind, ImageAnalysis } from "@/core/analysis/types";
 import { generateColorAnalysis } from "../simulated/color-analysis";
 import { simulateColorRows } from "../simulated/color-rows";
-import { simulateGamut } from "../simulated/gamut";
+import { computeGamutCoverage } from "@/core/analysis/gamut-coverage";
 import { hash, prng } from "../simulated/random";
 import { pixelsCsv, summaryCsv } from "./stub-csv";
 
@@ -61,7 +61,7 @@ export function generateAnalysis(id: string, file: Pick<File, "name" | "size">, 
   for (const c of colors) c.percent = (c.count / totalPixels) * 100;
 
   // Separate seeds, so the colours above stay exactly as they were.
-  const colorAnalysis = { ...generateColorAnalysis(prng(hash(`${seed}:color`))), gamut: simulateGamut(colors) };
+  const colorAnalysis = { ...generateColorAnalysis(prng(hash(`${seed}:color`))), gamut: computeGamutCoverage(colors) };
   return {
     id,
     fileName: file.name,

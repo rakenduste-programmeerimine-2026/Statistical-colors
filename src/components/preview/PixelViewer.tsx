@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerE
 import { cssColor, formatHex } from "@/core/analysis/format";
 import { formatOklch, srgbToOklch } from "@/core/color/oklch";
 import {
+  accumulateWheel,
   fit,
   GRID_MIN_FACTOR,
   ONE_TO_ONE,
@@ -13,12 +14,16 @@ import {
   zoomAt,
   zoomFactor,
   zoomLabel,
+  wheelPixels,
   type Size,
   type View,
 } from "@/core/preview/zoom";
 import { BackgroundPicker, backgroundCss, type BackgroundPreset } from "../BackgroundPicker";
+import { useViewerBackground } from "../useViewerBackground";
+import { CIE_GREY } from "@/core/viewer/viewer-prefs";
 import { button, hint } from "../ui";
 import { decodeImage, MAX_PREVIEW_PIXELS, PreviewTooLargeError, type DecodedImage } from "./decode";
+import { ColorName } from "../ColorName";
 
 /** Used when the browser cannot report the canvas size (no ResizeObserver). */
 const FALLBACK_VIEWPORT: Size = { width: 640, height: 360 };
@@ -46,7 +51,7 @@ async function toBlob(source: Blob | string): Promise<Blob> {
 const STAGE_PRESETS: BackgroundPreset[] = [
   { label: "vaikimisi", hex: null },
   { label: "valge", hex: "#ffffff" },
-  { label: "hall", hex: "#808080" },
+  { label: "CIE hall (L* 50)", hex: CIE_GREY },
   { label: "must", hex: "#000000" },
 ];
 
@@ -64,7 +69,7 @@ export function PixelViewer({ source, name }: { source: Blob | string; name: str
   const [manual, setManual] = useState<{ image: DecodedImage; view: View } | null>(null);
   const [grid, setGrid] = useState(false);
   // Null keeps the reference viewer's stage colour (P-037).
-  const [stage, setStage] = useState<string | null>(null);
+  const [stage, setStage] = useViewerBackground("pixel");
   const [hover, setHover] = useState<Hover | null>(null);
   const drag = useRef<{ x: number; y: number; ox: number; oy: number } | null>(null);
 
@@ -166,13 +171,17 @@ export function PixelViewer({ source, name }: { source: Blob | string; name: str
 
   // React's wheel listener is passive, so preventDefault needs a native one.
   const wheel = useRef<(e: WheelEvent) => void>(() => {});
+  // Wheel movement not yet turned into a zoom level (#90: trackpads send many small steps).
+  const wheelRest = useRef(0);
   useEffect(() => {
     wheel.current = (e) => {
       // Plain scrolling scrolls the page; Ctrl (or Cmd) + scroll zooms, as in embedded maps.
       if (!image || !(e.ctrlKey || e.metaKey)) return;
       e.preventDefault();
       const [x, y] = toDevice(canvasRef.current, e);
-      zoomBy(e.deltaY < 0 ? 1 : -1, x, y);
+      const { levels, rest } = accumulateWheel(wheelRest.current, wheelPixels(e.deltaY, e.deltaMode));
+      wheelRest.current = rest;
+      if (levels) zoomBy(levels, x, y);
     };
   });
   useEffect(() => {
@@ -282,7 +291,8 @@ export function PixelViewer({ source, name }: { source: Blob | string; name: str
                 className="inline-block size-4 rounded-sm border border-line"
                 style={{ background: cssColor(shownHover) }}
               />
-              x {shownHover.x}, y {shownHover.y} · {formatHex({ r: shownHover.r, g: shownHover.g, b: shownHover.b })} ·
+              x {shownHover.x}, y {shownHover.y} · {formatHex({ r: shownHover.r, g: shownHover.g, b: shownHover.b })}{" "}
+              <ColorName color={{ r: shownHover.r, g: shownHover.g, b: shownHover.b }} /> ·
               rgb {shownHover.r}, {shownHover.g}, {shownHover.b}
               {shownHover.a < 255 && `, a ${shownHover.a}`} ·{" "}
               {formatOklch(srgbToOklch(shownHover.a < 255 ? shownHover : { r: shownHover.r, g: shownHover.g, b: shownHover.b }))}
