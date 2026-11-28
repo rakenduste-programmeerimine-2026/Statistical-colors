@@ -2,6 +2,8 @@
 
 import { useId, useState } from "react";
 import type { ColorAnalysis } from "@/core/analysis/color-analysis";
+import type { GlossaryKey } from "@/core/glossary";
+import { Term } from "../Term";
 import { card, hint } from "../ui";
 import { FindingsPanel } from "./FindingsPanel";
 import { RampStrip, StructureList } from "./StructureList";
@@ -46,6 +48,12 @@ const PARAM_LABELS: Record<string, string> = {
   contentMinDeltaL: "Sisu vähim heleduse vahe",
   contentMinShare: "Sisu vähim osakaal (%)",
 };
+/** Steps whose name is a colour term with its own explanation (P-038). */
+const STEP_TERMS: Partial<Record<ColorAnalysis["pipeline"][number]["step"], GlossaryKey>> = {
+  "blend-snap": "blend",
+  convert: "oklch",
+  cluster: "cluster",
+};
 const STATUS_LABELS = { done: "tehtud", skipped: "vahele jäetud", "not-implemented": "pole veel" } as const;
 
 /** The server's colour analysis on the results page (P-030, P-031). */
@@ -80,7 +88,9 @@ export function ColorAnalysisSection({ analysis }: { analysis: ColorAnalysis }) 
         <ol className="mt-2 flex flex-col gap-2 pl-5 text-sm">
           {analysis.pipeline.map((p) => (
             <li key={p.step}>
-              <span className="font-bold">{STEP_LABELS[p.step]}</span> — {STATUS_LABELS[p.status]}
+              <span className="font-bold">
+                <StepName step={p.step} />
+              </span> — {STATUS_LABELS[p.status]}
               {p.removedShare ? <span className="text-muted">; eemaldati {p.removedShare.toFixed(1)} % pikslitest</span> : null}
               {p.params ? (
                 <dl className="mt-0.5 grid grid-cols-[auto_auto] justify-start gap-x-3 text-muted">
@@ -101,6 +111,10 @@ export function ColorAnalysisSection({ analysis }: { analysis: ColorAnalysis }) 
         <div className="mt-4 grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <div>
             <h3 className="text-lg font-bold">Struktuurid</h3>
+            <p className={hint}>
+              Värvid, mis moodustavad <Term k="harmony">harmoonia</Term>, astmestiku või ülemineku. <Term k="deltaE">ΔE</Term>{" "}
+              näitab, kui kaugel on tegelik värv ideaalsest.
+            </p>
             <div className="mt-2">
               <StructureList structures={analysis.structures} selectedId={selectedId} onSelect={setSelectedId} />
             </div>
@@ -125,4 +139,9 @@ export function ColorAnalysisSection({ analysis }: { analysis: ColorAnalysis }) 
       </div>
     </section>
   );
+}
+
+function StepName({ step }: { step: ColorAnalysis["pipeline"][number]["step"] }) {
+  const term = STEP_TERMS[step];
+  return term ? <Term k={term}>{STEP_LABELS[step]}</Term> : STEP_LABELS[step];
 }

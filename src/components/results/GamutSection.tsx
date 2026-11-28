@@ -92,9 +92,10 @@ export function GamutSection({ colors: allColors, topN, coverage, simulated }: P
         {coverage ? (
           <>
             Pilt <Term k="coverage">katab</Term> <b>{(coverage.coverage * 100).toFixed(2)} %</b> <Term k="gamut">sRGB gamutist</Term> (
-            {nf.format(coverage.occupiedCells)} / {nf.format(coverage.totalCells)} OKLab-rakku).
+            {nf.format(coverage.occupiedCells)} / {nf.format(coverage.totalCells)} <Term k="oklab">OKLab</Term>-rakku, iga rakk on üks{" "}
+            <Term k="jnd">just märgatav erinevus</Term>).
             {simulated && <span className="text-muted"> Näidisandmed: arvutatud brauseris, kuni server seda saadab.</span>}
-            {spaceId !== coverage.space && <span className="block text-sm text-muted">Katvus on määratud OKLab-is; CIELAB-i võrk on veidi teistsugune.</span>}
+            {spaceId !== coverage.space && <span className="block text-sm text-muted">Katvus on määratud OKLab-is; <Term k="cielab">CIELAB</Term>-i võrk on veidi teistsugune.</span>}
           </>
         ) : (
           <span className="text-muted">Katvust pole server veel saatnud.</span>

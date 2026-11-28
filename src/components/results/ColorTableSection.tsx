@@ -4,6 +4,7 @@ import { useDeferredValue, useMemo, useState } from "react";
 import { filterColors, isFiltered, NO_FILTER, type ColorFilter } from "@/core/analysis/color-filter";
 import { shareBands } from "@/core/analysis/share-bands";
 import type { ImageAnalysis } from "@/core/analysis/types";
+import { Term } from "../Term";
 import { card, hint } from "../ui";
 import { ColorFilters } from "./ColorFilters";
 import { ColorTable } from "./ColorTable";
@@ -34,7 +35,7 @@ export function ColorTableSection({ analysis, topN }: { analysis: ImageAnalysis;
   return (
     <section className={card} aria-labelledby="top-heading">
       <h2 id="top-heading" className="text-xl font-bold">
-        {nf.format(listed)} sagedasemat värvi
+        {nf.format(listed)} <Term k="topN">sagedasemat värvi</Term>
       </h2>
       <p className={hint}>
         Kokkuvõtte CSV sisaldab kõiki värve;{" "}

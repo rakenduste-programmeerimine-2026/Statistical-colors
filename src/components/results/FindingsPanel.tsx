@@ -3,6 +3,7 @@ import { GLOSSARY } from "@/core/glossary";
 import { AREA_LABELS, AREA_ORDER, CAVEAT_LABELS, findingLabel, PROVENANCE_LABELS, REQUIRES_LABELS, SEVERITY_LABELS } from "@/core/analysis/ontology";
 import { formatOklch, oklchCss } from "@/core/color/oklch";
 import { ColorName } from "../ColorName";
+import { Term } from "../Term";
 
 const SEVERITY_CLASS: Record<Finding["severity"], string> = {
   info: "border-line",
@@ -50,7 +51,7 @@ export function FindingsPanel({ findings, palette }: { findings: Finding[]; pale
                   <header className="flex flex-wrap items-baseline justify-between gap-2">
                     <h4 className="font-bold">{findingLabel(f)}</h4>
                     <span className="text-sm">
-                      {SEVERITY_LABELS[f.severity]} · {confidenceText(f.meta)}
+                      {SEVERITY_LABELS[f.severity]} · <Term k="confidence">{confidenceText(f.meta)}</Term>
                     </span>
                   </header>
                   {f.detail && <p className="mt-1">{f.detail}</p>}

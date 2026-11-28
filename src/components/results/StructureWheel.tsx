@@ -9,6 +9,17 @@ import { arcPath, chromaRadius, deltaERadius, lightnessRingWidth, medianLightnes
 import { formatDelta } from "@/core/analysis/format";
 import { hint } from "../ui";
 import { ColorName, colorNameText, useNameIndex } from "../ColorName";
+import { Term } from "../Term";
+import type { GlossaryKey } from "@/core/glossary";
+
+/** The points table's headings, with an explanation for each colour term (P-038). */
+const POINT_HEADINGS: [string, GlossaryKey | null][] = [
+  ["Tegelik", null],
+  ["Ideaalne", null],
+  ["ΔE", "deltaE"],
+  ["L", "lightness"],
+  ["ΔL", "lightness"],
+];
 
 const SIZE = 320;
 const C = SIZE / 2;
@@ -169,9 +180,9 @@ export function StructureWheel({ structure, palette }: Props) {
         <table className="mt-2 w-full border-collapse text-sm">
           <thead>
             <tr>
-              {["Tegelik", "Ideaalne", "ΔE", "L", "ΔL"].map((h) => (
+              {POINT_HEADINGS.map(([h, k]) => (
                 <th key={h} className="border-b border-line-soft p-1.5 text-left">
-                  {h}
+                  {k ? <Term k={k}>{h}</Term> : h}
                 </th>
               ))}
             </tr>

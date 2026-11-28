@@ -142,7 +142,9 @@ describe("FindingsPanel", () => {
     render(<FindingsPanel palette={[]} findings={[finding({ severity: "warning", caveats: undefined } as Partial<Finding>)]} />);
     expect(screen.getByRole("heading", { name: "Tume režiim" })).toBeInTheDocument();
     // A measured value is called measured, never "100 %" (#90).
-    expect(screen.getByText("Hoiatus · mõõdetud väärtus")).toBeInTheDocument();
+    expect(screen.getByText(/^Hoiatus ·/)).toBeInTheDocument();
+    // The confidence words are a term with an explanation (P-038).
+    expect(screen.getByRole("button", { name: "mõõdetud väärtus" })).toHaveAccessibleDescription(/Kindlus näitab/);
     expect(screen.getByText(/mõõdetud · piisab pikslitest · a rule/)).toBeInTheDocument();
   });
 

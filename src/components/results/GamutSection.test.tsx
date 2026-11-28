@@ -21,7 +21,8 @@ describe("GamutSection", () => {
     render(<GamutSection colors={colors} coverage={simulateGamut(colors)} simulated />);
     // The terms carry their explanations for screen readers, so check the figures, not one sentence.
     expect(screen.getByRole("status")).toHaveTextContent("0.03 %");
-    expect(screen.getByRole("status")).toHaveTextContent("(2 / 6789 OKLab-rakku)");
+    expect(screen.getByRole("status")).toHaveTextContent("(2 / 6789 OKLab");
+    expect(screen.getByRole("button", { name: "just märgatav erinevus" })).toHaveAccessibleDescription(/JND/);
     expect(screen.getByRole("status")).toHaveTextContent("Näidisandmed");
   });
 
